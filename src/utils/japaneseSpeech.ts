@@ -31,6 +31,8 @@ const KANJI_TO_HIRAGANA_MAP: Record<string, string> = {
   '今晩は': 'こんばんは',
   'さようなら': 'さようなら',
   'さよなら': 'さようなら',
+  'じゃあまた': 'じゃあまた',
+  'ではまた': 'ではまた',
   'お先に失礼します': 'おさきにしつれいします',
   'お先に失礼': 'おさきにしつれい',
   'お先に': 'おさきに',
@@ -69,6 +71,32 @@ const KANJI_TO_HIRAGANA_MAP: Record<string, string> = {
   'フランス': 'ふらんす',
   'エリック': 'えりっく',
   'エンジニア': 'えんじにあ',
+  '私': 'わたし',
+  '僕': 'ぼく',
+  '日本': 'にほん',
+  '日本人': 'にほんじん',
+  '日本語': 'にほんご',
+  '英語': 'えいご',
+  'アメリカ': 'あめりか',
+  'イギリス': 'いぎりす',
+  '中国': 'ちゅうごく',
+  '韓国': 'かんこく',
+  'ベトナム': 'べとなむ',
+  'ブラジル': 'ぶらじる',
+  '誰': 'だれ',
+  '何歳': 'なんさい',
+  '歳': 'さい',
+  '大学': 'だいがく',
+  '病院': 'びょういん',
+  '銀行': 'ぎんこう',
+  '会社': 'かいしゃ',
+  '元気': 'げんき',
+  'お元気': 'おげんき',
+  'お疲れ様': 'おつかれさま',
+  '赤': 'あか',
+  '青': 'あお',
+  '白': 'しろ',
+  '黒': 'くろ',
 };
 
 export function normalizeJapaneseForSpeech(text: string): string {
@@ -132,16 +160,30 @@ export interface SpeechMatchResult {
 export function checkSpeechMatch(spokenText: string, phrase: PhraseItem): SpeechMatchResult {
   const normSpoken = normalizeJapaneseForSpeech(spokenText);
   const targetHiragana = normalizeJapaneseForSpeech(phrase.hiragana);
+  const cleanSpoken = cleanJapaneseText(spokenText);
 
-  if (!normSpoken) {
+  if (!normSpoken && !cleanSpoken) {
     return { isMatch: false, similarity: 0, normalizedSpoken: '' };
   }
 
-  // 1. Direct or substring match with normalized Hiragana
+  // 1. Direct match with original Kanji if present
+  if (phrase.originalKanji) {
+    const cleanKanji = cleanJapaneseText(phrase.originalKanji);
+    if (cleanSpoken === cleanKanji || cleanSpoken.includes(cleanKanji) || cleanKanji.includes(cleanSpoken)) {
+      return {
+        isMatch: true,
+        similarity: 1.0,
+        normalizedSpoken: normSpoken,
+        matchedVariation: phrase.originalKanji,
+      };
+    }
+  }
+
+  // 2. Direct or substring match with normalized Hiragana
   if (normSpoken === targetHiragana || normSpoken.includes(targetHiragana) || targetHiragana.includes(normSpoken)) {
-    // If target is very short (e.g. いえ), require at least 80% similarity so random sounds don't trigger it
-    if (targetHiragana.length <= 3 && normSpoken.length > targetHiragana.length + 2) {
-      // User said something too long
+    // If target is very short (e.g. いえ), require reasonable length match
+    if (targetHiragana.length <= 3 && normSpoken.length > targetHiragana.length + 3) {
+      // User said something too long, check similarity instead
     } else {
       return {
         isMatch: true,
@@ -152,8 +194,18 @@ export function checkSpeechMatch(spokenText: string, phrase: PhraseItem): Speech
     }
   }
 
-  // 2. Check against spoken keyword variations
+  // 3. Check against spoken keyword variations
   for (const keyword of phrase.spokenKeywords) {
+    const cleanKeyword = cleanJapaneseText(keyword);
+    if (cleanSpoken === cleanKeyword || cleanSpoken.includes(cleanKeyword) || cleanKeyword.includes(cleanSpoken)) {
+      return {
+        isMatch: true,
+        similarity: 1.0,
+        normalizedSpoken: normSpoken,
+        matchedVariation: keyword,
+      };
+    }
+
     const normKeyword = normalizeJapaneseForSpeech(keyword);
     if (normSpoken === normKeyword || normSpoken.includes(normKeyword) || normKeyword.includes(normSpoken)) {
       return {
@@ -165,7 +217,7 @@ export function checkSpeechMatch(spokenText: string, phrase: PhraseItem): Speech
     }
   }
 
-  // 3. Check fuzzy similarity
+  // 4. Check fuzzy similarity
   let highestSimilarity = calculateSimilarity(normSpoken, targetHiragana);
 
   for (const keyword of phrase.spokenKeywords) {

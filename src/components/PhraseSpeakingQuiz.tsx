@@ -15,6 +15,7 @@ import {
   Info,
   Flame,
   Square,
+  Loader2,
 } from "lucide-react";
 
 interface PhraseSpeakingQuizProps {
@@ -26,31 +27,9 @@ interface PhraseSpeakingQuizProps {
 type SpeechStatus =
   | "idle"
   | "listening"
+  | "transcribing"
   | "success"
-  | "retry"
-  | "unsupported";
-
-// Type definition for Web Speech API
-interface SpeechRecognitionEvent {
-  resultIndex: number;
-  results: {
-    length: number;
-    [index: number]: {
-      [index: number]: {
-        transcript: string;
-        confidence: number;
-      };
-      isFinal: boolean;
-    };
-  };
-}
-
-interface IWindowWithSpeech extends Window {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  SpeechRecognition?: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  webkitSpeechRecognition?: any;
-}
+  | "retry";
 
 export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
   soundEnabled,
@@ -78,24 +57,32 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
   // Speech recognition states
   const [status, setStatus] = useState<SpeechStatus>("idle");
   const [transcript, setTranscript] = useState<string>("");
-  const [interimTranscript, setInterimTranscript] = useState<string>("");
   const [matchConfidence, setMatchConfidence] = useState<number>(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [hasSpeechSupport, setHasSpeechSupport] = useState<boolean>(true);
   const [isNativeSpeaking, setIsNativeSpeaking] = useState<boolean>(false);
   const [recordingSecondsLeft, setRecordingSecondsLeft] = useState<number>(10);
 
   // References
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const recognitionRef = useRef<any>(null);
   const startTimeRef = useRef<number>(Date.now());
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const recordingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isListeningRef = useRef<boolean>(false);
-  const lastRecordedTranscriptRef = useRef<string>("");
+  const mediaStreamRef = useRef<MediaStream | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+
+  // Stop hardware microphone stream tracks
+  const stopMediaTracks = useCallback(() => {
+    if (mediaStreamRef.current) {
+      try {
+        mediaStreamRef.current.getTracks().forEach((t) => t.stop());
+      } catch {
+        // ignore
+      }
+      mediaStreamRef.current = null;
+    }
+  }, []);
 
   // Clear 10s max recording timer & countdown
   const clearRecordingTimer = useCallback(() => {
@@ -107,31 +94,21 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
       clearInterval(countdownIntervalRef.current);
       countdownIntervalRef.current = null;
     }
-    if (
-      mediaRecorderRef.current &&
-      mediaRecorderRef.current.state !== "inactive"
-    ) {
-      try {
-        mediaRecorderRef.current.stop();
-        mediaRecorderRef.current.stream?.getTracks().forEach((t) => t.stop());
-      } catch {
-        // ignore
-      }
-    }
   }, []);
 
-  // Stop speech recognition
+  // Stop active speech recording session
   const stopListening = useCallback(() => {
     clearRecordingTimer();
     isListeningRef.current = false;
-    if (recognitionRef.current) {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       try {
-        recognitionRef.current.stop();
+        mediaRecorderRef.current.stop();
       } catch {
         // ignore
       }
     }
-  }, [clearRecordingTimer]);
+    stopMediaTracks();
+  }, [clearRecordingTimer, stopMediaTracks]);
 
   // Initialize round questions
   const startNewRound = useCallback(
@@ -150,7 +127,6 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
       setAnswerLog([]);
       setStatus("idle");
       setTranscript("");
-      setInterimTranscript("");
       setMatchConfidence(0);
       setErrorMessage(null);
       startTimeRef.current = Date.now();
@@ -164,16 +140,6 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
 
   const currentPhrase: PhraseItem | undefined = roundPhrases[currentIndex];
 
-  // Check Web Speech API availability
-  useEffect(() => {
-    const win = window as unknown as IWindowWithSpeech;
-    const SpeechAPI = win.SpeechRecognition || win.webkitSpeechRecognition;
-    if (!SpeechAPI) {
-      setHasSpeechSupport(false);
-      setStatus("unsupported");
-    }
-  }, []);
-
   // Cleanup timers & recognition on unmount
   useEffect(() => {
     return () => {
@@ -182,15 +148,9 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
         clearTimeout(recordingTimeoutRef.current);
       if (countdownIntervalRef.current)
         clearInterval(countdownIntervalRef.current);
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.abort();
-        } catch {
-          // ignore
-        }
-      }
+      stopMediaTracks();
     };
-  }, []);
+  }, [stopMediaTracks]);
 
   // Pronounce Japanese phrase via SpeechSynthesis
   const handlePlayAudio = useCallback((kanaPhrase: string) => {
@@ -237,14 +197,6 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
       if (evaluation.isMatch) {
         clearRecordingTimer();
         isListeningRef.current = false;
-        if (recognitionRef.current) {
-          try {
-            recognitionRef.current.stop();
-          } catch {
-            // ignore
-          }
-        }
-
         if (soundEnabled) playSuccessChime();
         setStatus("success");
         setCorrectCount((prev) => prev + 1);
@@ -264,7 +216,7 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
         setStatus("retry");
         setStreak(0);
         setErrorMessage(
-          `不正解 (Incorrect). Similarity: ${Math.round(evaluation.similarity * 100)}% (Requires ≥ 60%). Heard: "${spoken}". Try speaking again!`,
+          `不正解 (Incorrect). Heard: "${spoken}". Expected: 『${currentPhrase.hiragana}』. Try speaking again!`,
         );
         setAnswerLog((prev) => [
           ...prev,
@@ -276,71 +228,112 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
         ]);
       }
     },
-    [currentPhrase, soundEnabled, clearRecordingTimer],
+    [currentPhrase, soundEnabled],
   );
 
-  // Stop listening and evaluate recording against correct answer
+  // Stop listening and evaluate recording against correct answer via JPTranscribe
   const handleStopListening = useCallback(async () => {
-    clearRecordingTimer();
+    if (!isListeningRef.current && status !== "listening") return;
     isListeningRef.current = false;
+    clearRecordingTimer();
 
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch {
-        // ignore
-      }
-    }
+    // Immediately show transcribing state in UI
+    setStatus("transcribing");
 
-    if (
-      mediaRecorderRef.current &&
-      mediaRecorderRef.current.state !== "inactive"
-    ) {
-      try {
-        mediaRecorderRef.current.stop();
-        mediaRecorderRef.current.stream?.getTracks().forEach((t) => t.stop());
-      } catch {
-        // ignore
-      }
-    }
+    let audioBlob: Blob | null = null;
+    const recorder = mediaRecorderRef.current;
 
-    // Transcribe recorded audio with the JPTranscribe (https://jptranscribe.com/) API
-    let jptText = "";
-    if (audioChunksRef.current.length > 0) {
-      try {
-        const audioBlob = new Blob(audioChunksRef.current, {
-          type: "audio/webm",
-        });
-        const res = await transcribeAudioBlob(audioBlob, "ja");
-        if (res.text) {
-          jptText = res.text.trim();
+    if (recorder && recorder.state !== "inactive") {
+      audioBlob = await new Promise<Blob | null>((resolve) => {
+        recorder.addEventListener(
+          "stop",
+          () => {
+            const mime =
+              audioChunksRef.current[0]?.type ||
+              recorder.mimeType ||
+              "audio/webm";
+            if (audioChunksRef.current.length > 0) {
+              resolve(new Blob(audioChunksRef.current, { type: mime }));
+            } else {
+              resolve(null);
+            }
+          },
+          { once: true },
+        );
+        try {
+          recorder.stop();
+        } catch {
+          resolve(null);
         }
-      } catch (err) {
-        console.warn("JPTranscribe API notice:", err);
-      }
+      });
+    } else if (audioChunksRef.current.length > 0) {
+      const mime = audioChunksRef.current[0]?.type || "audio/webm";
+      audioBlob = new Blob(audioChunksRef.current, { type: mime });
     }
 
-    const candidate = (
-      jptText ||
-      lastRecordedTranscriptRef.current ||
-      transcript ||
-      interimTranscript
-    ).trim();
+    stopMediaTracks();
 
-    if (candidate) {
-      setTranscript(candidate);
-      setInterimTranscript("");
-      evaluateSpokenResult(candidate);
-    } else {
-      // Japanese speech detection failed to recognize words
+    // If recording produced no audio (microphone muted or 0-length)
+    if (!audioBlob || audioBlob.size === 0) {
       if (soundEnabled) playErrorBuzz();
       setStatus("retry");
       setStreak(0);
-      setMatchConfidence(0);
       setTranscript("");
-      setInterimTranscript("");
+      setMatchConfidence(0);
       setErrorMessage(
-        "不正解 (Incorrect). No Japanese speech recognized. Please speak clearly into the microphone and try again.",
+        "不正解 (Incorrect). No speech recorded. Please speak clearly into the microphone and try again.",
+      );
+      if (currentPhrase) {
+        setAnswerLog((prev) => [
+          ...prev,
+          {
+            phrase: currentPhrase,
+            spokenTranscript: "",
+            isCorrect: false,
+          },
+        ]);
+      }
+      return;
+    }
+
+    // Send recording to JPTranscribe via API
+    try {
+      const res = await transcribeAudioBlob(audioBlob, "ja");
+      const transcribedText = (res.text || "").trim();
+
+      // IF not recognised: return incorrect
+      if (!transcribedText) {
+        if (soundEnabled) playErrorBuzz();
+        setStatus("retry");
+        setStreak(0);
+        setTranscript("");
+        setMatchConfidence(0);
+        setErrorMessage(
+          "不正解 (Incorrect). No Japanese speech recognized. Please speak clearly into the microphone and try again.",
+        );
+        if (currentPhrase) {
+          setAnswerLog((prev) => [
+            ...prev,
+            {
+              phrase: currentPhrase,
+              spokenTranscript: "",
+              isCorrect: false,
+            },
+          ]);
+        }
+        return;
+      }
+
+      // IF recognised: transcribe to text, compare text to correct answer
+      setTranscript(transcribedText);
+      evaluateSpokenResult(transcribedText);
+    } catch (apiErr) {
+      console.warn("JPTranscribe request error:", apiErr);
+      if (soundEnabled) playErrorBuzz();
+      setStatus("retry");
+      setStreak(0);
+      setErrorMessage(
+        "不正解 (Incorrect). Speech recognition error. Please try speaking again.",
       );
       if (currentPhrase) {
         setAnswerLog((prev) => [
@@ -355,130 +348,84 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
     }
   }, [
     clearRecordingTimer,
-    transcript,
-    interimTranscript,
-    evaluateSpokenResult,
+    stopMediaTracks,
     soundEnabled,
     currentPhrase,
+    evaluateSpokenResult,
+    status,
   ]);
 
   // Start 10s speech recording session
-  const startListening = () => {
+  const startListening = async () => {
     if (!currentPhrase) return;
 
-    // Reset previous timers
     clearRecordingTimer();
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.abort();
-      } catch {
-        // ignore
-      }
-    }
+    stopMediaTracks();
 
-    // Immediately activate recording state in the UI
-    setStatus("listening");
-    isListeningRef.current = true;
-    lastRecordedTranscriptRef.current = "";
+    audioChunksRef.current = [];
     setTranscript("");
-    setInterimTranscript("");
     setErrorMessage(null);
     setRecordingSecondsLeft(10);
 
-    // 1-second countdown interval
-    countdownIntervalRef.current = setInterval(() => {
-      setRecordingSecondsLeft((prev) => {
-        if (prev <= 1) return 0;
-        return prev - 1;
-      });
-    }, 1000);
-
-    // 10 second maximum recording timer
-    recordingTimeoutRef.current = setTimeout(() => {
-      handleStopListening();
-    }, 10000);
-
-    // Start MediaRecorder for JPTranscribe (https://jptranscribe.com/)
-    audioChunksRef.current = [];
-    if (navigator?.mediaDevices?.getUserMedia) {
-      navigator.mediaDevices
-        .getUserMedia({ audio: true })
-        .then((stream) => {
-          try {
-            const mediaRecorder = new MediaRecorder(stream);
-            mediaRecorder.ondataavailable = (e) => {
-              if (e.data && e.data.size > 0) {
-                audioChunksRef.current.push(e.data);
-              }
-            };
-            mediaRecorder.start(250);
-            mediaRecorderRef.current = mediaRecorder;
-          } catch (mErr) {
-            console.warn("MediaRecorder start notice:", mErr);
-          }
-        })
-        .catch((mediaErr) => {
-          console.warn("Microphone stream notice:", mediaErr);
-        });
-    }
-
-    // Speech recognition startup (for live preview)
-    const win = window as unknown as IWindowWithSpeech;
-    const SpeechAPI = win.SpeechRecognition || win.webkitSpeechRecognition;
-
-    if (SpeechAPI) {
-      try {
-        const recognition = new SpeechAPI();
-        recognition.lang = "ja-JP";
-        recognition.continuous = true;
-        recognition.interimResults = true;
-        recognition.maxAlternatives = 3;
-
-        recognition.onresult = (event: SpeechRecognitionEvent) => {
-          let interim = "";
-          let final = "";
-
-          for (let i = 0; i < event.results.length; ++i) {
-            const item = event.results[i];
-            if (item.isFinal) {
-              final += item[0].transcript;
-            } else {
-              interim += item[0].transcript;
-            }
-          }
-
-          if (interim) {
-            setInterimTranscript(interim);
-          }
-
-          const candidate = (final || interim).trim();
-          if (candidate) {
-            lastRecordedTranscriptRef.current = candidate;
-            setTranscript(candidate);
-          }
-        };
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        recognition.onerror = (event: any) => {
-          console.warn("Speech recognition notice:", event.error);
-        };
-
-        recognition.onend = () => {
-          // Restart if still actively listening in the 10s window
-          if (isListeningRef.current && recognitionRef.current) {
-            try {
-              recognitionRef.current.start();
-            } catch {
-              // ignore
-            }
-          }
-        };
-
-        recognitionRef.current = recognition;
-        recognition.start();
-      } catch (err) {
-        console.warn("Speech recognition start notice:", err);
+    try {
+      if (!navigator?.mediaDevices?.getUserMedia) {
+        setErrorMessage("Microphone access is not supported in this browser.");
+        setStatus("retry");
+        return;
       }
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
+      mediaStreamRef.current = stream;
+
+      let mimeType = "audio/webm";
+      if (typeof MediaRecorder !== "undefined") {
+        if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
+          mimeType = "audio/webm;codecs=opus";
+        } else if (MediaRecorder.isTypeSupported("audio/webm")) {
+          mimeType = "audio/webm";
+        } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
+          mimeType = "audio/mp4";
+        }
+      }
+
+      const recorder = new MediaRecorder(
+        stream,
+        mimeType ? { mimeType } : undefined,
+      );
+      recorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) {
+          audioChunksRef.current.push(e.data);
+        }
+      };
+
+      mediaRecorderRef.current = recorder;
+      recorder.start(250);
+
+      setStatus("listening");
+      isListeningRef.current = true;
+
+      countdownIntervalRef.current = setInterval(() => {
+        setRecordingSecondsLeft((prev) => {
+          if (prev <= 1) return 0;
+          return prev - 1;
+        });
+      }, 1000);
+
+      recordingTimeoutRef.current = setTimeout(() => {
+        handleStopListening();
+      }, 10000);
+    } catch (err) {
+      console.warn("Microphone access error:", err);
+      setStatus("retry");
+      setErrorMessage(
+        "Microphone permission was denied or is unavailable. Please allow microphone access and try again.",
+      );
     }
   };
 
@@ -486,7 +433,7 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
   const handleToggleListening = () => {
     if (status === "listening" || isListeningRef.current) {
       handleStopListening();
-    } else {
+    } else if (status !== "transcribing") {
       startListening();
     }
   };
@@ -501,7 +448,6 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
       setCurrentIndex(nextIndex);
       setStatus("idle");
       setTranscript("");
-      setInterimTranscript("");
       setMatchConfidence(0);
       setErrorMessage(null);
     } else {
@@ -718,6 +664,13 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
                     {Math.round(matchConfidence * 100)}% similarity)
                   </span>
                 </div>
+              ) : status === "transcribing" ? (
+                <div className="flex items-center gap-2 text-indigo-700 font-bold bg-indigo-50 px-3 py-1.5 rounded-xl border border-indigo-200">
+                  <Loader2 className="w-4 h-4 text-indigo-600 animate-spin shrink-0" />
+                  <span>
+                    音声認識中... Transcribing audio with JPTranscribe...
+                  </span>
+                </div>
               ) : status === "listening" ? (
                 <div className="flex items-center gap-2 text-[#1A73E8] font-bold bg-[#E8F0FE] px-3 py-1.5 rounded-xl border border-[#BFDBFE]">
                   <div className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping shrink-0" />
@@ -734,13 +687,6 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
                       "不正解 (Incorrect). Try speaking clearly into the mic."}
                   </span>
                 </div>
-              ) : status === "unsupported" ? (
-                <div className="flex items-center gap-1.5 text-amber-800 font-bold bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-200">
-                  <XCircle className="w-4 h-4 text-amber-600 shrink-0" />
-                  <span>
-                    Speech recognition not supported in this browser. Please use Chrome.
-                  </span>
-                </div>
               ) : (
                 <div className="flex items-center gap-1.5 text-[#5F6368] font-semibold">
                   <Info className="w-4 h-4 text-[#1A73E8]" />
@@ -750,11 +696,11 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
             </div>
 
             {/* What was heard live */}
-            {(transcript || interimTranscript) && (
+            {transcript && (
               <div className="text-right text-xs text-[#5F6368] font-medium bg-[#F8FAFF] px-2.5 py-1 rounded-lg border border-[#E2E8F0] max-w-sm truncate">
                 Heard:{" "}
                 <strong className="text-[#1F2329] font-bold">
-                  {transcript || interimTranscript}
+                  {transcript}
                 </strong>
                 {matchConfidence > 0 && (
                   <span className="text-[#1A73E8] ml-1">
@@ -777,7 +723,16 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
 
           {/* Center: BIG INTERACTIVE MICROPHONE BUTTON */}
           <div className="flex items-center gap-3">
-            {status === "listening" ? (
+            {status === "transcribing" ? (
+              <button
+                type="button"
+                disabled
+                className="h-14 sm:h-16 px-6 sm:px-8 rounded-2xl bg-indigo-600 text-white font-black text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-md shadow-indigo-200 opacity-90 cursor-wait"
+              >
+                <Loader2 className="w-5 h-5 text-white animate-spin shrink-0" />
+                <span>Transcribing...</span>
+              </button>
+            ) : status === "listening" ? (
               <button
                 type="button"
                 onClick={handleToggleListening}
