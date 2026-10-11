@@ -4,6 +4,7 @@ import { PHRASE_DATA, PhraseItem } from "../data/phraseData";
 import { SituationIllustration } from "./SituationIllustration";
 import { checkSpeechMatch } from "../utils/japaneseSpeech";
 import { playSuccessChime, playErrorBuzz } from "../utils/audio";
+import { transcribeAudioBlob } from "../services/speechService";
 import {
   Mic,
   Volume2,
@@ -93,6 +94,8 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isListeningRef = useRef<boolean>(false);
   const lastRecordedTranscriptRef = useRef<string>("");
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
 
   // Clear 10s max recording timer & countdown
   const clearRecordingTimer = useCallback(() => {
@@ -103,6 +106,17 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
     if (countdownIntervalRef.current) {
       clearInterval(countdownIntervalRef.current);
       countdownIntervalRef.current = null;
+    }
+    if (
+      mediaRecorderRef.current &&
+      mediaRecorderRef.current.state !== "inactive"
+    ) {
+      try {
+        mediaRecorderRef.current.stop();
+        mediaRecorderRef.current.stream?.getTracks().forEach((t) => t.stop());
+      } catch {
+        // ignore
+      }
     }
   }, []);
 
@@ -266,7 +280,7 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
   );
 
   // Stop listening and evaluate recording against correct answer
-  const handleStopListening = useCallback(() => {
+  const handleStopListening = useCallback(async () => {
     clearRecordingTimer();
     isListeningRef.current = false;
 
@@ -278,7 +292,36 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
       }
     }
 
+    if (
+      mediaRecorderRef.current &&
+      mediaRecorderRef.current.state !== "inactive"
+    ) {
+      try {
+        mediaRecorderRef.current.stop();
+        mediaRecorderRef.current.stream?.getTracks().forEach((t) => t.stop());
+      } catch {
+        // ignore
+      }
+    }
+
+    // Transcribe recorded audio with the JPTranscribe (https://jptranscribe.com/) API
+    let jptText = "";
+    if (audioChunksRef.current.length > 0) {
+      try {
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: "audio/webm",
+        });
+        const res = await transcribeAudioBlob(audioBlob, "ja");
+        if (res.text) {
+          jptText = res.text.trim();
+        }
+      } catch (err) {
+        console.warn("JPTranscribe API notice:", err);
+      }
+    }
+
     const candidate = (
+      jptText ||
       lastRecordedTranscriptRef.current ||
       transcript ||
       interimTranscript
@@ -355,7 +398,31 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
       handleStopListening();
     }, 10000);
 
-    // Speech recognition startup
+    // Start MediaRecorder for JPTranscribe (https://jptranscribe.com/)
+    audioChunksRef.current = [];
+    if (navigator?.mediaDevices?.getUserMedia) {
+      navigator.mediaDevices
+        .getUserMedia({ audio: true })
+        .then((stream) => {
+          try {
+            const mediaRecorder = new MediaRecorder(stream);
+            mediaRecorder.ondataavailable = (e) => {
+              if (e.data && e.data.size > 0) {
+                audioChunksRef.current.push(e.data);
+              }
+            };
+            mediaRecorder.start(250);
+            mediaRecorderRef.current = mediaRecorder;
+          } catch (mErr) {
+            console.warn("MediaRecorder start notice:", mErr);
+          }
+        })
+        .catch((mediaErr) => {
+          console.warn("Microphone stream notice:", mediaErr);
+        });
+    }
+
+    // Speech recognition startup (for live preview)
     const win = window as unknown as IWindowWithSpeech;
     const SpeechAPI = win.SpeechRecognition || win.webkitSpeechRecognition;
 
