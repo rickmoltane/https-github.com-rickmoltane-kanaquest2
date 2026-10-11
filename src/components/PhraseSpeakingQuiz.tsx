@@ -15,7 +15,8 @@ import {
   ArrowRight,
   Info,
   Flame,
-  Award
+  Award,
+  Square
 } from 'lucide-react';
 
 interface PhraseSpeakingQuizProps {
@@ -83,6 +84,30 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
   const recognitionRef = useRef<any>(null);
   const startTimeRef = useRef<number>(Date.now());
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const recordingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isListeningRef = useRef<boolean>(false);
+  const lastRecordedTranscriptRef = useRef<string>('');
+
+  // Clear 10s max recording timer
+  const clearRecordingTimer = useCallback(() => {
+    if (recordingTimeoutRef.current) {
+      clearTimeout(recordingTimeoutRef.current);
+      recordingTimeoutRef.current = null;
+    }
+  }, []);
+
+  // Stop speech recognition
+  const stopListening = useCallback(() => {
+    clearRecordingTimer();
+    isListeningRef.current = false;
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch {
+        // ignore
+      }
+    }
+  }, [clearRecordingTimer]);
 
   // Initialize round questions
   const startNewRound = useCallback((category = selectedCategory) => {
@@ -90,7 +115,6 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
     if (category !== 'all') {
       pool = PHRASE_DATA.filter(p => p.category === category);
     }
-    // Shuffle and pick 10 items (or all available if pool is smaller)
     const shuffled = [...pool].sort(() => 0.5 - Math.random());
     const selected = shuffled.slice(0, Math.min(10, shuffled.length));
 
@@ -127,6 +151,7 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
   useEffect(() => {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
+      if (recordingTimeoutRef.current) clearTimeout(recordingTimeoutRef.current);
       if (recognitionRef.current) {
         try {
           recognitionRef.current.abort();
@@ -181,7 +206,8 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
       return;
     }
 
-    // Cancel existing session
+    // Cancel existing session and timer
+    clearRecordingTimer();
     if (recognitionRef.current) {
       try {
         recognitionRef.current.abort();
@@ -193,24 +219,32 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
     try {
       const recognition = new SpeechAPI();
       recognition.lang = 'ja-JP';
-      recognition.continuous = false;
+      recognition.continuous = true; // allow recording for the duration
       recognition.interimResults = true;
       recognition.maxAlternatives = 3;
 
       setStatus('listening');
+      isListeningRef.current = true;
+      lastRecordedTranscriptRef.current = '';
       setTranscript('');
       setInterimTranscript('');
       setErrorMessage(null);
 
+      // 10 second maximum recording timer
+      recordingTimeoutRef.current = setTimeout(() => {
+        stopListening();
+      }, 10000);
+
       recognition.onstart = () => {
         setStatus('listening');
+        isListeningRef.current = true;
       };
 
       recognition.onresult = (event: SpeechRecognitionEvent) => {
         let interim = '';
         let final = '';
 
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
+        for (let i = 0; i < event.results.length; ++i) {
           const item = event.results[i];
           if (item.isFinal) {
             final += item[0].transcript;
@@ -223,6 +257,11 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
           setInterimTranscript(interim);
         }
 
+        const candidate = final || interim;
+        if (candidate) {
+          lastRecordedTranscriptRef.current = candidate;
+        }
+
         if (final) {
           setTranscript(final);
           setInterimTranscript('');
@@ -233,6 +272,8 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       recognition.onerror = (event: any) => {
         console.warn('Speech recognition error:', event.error);
+        clearRecordingTimer();
+        isListeningRef.current = false;
         if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
           setErrorMessage('Microphone access blocked. Please enable mic permissions or use Self-Check.');
           setStatus('unsupported');
@@ -246,26 +287,40 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
       };
 
       recognition.onend = () => {
-        // If still listening without a final match, wait or transition
-        setStatus((prev) => (prev === 'listening' ? 'retry' : prev));
+        clearRecordingTimer();
+        isListeningRef.current = false;
+        // If ended and we haven't succeeded, evaluate what was heard
+        setStatus((prev) => {
+          if (prev === 'listening') {
+            const spokenSoFar = lastRecordedTranscriptRef.current;
+            if (spokenSoFar) {
+              setTranscript(spokenSoFar);
+              setInterimTranscript('');
+              evaluateSpokenResult(spokenSoFar);
+              return 'evaluating' as SpeechStatus;
+            }
+            return 'retry';
+          }
+          return prev;
+        });
       };
 
       recognitionRef.current = recognition;
       recognition.start();
     } catch (err) {
       console.warn('Speech start error:', err);
+      clearRecordingTimer();
+      isListeningRef.current = false;
       setStatus('unsupported');
     }
   };
 
-  // Stop speech recognition
-  const stopListening = () => {
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch {
-        // ignore
-      }
+  // Toggle listening when tapping the speak/record button
+  const handleToggleListening = () => {
+    if (status === 'listening' || isListeningRef.current) {
+      stopListening();
+    } else {
+      startListening();
     }
   };
 
@@ -277,6 +332,7 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
     setMatchConfidence(evaluation.similarity);
 
     if (evaluation.isMatch) {
+      stopListening();
       if (soundEnabled) playSuccessChime();
       setStatus('success');
       setCorrectCount(prev => prev + 1);
@@ -584,17 +640,21 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
             {status === 'listening' ? (
               <button
                 type="button"
-                onClick={stopListening}
-                className="h-14 sm:h-16 px-6 sm:px-8 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-black text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-lg shadow-rose-200 transition-all cursor-pointer animate-pulse"
+                onClick={handleToggleListening}
+                className="h-14 sm:h-16 w-44 sm:w-52 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-black text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-lg shadow-rose-200 transition-all cursor-pointer ring-4 ring-rose-200"
+                title="Tap to stop recording early"
               >
-                <MicOff className="w-5 h-5 sm:w-6 sm:h-6" />
-                <span>Stop Listening</span>
+                {/* Square icon when tapped & recording */}
+                <Square className="w-5 h-5 fill-white text-white shrink-0" />
+                <span className="animate-recording-flash tracking-wide">
+                  Recording...
+                </span>
               </button>
             ) : status === 'success' ? (
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={startListening}
+                  onClick={handleToggleListening}
                   className="h-12 px-4 rounded-xl border-2 border-emerald-500 text-emerald-700 bg-emerald-50 font-bold text-xs sm:text-sm flex items-center gap-1.5 cursor-pointer hover:bg-emerald-100"
                 >
                   <RotateCcw className="w-4 h-4" />
@@ -612,11 +672,11 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
             ) : (
               <button
                 type="button"
-                onClick={startListening}
+                onClick={handleToggleListening}
                 className="h-14 sm:h-16 px-6 sm:px-10 rounded-2xl bg-[#1A73E8] hover:bg-[#1557B0] text-white font-black text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-md shadow-blue-100 hover:scale-102 transition-all cursor-pointer active:scale-98"
               >
                 <Mic className="w-5 h-5 sm:w-6 sm:h-6" />
-                <span>Tap & Speak Phrase</span>
+                <span>Tap to Speak</span>
               </button>
             )}
           </div>

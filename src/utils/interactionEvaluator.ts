@@ -8,6 +8,7 @@ export interface InteractionEvaluationResult {
   feedbackExplanation: string; // Diagnostic feedback explaining logic and grammar
   grammarNotes?: string; // Specific grammatical highlight
   matchedSample?: string;
+  similarity?: number;
   isLogical: boolean;
   isGrammatical: boolean;
 }
@@ -70,15 +71,18 @@ export function evaluateInteractionResponse(
     };
   }
 
-  // 1. Direct exact/close match with any of the ideal sample replies
+  // 1. Direct exact/close match with any of the ideal sample replies (similarity >= 60%)
   for (const sample of interaction.sampleGoodReplies) {
     const normSample = normalizeJapaneseForSpeech(sample.hiragana);
+    const similarity = calculateSimilarity(normalized, normSample);
+
     if (normalized === normSample || normalized.includes(normSample) || normSample.includes(normalized)) {
       return {
         isValid: true,
         isLogical: true,
         isGrammatical: true,
         normalizedSpoken: normalized,
+        similarity: 1.0,
         headline: 'せいかい！ ろんりてきで ただしいにほんごです！',
         feedbackExplanation: `Logical and grammatically natural! You matched: 『${sample.hiragana}』 (${sample.english})`,
         grammarNotes: 'Proper polite sentence structure (丁寧語) matching conversational etiquette.',
@@ -86,15 +90,15 @@ export function evaluateInteractionResponse(
       };
     }
 
-    const similarity = calculateSimilarity(normalized, normSample);
-    if (similarity >= 0.75) {
+    if (similarity >= 0.60) {
       return {
         isValid: true,
         isLogical: true,
         isGrammatical: true,
         normalizedSpoken: normalized,
+        similarity: Math.round(similarity * 100) / 100,
         headline: 'せいかい！ よくできました！',
-        feedbackExplanation: `Great reply! Your spoken response closely matches: 『${sample.hiragana}』 (${sample.english})`,
+        feedbackExplanation: `Great reply! Your spoken response closely matches (${Math.round(similarity * 100)}%): 『${sample.hiragana}』 (${sample.english})`,
         grammarNotes: 'Natural spoken Japanese phrasing.',
         matchedSample: sample.hiragana,
       };

@@ -15,7 +15,8 @@ import {
   HelpCircle, 
   Keyboard, 
   Flame,
-  X
+  X,
+  Square
 } from 'lucide-react';
 
 interface InteractionSpeakingQuizProps {
@@ -90,6 +91,44 @@ export const InteractionSpeakingQuiz: React.FC<InteractionSpeakingQuizProps> = (
   const recognitionRef = useRef<any>(null);
   const startTimeRef = useRef<number>(Date.now());
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const recordingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isListeningRef = useRef<boolean>(false);
+  const lastRecordedTranscriptRef = useRef<string>('');
+
+  // Clear 10s recording timer
+  const clearRecordingTimer = useCallback(() => {
+    if (recordingTimeoutRef.current) {
+      clearTimeout(recordingTimeoutRef.current);
+      recordingTimeoutRef.current = null;
+    }
+  }, []);
+
+  // Stop speech recognition
+  const handleStopListening = useCallback(() => {
+    clearRecordingTimer();
+    isListeningRef.current = false;
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch {
+        // ignore
+      }
+    }
+  }, [clearRecordingTimer]);
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      clearRecordingTimer();
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.abort();
+        } catch {
+          // ignore
+        }
+      }
+    };
+  }, [clearRecordingTimer]);
 
   // Initialize round questions
   const startNewRound = useCallback(() => {
@@ -145,6 +184,7 @@ export const InteractionSpeakingQuiz: React.FC<InteractionSpeakingQuizProps> = (
     setEvaluationResult(result);
 
     if (result.isValid) {
+      handleStopListening();
       setStatus('success');
       setCorrectCount(prev => prev + 1);
       setStreak(prev => prev + 1);
@@ -174,37 +214,69 @@ export const InteractionSpeakingQuiz: React.FC<InteractionSpeakingQuizProps> = (
         },
       ]);
     }
-  }, [currentItem, soundEnabled]);
+  }, [currentItem, soundEnabled, handleStopListening]);
 
-  // Initialize Web Speech Recognition
+  // Check speech API support
   useEffect(() => {
     const win = window as unknown as IWindowWithSpeech;
-    const SpeechRecognition = win.SpeechRecognition || win.webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
+    const SpeechAPI = win.SpeechRecognition || win.webkitSpeechRecognition;
+    if (!SpeechAPI) {
       setHasSpeechSupport(false);
       setStatus('unsupported');
+    }
+  }, []);
+
+  // Start speech recognition session
+  const handleStartListening = () => {
+    const win = window as unknown as IWindowWithSpeech;
+    const SpeechAPI = win.SpeechRecognition || win.webkitSpeechRecognition;
+
+    if (!SpeechAPI) {
+      setHasSpeechSupport(false);
+      setStatus('unsupported');
+      setShowKeyboardInput(true);
       return;
     }
 
+    clearRecordingTimer();
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.abort();
+      } catch {
+        // ignore
+      }
+    }
+
     try {
-      const recognition = new SpeechRecognition();
+      const recognition = new SpeechAPI();
       recognition.lang = 'ja-JP';
-      recognition.continuous = false;
+      recognition.continuous = true;
       recognition.interimResults = true;
       recognition.maxAlternatives = 3;
 
+      setStatus('listening');
+      isListeningRef.current = true;
+      lastRecordedTranscriptRef.current = '';
+      setTranscript('');
+      setInterimTranscript('');
+      setEvaluationResult(null);
+      setErrorMessage(null);
+
+      // 10s maximum recording limit
+      recordingTimeoutRef.current = setTimeout(() => {
+        handleStopListening();
+      }, 10000);
+
       recognition.onstart = () => {
         setStatus('listening');
-        setErrorMessage(null);
-        setInterimTranscript('');
+        isListeningRef.current = true;
       };
 
       recognition.onresult = (event: SpeechRecognitionEvent) => {
         let interim = '';
         let final = '';
 
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
+        for (let i = 0; i < event.results.length; ++i) {
           const res = event.results[i];
           if (res.isFinal) {
             final += res[0].transcript;
@@ -217,6 +289,11 @@ export const InteractionSpeakingQuiz: React.FC<InteractionSpeakingQuizProps> = (
           setInterimTranscript(interim);
         }
 
+        const candidate = final || interim;
+        if (candidate) {
+          lastRecordedTranscriptRef.current = candidate;
+        }
+
         if (final) {
           setTranscript(final);
           setInterimTranscript('');
@@ -225,6 +302,9 @@ export const InteractionSpeakingQuiz: React.FC<InteractionSpeakingQuizProps> = (
       };
 
       recognition.onerror = (event: { error: string }) => {
+        console.warn('Speech recognition error in interaction:', event.error);
+        clearRecordingTimer();
+        isListeningRef.current = false;
         if (event.error === 'not-allowed') {
           setErrorMessage('Microphone access denied. You can use keyboard input below.');
           setStatus('unsupported');
@@ -237,58 +317,41 @@ export const InteractionSpeakingQuiz: React.FC<InteractionSpeakingQuizProps> = (
       };
 
       recognition.onend = () => {
-        setStatus(prev => (prev === 'listening' ? 'retry' : prev));
+        clearRecordingTimer();
+        isListeningRef.current = false;
+        setStatus((prev) => {
+          if (prev === 'listening') {
+            const spokenSoFar = lastRecordedTranscriptRef.current;
+            if (spokenSoFar) {
+              setTranscript(spokenSoFar);
+              setInterimTranscript('');
+              handleProcessResponse(spokenSoFar);
+              return 'evaluating';
+            }
+            return 'retry';
+          }
+          return prev;
+        });
       };
 
       recognitionRef.current = recognition;
-    } catch {
+      recognition.start();
+    } catch (err) {
+      console.warn('Recognition start failed:', err);
+      clearRecordingTimer();
+      isListeningRef.current = false;
       setHasSpeechSupport(false);
       setStatus('unsupported');
-    }
-
-    return () => {
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.abort();
-        } catch {
-          // ignore
-        }
-      }
-    };
-  }, [handleProcessResponse]);
-
-  // Mic controls
-  const handleStartListening = () => {
-    if (!hasSpeechSupport || !recognitionRef.current) {
       setShowKeyboardInput(true);
-      return;
-    }
-
-    try {
-      setErrorMessage(null);
-      setTranscript('');
-      setInterimTranscript('');
-      setEvaluationResult(null);
-      recognitionRef.current.start();
-    } catch {
-      try {
-        recognitionRef.current.stop();
-        setTimeout(() => {
-          recognitionRef.current.start();
-        }, 150);
-      } catch {
-        // ignore
-      }
     }
   };
 
-  const handleStopListening = () => {
-    if (recognitionRef.current && status === 'listening') {
-      try {
-        recognitionRef.current.stop();
-      } catch {
-        // ignore
-      }
+  // Toggle listening button
+  const handleToggleListening = () => {
+    if (status === 'listening' || isListeningRef.current) {
+      handleStopListening();
+    } else {
+      handleStartListening();
     }
   };
 
@@ -566,19 +629,21 @@ export const InteractionSpeakingQuiz: React.FC<InteractionSpeakingQuizProps> = (
             <div className="flex items-center justify-center pt-1">
               <button
                 type="button"
-                onClick={status === 'listening' ? handleStopListening : handleStartListening}
+                onClick={handleToggleListening}
                 disabled={status === 'evaluating'}
-                aria-label="Speak Japanese reply"
-                className={`px-6 py-3.5 rounded-2xl font-black text-sm sm:text-base flex items-center justify-center gap-2.5 transition-all shadow-md cursor-pointer ${
+                aria-label={status === 'listening' ? 'Recording in progress. Tap to stop early' : 'Tap to speak reply'}
+                className={`transition-all shadow-md cursor-pointer flex items-center justify-center gap-2.5 ${
                   status === 'listening'
-                    ? 'bg-rose-600 text-white ring-4 ring-rose-200 scale-102 animate-pulse'
-                    : 'bg-[#1A73E8] text-white hover:bg-[#1557B0] hover:scale-102 active:scale-98'
+                    ? 'h-14 sm:h-16 w-44 sm:w-52 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-black text-sm sm:text-base ring-4 ring-rose-200'
+                    : 'px-6 py-3.5 rounded-2xl font-black text-sm sm:text-base bg-[#1A73E8] text-white hover:bg-[#1557B0] hover:scale-102 active:scale-98'
                 }`}
               >
                 {status === 'listening' ? (
                   <>
-                    <MicOff className="w-5 h-5" />
-                    <span>Stop Speaking</span>
+                    <Square className="w-5 h-5 fill-white text-white shrink-0" />
+                    <span className="animate-recording-flash tracking-wide">
+                      Recording...
+                    </span>
                   </>
                 ) : (
                   <>

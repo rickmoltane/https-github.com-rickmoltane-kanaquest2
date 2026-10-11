@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+@keyframes flashSlow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+
+.animate-recording-flash {
+  animation: flashSlow 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
 @layer base {
   html, body, #root {
     height: 100%;

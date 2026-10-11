@@ -54,6 +54,21 @@ const KANJI_TO_HIRAGANA_MAP: Record<string, string> = {
   '銀行員': 'ぎんこういん',
   '研究者': 'けんきゅうしゃ',
   '何': 'なん',
+  '何のお仕事': 'なんのおしごと',
+  '何のご職業': 'なんのごしょくぎょう',
+  '方': 'かた',
+  '何方': 'どなた',
+  'どちら': 'どちら',
+  '出身': 'しゅっしん',
+  'はい': 'はい',
+  'いいえ': 'いいえ',
+  'どういたしまして': 'どういたしまして',
+  '宜しく': 'よろしく',
+  'どうぞ': 'どうぞ',
+  'こちらこそ': 'こちらこそ',
+  'フランス': 'ふらんす',
+  'エリック': 'えりっく',
+  'エンジニア': 'えんじにあ',
 };
 
 export function normalizeJapaneseForSpeech(text: string): string {
@@ -161,8 +176,8 @@ export function checkSpeechMatch(spokenText: string, phrase: PhraseItem): Speech
     }
   }
 
-  // Consider a match if similarity is at least 0.72 (lenient enough for minor accent/STT variance)
-  const isMatch = highestSimilarity >= 0.72;
+  // Consider a match if similarity is more than 60% (>= 0.60)
+  const isMatch = highestSimilarity >= 0.60;
 
   return {
     isMatch,
