@@ -67,7 +67,7 @@ export function evaluateInteractionResponse(
       isGrammatical: false,
       normalizedSpoken: '',
       headline: 'おんせいが ききとれませんでした (No voice detected)',
-      feedbackExplanation: 'Speak clearly into the microphone in Japanese, or use the test input button below.',
+      feedbackExplanation: 'Speak clearly into the microphone in Japanese, and tap to try again.',
     };
   }
 

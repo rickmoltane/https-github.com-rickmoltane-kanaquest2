@@ -14,13 +14,10 @@ import {
 import {
   Volume2,
   Mic,
-  MicOff,
   ArrowRight,
   RotateCcw,
   CheckCircle2,
   AlertCircle,
-  HelpCircle,
-  Keyboard,
   Flame,
   X,
   Square,
@@ -33,10 +30,12 @@ interface InteractionSpeakingQuizProps {
 }
 
 type QuizStatus =
-  "idle" | "listening" | "evaluating" | "success" | "retry" | "unsupported";
+  | "idle" | "listening" | "success" | "retry" | "unsupported";
 
 interface IWindowWithSpeech extends Window {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   SpeechRecognition?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   webkitSpeechRecognition?: any;
 }
 
@@ -81,12 +80,9 @@ export const InteractionSpeakingQuiz: React.FC<
   const [correctCount, setCorrectCount] = useState(0);
   const [streak, setStreak] = useState(0);
 
-  // Optional minimal drawers
+  // Optional minimal hint drawer
   const [showHints, setShowHints] = useState(false);
-  const [showKeyboardInput, setShowKeyboardInput] = useState(false);
-  const [keyboardText, setKeyboardText] = useState("");
   const [recordingSecondsLeft, setRecordingSecondsLeft] = useState<number>(10);
-  const [micIframeRestricted, setMicIframeRestricted] = useState<boolean>(false);
 
   // Answer history for final summary
   const [answerLog, setAnswerLog] = useState<
@@ -152,8 +148,6 @@ export const InteractionSpeakingQuiz: React.FC<
     setEvaluationResult(null);
     setErrorMessage(null);
     setShowHints(false);
-    setShowKeyboardInput(false);
-    setKeyboardText("");
     startTimeRef.current = Date.now();
   }, []);
 
@@ -203,7 +197,6 @@ export const InteractionSpeakingQuiz: React.FC<
   const handleProcessResponse = useCallback(
     (spoken: string) => {
       if (!currentItem) return;
-      setStatus("evaluating");
       const result = evaluateInteractionResponse(spoken, currentItem);
       setEvaluationResult(result);
 
@@ -252,20 +245,54 @@ export const InteractionSpeakingQuiz: React.FC<
     }
   }, []);
 
-  // Stop speech recognition and finalize session
+  // Stop speech recognition and evaluate recording against correct answer
   const handleStopListening = useCallback(() => {
     stopHardwareAudio();
 
-    const candidate = lastRecordedTranscriptRef.current;
+    const candidate = (
+      lastRecordedTranscriptRef.current ||
+      transcript ||
+      interimTranscript
+    ).trim();
+
     if (candidate) {
       setTranscript(candidate);
       setInterimTranscript("");
       handleProcessResponse(candidate);
     } else {
-      // 10s recording completed without transcription (e.g. iframe mic restriction or silence)
-      setStatus("evaluating");
+      // Japanese speech detection failed to recognize words -> Incorrect!
+      if (soundEnabled) playErrorBuzz();
+      setStatus("retry");
+      setStreak(0);
+      setEvaluationResult({
+        isValid: false,
+        isLogical: false,
+        isGrammatical: false,
+        normalizedSpoken: "",
+        headline: "おんせいが ききとれませんでした (No voice detected)",
+        feedbackExplanation:
+          "Could not detect or transcribe Japanese speech. Please check your microphone, speak clearly, and tap to try again.",
+      });
+      if (currentItem) {
+        setAnswerLog((prev) => [
+          ...prev,
+          {
+            interaction: currentItem,
+            spokenTranscript: "",
+            isCorrect: false,
+            explanation: "No voice detected",
+          },
+        ]);
+      }
     }
-  }, [stopHardwareAudio, handleProcessResponse]);
+  }, [
+    stopHardwareAudio,
+    transcript,
+    interimTranscript,
+    handleProcessResponse,
+    soundEnabled,
+    currentItem,
+  ]);
 
   // Start speech recognition session (max 10s with countdown)
   const handleStartListening = () => {
@@ -301,21 +328,7 @@ export const InteractionSpeakingQuiz: React.FC<
       handleStopListening();
     }, 10000);
 
-    // Non-blocking microphone stream check
-    if (navigator?.mediaDevices?.getUserMedia) {
-      navigator.mediaDevices
-        .getUserMedia({ audio: true })
-        .then((stream) => {
-          stream.getTracks().forEach((track) => track.stop());
-          setMicIframeRestricted(false);
-        })
-        .catch((mediaErr) => {
-          console.warn("Microphone permission check in iframe:", mediaErr);
-          setMicIframeRestricted(true);
-        });
-    }
-
-    // Non-blocking speech recognition startup
+    // Speech recognition startup
     const win = window as unknown as IWindowWithSpeech;
     const SpeechAPI = win.SpeechRecognition || win.webkitSpeechRecognition;
 
@@ -344,23 +357,26 @@ export const InteractionSpeakingQuiz: React.FC<
             setInterimTranscript(interim);
           }
 
-          const candidate = final || interim;
+          const candidate = (final || interim).trim();
           if (candidate) {
             lastRecordedTranscriptRef.current = candidate;
-          }
-
-          if (final) {
-            setTranscript(final);
-            setInterimTranscript("");
-            handleProcessResponse(final);
+            setTranscript(candidate);
           }
         };
 
-        recognition.onerror = (event: { error: string }) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        recognition.onerror = (event: any) => {
           console.warn("Speech recognition notice:", event.error);
-          if (event.error === "not-allowed" || event.error === "service-not-allowed") {
-            setMicIframeRestricted(true);
-            // DO NOT cancel the UI recording session! The 10s practice session stays active!
+        };
+
+        recognition.onend = () => {
+          // Restart if still actively listening within the 10s window
+          if (isListeningRef.current && recognitionRef.current) {
+            try {
+              recognitionRef.current.start();
+            } catch {
+              // ignore
+            }
           }
         };
 
@@ -368,10 +384,7 @@ export const InteractionSpeakingQuiz: React.FC<
         recognition.start();
       } catch (err) {
         console.warn("Recognition start notice:", err);
-        setMicIframeRestricted(true);
       }
-    } else {
-      setMicIframeRestricted(true);
     }
   };
 
@@ -382,16 +395,6 @@ export const InteractionSpeakingQuiz: React.FC<
     } else {
       handleStartListening();
     }
-  };
-
-  // Keyboard input evaluation
-  const handleKeyboardSubmit = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!keyboardText.trim()) return;
-
-    setTranscript(keyboardText.trim());
-    handleProcessResponse(keyboardText.trim());
-    setKeyboardText("");
   };
 
   // Advance to next question or complete quiz
@@ -573,18 +576,28 @@ export const InteractionSpeakingQuiz: React.FC<
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={handleNextQuestion}
-                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs sm:text-sm shadow-md inline-flex items-center gap-1.5 transition-all shrink-0 cursor-pointer"
-              >
-                <span>
-                  {currentIndex + 1 >= roundQuestions.length
-                    ? "Results"
-                    : "Next"}
-                </span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleStartListening}
+                  className="px-3 py-2 rounded-xl border border-emerald-400 bg-white hover:bg-emerald-100 text-emerald-800 font-bold text-xs inline-flex items-center gap-1 cursor-pointer"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Speak Again</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleNextQuestion}
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs sm:text-sm shadow-md inline-flex items-center gap-1.5 transition-all cursor-pointer"
+                >
+                  <span>
+                    {currentIndex + 1 >= roundQuestions.length
+                      ? "Results"
+                      : "Next"}
+                  </span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           )}
 
@@ -597,6 +610,9 @@ export const InteractionSpeakingQuiz: React.FC<
                 </div>
                 <div className="flex-1">
                   <p className="text-xs sm:text-sm font-bold text-amber-900">
+                    {evaluationResult.headline}
+                  </p>
+                  <p className="text-xs text-amber-800 mt-0.5">
                     {evaluationResult.feedbackExplanation}
                   </p>
                   {transcript && (
@@ -610,35 +626,35 @@ export const InteractionSpeakingQuiz: React.FC<
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-1 border-t border-amber-200">
+              <div className="flex items-center justify-between pt-1 border-t border-amber-200">
                 <button
                   type="button"
                   onClick={() => setShowHints((prev) => !prev)}
                   className="text-xs font-bold text-amber-900 hover:underline px-2 py-1 cursor-pointer"
                 >
-                  {showHints ? "Hide sample replies" : "Need a hint?"}
+                  {showHints ? "Hide hints" : "Need a hint?"}
                 </button>
                 <button
                   type="button"
                   onClick={handleStartListening}
-                  className="px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
+                  className="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
-                  <span>Try Again</span>
+                  <span>Try Again (Speak)</span>
                 </button>
               </div>
             </div>
           )}
 
-          {/* UNSUPPORTED / PERMISSION DENIED STATE */}
+          {/* UNSUPPORTED STATE */}
           {status === "unsupported" && (
             <div className="p-3 rounded-2xl bg-amber-50 border-2 border-amber-300 flex items-start gap-2.5 animate-in fade-in-50">
               <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
               <div className="flex-1 text-xs text-amber-900 font-medium">
-                <p className="font-bold mb-1">Microphone Access Notice</p>
+                <p className="font-bold mb-1">Speech Recognition Notice</p>
                 <p>
                   {errorMessage ||
-                    "Microphone access is not allowed in this window. You can type your reply or pick a sample reply below."}
+                    "Speech recognition is not supported in this browser. Please use Chrome."}
                 </p>
               </div>
             </div>
@@ -656,63 +672,29 @@ export const InteractionSpeakingQuiz: React.FC<
                   &ldquo;{interimTranscript}&rdquo;
                 </p>
               )}
-              {micIframeRestricted && (
-                <p className="text-[11px] text-amber-800 mt-1">
-                  Browser iframe blocks hardware mic prompt &bull; Tap square to stop recording
-                </p>
-              )}
             </div>
           )}
 
-          {/* EVALUATING / RECORDING COMPLETED PANEL */}
-          {status === "evaluating" && !evaluationResult && (
-            <div className="p-3.5 rounded-2xl bg-blue-50/90 border-2 border-blue-200 text-xs space-y-2.5">
-              <div className="flex items-center justify-between">
-                <span className="font-extrabold text-blue-900">
-                  Recording completed (10s session)
-                </span>
-                <span className="text-[11px] text-blue-700 font-bold">
-                  Pass threshold: ≥ 60% similarity
-                </span>
-              </div>
-              {micIframeRestricted && (
-                <div className="text-[11px] text-amber-900 bg-amber-50 px-2.5 py-1.5 rounded-lg border border-amber-200">
-                  Browser iframe security blocks the native microphone prompt. Select or test your response below:
-                </div>
-              )}
-              <div>
-                <span className="font-bold text-[#1F2329] block mb-1.5">
-                  Test sample reply (click to evaluate):
-                </span>
-                <div className="flex flex-wrap gap-1.5">
-                  {currentItem.sampleGoodReplies.map((sample, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => handleProcessResponse(sample.hiragana)}
-                      className="px-3 py-1.5 rounded-xl bg-white hover:bg-blue-100 border border-[#CBD5E1] hover:border-[#1A73E8] font-bold text-[#1A73E8] font-sans text-xs cursor-pointer shadow-2xs"
-                    >
-                      『{sample.hiragana}』 ({sample.english})
-                    </button>
-                  ))}
-                </div>
-              </div>
+          {/* IDLE PROMPT */}
+          {status === "idle" && (
+            <div className="p-2.5 rounded-xl bg-[#F8FAFF] border border-[#CBD5E1] text-center text-xs text-[#5F6368] font-semibold">
+              Listen to the prompt above, then tap the microphone button below to reply in Japanese.
             </div>
           )}
 
-          {/* SAMPLE REPLIES (Shown only when toggled) */}
+          {/* SAMPLE REPLIES (Shown only when hints toggled) */}
           {showHints && (
             <div className="p-3 rounded-2xl bg-[#F8FAFF] border border-[#CBD5E1] text-xs">
               <span className="font-bold text-[#1F2329] block mb-1.5">
-                Possible replies:
+                Suggested response phrasing:
               </span>
               <div className="flex flex-wrap gap-1.5">
                 {currentItem.sampleGoodReplies.map((sample, idx) => (
                   <span
                     key={idx}
-                    className="px-2 py-1 rounded-lg bg-white border border-[#E2E8F0] font-bold text-[#1A73E8] font-sans text-xs"
+                    className="px-2.5 py-1 rounded-lg bg-white border border-[#CBD5E1] font-bold text-[#1A73E8] font-sans text-xs"
                   >
-                    {sample.hiragana}
+                    『{sample.hiragana}』 ({sample.english})
                   </span>
                 ))}
               </div>
@@ -721,7 +703,7 @@ export const InteractionSpeakingQuiz: React.FC<
 
           {/* E. MICROPHONE ACTION BUTTON */}
           {status !== "success" && (
-            <div className="flex items-center justify-center pt-1">
+            <div className="flex items-center justify-center pt-2">
               <button
                 type="button"
                 onClick={handleToggleListening}
@@ -733,6 +715,8 @@ export const InteractionSpeakingQuiz: React.FC<
                 className={`transition-all shadow-md cursor-pointer flex items-center justify-center gap-2.5 ${
                   status === "listening"
                     ? "h-14 sm:h-16 px-6 sm:px-8 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-black text-sm sm:text-base ring-4 ring-rose-200"
+                    : status === "retry"
+                    ? "px-6 py-3.5 rounded-2xl font-black text-sm sm:text-base bg-amber-600 hover:bg-amber-700 text-white hover:scale-102 active:scale-98"
                     : "px-6 py-3.5 rounded-2xl font-black text-sm sm:text-base bg-[#1A73E8] text-white hover:bg-[#1557B0] hover:scale-102 active:scale-98"
                 }`}
               >
@@ -746,6 +730,11 @@ export const InteractionSpeakingQuiz: React.FC<
                       {recordingSecondsLeft}s
                     </span>
                   </>
+                ) : status === "retry" ? (
+                  <>
+                    <RotateCcw className="w-5 h-5" />
+                    <span>Try Again (Speak)</span>
+                  </>
                 ) : (
                   <>
                     <Mic className="w-5 h-5" />
@@ -755,44 +744,6 @@ export const InteractionSpeakingQuiz: React.FC<
               </button>
             </div>
           )}
-
-          {/* F. DISCREET KEYBOARD INPUT TOGGLE (At the very bottom, minimal) */}
-          <div className="text-center pt-1">
-            <button
-              type="button"
-              onClick={() => setShowKeyboardInput((prev) => !prev)}
-              className="text-[11px] font-semibold text-[#64748B] hover:text-[#1F2329] inline-flex items-center gap-1 cursor-pointer"
-            >
-              <Keyboard className="w-3.5 h-3.5" />
-              <span>
-                {showKeyboardInput
-                  ? "Hide keyboard input"
-                  : "Type reply (no mic)"}
-              </span>
-            </button>
-
-            {showKeyboardInput && (
-              <form
-                onSubmit={handleKeyboardSubmit}
-                className="mt-2 flex items-center gap-2"
-              >
-                <input
-                  type="text"
-                  value={keyboardText}
-                  onChange={(e) => setKeyboardText(e.target.value)}
-                  placeholder="Type in Japanese (e.g. はい、かいしゃいんです)"
-                  className="flex-1 px-3 py-1.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-[#1F2329] focus:outline-none focus:ring-2 focus:ring-[#1A73E8]"
-                />
-                <button
-                  type="submit"
-                  disabled={!keyboardText.trim()}
-                  className="px-3 py-1.5 rounded-xl bg-[#1A73E8] text-white font-bold text-xs hover:bg-[#1557B0] disabled:opacity-50 cursor-pointer"
-                >
-                  Submit
-                </button>
-              </form>
-            )}
-          </div>
         </div>
       </div>
     </div>

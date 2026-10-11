@@ -6,16 +6,13 @@ import { checkSpeechMatch } from "../utils/japaneseSpeech";
 import { playSuccessChime, playErrorBuzz } from "../utils/audio";
 import {
   Mic,
-  MicOff,
   Volume2,
   CheckCircle2,
   XCircle,
   RotateCcw,
-  Sparkles,
   ArrowRight,
   Info,
   Flame,
-  Award,
   Square,
 } from "lucide-react";
 
@@ -28,7 +25,6 @@ interface PhraseSpeakingQuizProps {
 type SpeechStatus =
   | "idle"
   | "listening"
-  | "evaluating"
   | "success"
   | "retry"
   | "unsupported";
@@ -87,9 +83,6 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
   const [hasSpeechSupport, setHasSpeechSupport] = useState<boolean>(true);
   const [isNativeSpeaking, setIsNativeSpeaking] = useState<boolean>(false);
   const [recordingSecondsLeft, setRecordingSecondsLeft] = useState<number>(10);
-  const [micIframeRestricted, setMicIframeRestricted] =
-    useState<boolean>(false);
-  const [testCustomInput, setTestCustomInput] = useState<string>("");
 
   // References
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -225,6 +218,7 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
 
       const evaluation = checkSpeechMatch(spoken, currentPhrase);
       setMatchConfidence(evaluation.similarity);
+      setTranscript(spoken);
 
       if (evaluation.isMatch) {
         clearRecordingTimer();
@@ -241,6 +235,7 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
         setStatus("success");
         setCorrectCount((prev) => prev + 1);
         setStreak((prev) => prev + 1);
+        setErrorMessage(null);
 
         setAnswerLog((prev) => [
           ...prev,
@@ -255,14 +250,22 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
         setStatus("retry");
         setStreak(0);
         setErrorMessage(
-          `Similarity: ${Math.round(evaluation.similarity * 100)}% (Requires ≥ 60%). Heard: "${spoken}". Try speaking again!`,
+          `不正解 (Incorrect). Similarity: ${Math.round(evaluation.similarity * 100)}% (Requires ≥ 60%). Heard: "${spoken}". Try speaking again!`,
         );
+        setAnswerLog((prev) => [
+          ...prev,
+          {
+            phrase: currentPhrase,
+            spokenTranscript: spoken,
+            isCorrect: false,
+          },
+        ]);
       }
     },
     [currentPhrase, soundEnabled, clearRecordingTimer],
   );
 
-  // Stop listening and finalize recording
+  // Stop listening and evaluate recording against correct answer
   const handleStopListening = useCallback(() => {
     clearRecordingTimer();
     isListeningRef.current = false;
@@ -275,18 +278,48 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
       }
     }
 
-    const candidate = lastRecordedTranscriptRef.current;
+    const candidate = (
+      lastRecordedTranscriptRef.current ||
+      transcript ||
+      interimTranscript
+    ).trim();
+
     if (candidate) {
       setTranscript(candidate);
       setInterimTranscript("");
       evaluateSpokenResult(candidate);
     } else {
-      // 10s recording completed without transcription (e.g. iframe mic restriction or silence)
-      setStatus("evaluating");
+      // Japanese speech detection failed to recognize words
+      if (soundEnabled) playErrorBuzz();
+      setStatus("retry");
+      setStreak(0);
+      setMatchConfidence(0);
+      setTranscript("");
+      setInterimTranscript("");
+      setErrorMessage(
+        "不正解 (Incorrect). No Japanese speech recognized. Please speak clearly into the microphone and try again.",
+      );
+      if (currentPhrase) {
+        setAnswerLog((prev) => [
+          ...prev,
+          {
+            phrase: currentPhrase,
+            spokenTranscript: "",
+            isCorrect: false,
+          },
+        ]);
+      }
     }
-  }, [clearRecordingTimer, evaluateSpokenResult]);
+  }, [
+    clearRecordingTimer,
+    transcript,
+    interimTranscript,
+    evaluateSpokenResult,
+    soundEnabled,
+    currentPhrase,
+  ]);
 
-  // Request mic permission and start 10s speech recording session
+  // Start 10s speech recording session
   const startListening = () => {
     if (!currentPhrase) return;
 
@@ -322,24 +355,7 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
       handleStopListening();
     }, 10000);
 
-    // Non-blocking microphone stream check
-    if (navigator?.mediaDevices?.getUserMedia) {
-      navigator.mediaDevices
-        .getUserMedia({ audio: true })
-        .then((stream) => {
-          stream.getTracks().forEach((track) => track.stop());
-          setMicIframeRestricted(false);
-        })
-        .catch((mediaErr) => {
-          console.warn(
-            "Microphone permission notice (iframe restriction):",
-            mediaErr,
-          );
-          setMicIframeRestricted(true);
-        });
-    }
-
-    // Non-blocking speech recognition startup
+    // Speech recognition startup
     const win = window as unknown as IWindowWithSpeech;
     const SpeechAPI = win.SpeechRecognition || win.webkitSpeechRecognition;
 
@@ -368,27 +384,26 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
             setInterimTranscript(interim);
           }
 
-          const candidate = final || interim;
+          const candidate = (final || interim).trim();
           if (candidate) {
             lastRecordedTranscriptRef.current = candidate;
-          }
-
-          if (final) {
-            setTranscript(final);
-            setInterimTranscript("");
-            evaluateSpokenResult(final);
+            setTranscript(candidate);
           }
         };
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         recognition.onerror = (event: any) => {
           console.warn("Speech recognition notice:", event.error);
-          if (
-            event.error === "not-allowed" ||
-            event.error === "service-not-allowed"
-          ) {
-            setMicIframeRestricted(true);
-            // DO NOT cancel the UI recording session! The 10s practice session stays active!
+        };
+
+        recognition.onend = () => {
+          // Restart if still actively listening in the 10s window
+          if (isListeningRef.current && recognitionRef.current) {
+            try {
+              recognitionRef.current.start();
+            } catch {
+              // ignore
+            }
           }
         };
 
@@ -396,10 +411,7 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
         recognition.start();
       } catch (err) {
         console.warn("Speech recognition start notice:", err);
-        setMicIframeRestricted(true);
       }
-    } else {
-      setMicIframeRestricted(true);
     }
   };
 
@@ -409,31 +421,6 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
       handleStopListening();
     } else {
       startListening();
-    }
-  };
-
-  // Self-check fallback for users without mic or for manual confirmation
-  const handleMarkSelfCheck = (wasCorrect: boolean) => {
-    if (!currentPhrase) return;
-
-    if (wasCorrect) {
-      if (soundEnabled) playSuccessChime();
-      setStatus("success");
-      setCorrectCount((prev) => prev + 1);
-      setStreak((prev) => prev + 1);
-      setTranscript(currentPhrase.hiragana);
-      setAnswerLog((prev) => [
-        ...prev,
-        {
-          phrase: currentPhrase,
-          spokenTranscript: currentPhrase.hiragana,
-          isCorrect: true,
-        },
-      ]);
-    } else {
-      if (soundEnabled) playErrorBuzz();
-      setStatus("retry");
-      setStreak(0);
     }
   };
 
@@ -672,82 +659,19 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
                     remaining)
                   </span>
                 </div>
-              ) : status === "evaluating" ? (
-                <div className="w-full flex flex-col gap-2 p-2.5 bg-blue-50/80 border border-blue-200 rounded-xl">
-                  <div className="flex items-center justify-between">
-                    <span className="font-extrabold text-blue-900 text-xs">
-                      Recording finished (10s session)
-                    </span>
-                    <span className="text-[11px] text-blue-700 font-bold">
-                      Pass threshold: ≥ 60% similarity
-                    </span>
-                  </div>
-                  {micIframeRestricted && (
-                    <div className="text-[11px] text-amber-900 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
-                      Browser iframe policy blocks microphone hardware prompt.
-                      Compare pronunciation below:
-                    </div>
-                  )}
-                  <div className="flex flex-wrap items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        evaluateSpokenResult(currentPhrase.hiragana)
-                      }
-                      className="px-3 py-1.5 bg-[#1A73E8] hover:bg-[#1557B0] text-white rounded-lg font-bold text-xs cursor-pointer shadow-2xs"
-                    >
-                      Test Ideal Pronunciation: 『{currentPhrase.hiragana}』
-                      (100% Match)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleMarkSelfCheck(true)}
-                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs cursor-pointer shadow-2xs"
-                    >
-                      I Spoke It Correctly (Self-Check)
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-2 pt-0.5">
-                    <input
-                      type="text"
-                      value={testCustomInput}
-                      onChange={(e) => setTestCustomInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && testCustomInput.trim()) {
-                          evaluateSpokenResult(testCustomInput.trim());
-                          setTestCustomInput("");
-                        }
-                      }}
-                      placeholder={`Test pronunciation (e.g. ${currentPhrase.hiragana})`}
-                      className="flex-1 px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1A73E8]"
-                    />
-                    <button
-                      type="button"
-                      disabled={!testCustomInput.trim()}
-                      onClick={() => {
-                        evaluateSpokenResult(testCustomInput.trim());
-                        setTestCustomInput("");
-                      }}
-                      className="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg font-bold text-xs disabled:opacity-50 cursor-pointer"
-                    >
-                      Check Similarity (≥60%)
-                    </button>
-                  </div>
-                </div>
-              ) : status === "unsupported" ? (
-                <div className="flex items-center gap-1.5 text-amber-800 font-bold bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-200">
-                  <XCircle className="w-4 h-4 text-amber-600 shrink-0" />
-                  <span>
-                    {errorMessage ||
-                      "Microphone blocked by iframe policy. Tap to record and test pronunciation."}
-                  </span>
-                </div>
               ) : status === "retry" ? (
                 <div className="flex items-center gap-1.5 text-rose-700 font-bold bg-rose-50 px-3 py-1.5 rounded-xl border border-rose-200">
                   <XCircle className="w-4 h-4 text-rose-600 shrink-0" />
                   <span>
                     {errorMessage ||
-                      "Similarity was under 60%. Try speaking clearly into the mic."}
+                      "不正解 (Incorrect). Try speaking clearly into the mic."}
+                  </span>
+                </div>
+              ) : status === "unsupported" ? (
+                <div className="flex items-center gap-1.5 text-amber-800 font-bold bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-200">
+                  <XCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>
+                    Speech recognition not supported in this browser. Please use Chrome.
                   </span>
                 </div>
               ) : (
@@ -777,19 +701,11 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
 
         {/* BOTTOM ACTION BAR: Microphone Button, Audio Wave Visualizer, Next CTA */}
         <div className="w-full bg-white border-2 border-[#CBD5E1] rounded-2xl p-3 sm:p-4 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
-          {/* Left: Quick Practice Instructions / Self-Check Fallback */}
+          {/* Left: Cue indicator */}
           <div className="flex items-center gap-2 text-xs font-semibold text-[#5F6368]">
-            <span className="hidden sm:inline">
-              Difficulty: Beginner &bull;
+            <span className="px-2.5 py-1 rounded-lg bg-[#F8FAFF] border border-[#E2E8F0] font-bold text-[#1A73E8]">
+              Target: {currentPhrase.hiragana}
             </span>
-            <button
-              type="button"
-              onClick={() => handleMarkSelfCheck(true)}
-              className="text-xs font-bold text-[#1A73E8] hover:underline cursor-pointer bg-[#F8FAFF] px-2.5 py-1.5 rounded-lg border border-[#CBD5E1]"
-              title="Click if your microphone is quiet or you want to self-verify"
-            >
-              I Spoke It Correctly (Self-Check)
-            </button>
           </div>
 
           {/* Center: BIG INTERACTIVE MICROPHONE BUTTON */}
@@ -829,6 +745,15 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
                   <ArrowRight className="w-5 h-5" />
                 </button>
               </div>
+            ) : status === "retry" ? (
+              <button
+                type="button"
+                onClick={handleToggleListening}
+                className="h-14 sm:h-16 px-6 sm:px-10 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white font-black text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-md shadow-amber-100 hover:scale-102 transition-all cursor-pointer"
+              >
+                <RotateCcw className="w-5 h-5" />
+                <span>Try Again (Speak)</span>
+              </button>
             ) : (
               <button
                 type="button"
