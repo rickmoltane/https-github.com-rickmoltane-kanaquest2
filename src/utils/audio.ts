@@ -101,3 +101,38 @@ export function speakKana(kana: string) {
     console.debug('SpeechSynthesis error', e);
   }
 }
+
+/**
+ * Pronounce full Japanese sentence or dialogue phrase with optional onEnd callback
+ */
+export function speakJapaneseSentence(text: string, rate = 0.9, onEnd?: () => void) {
+  if (typeof window === 'undefined' || !window.speechSynthesis) {
+    if (onEnd) onEnd();
+    return;
+  }
+
+  try {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'ja-JP';
+    utterance.rate = rate;
+    utterance.pitch = 1.0;
+
+    const voices = window.speechSynthesis.getVoices();
+    const jaVoice = voices.find(v => v.lang.startsWith('ja') || v.lang.includes('JP'));
+    if (jaVoice) {
+      utterance.voice = jaVoice;
+    }
+
+    if (onEnd) {
+      utterance.onend = () => onEnd();
+      utterance.onerror = () => onEnd();
+    }
+
+    window.speechSynthesis.speak(utterance);
+  } catch (e) {
+    console.debug('SpeechSynthesis error', e);
+    if (onEnd) onEnd();
+  }
+}
+

@@ -3,7 +3,9 @@ export type ExerciseType =
   | 'romaji-to-hiragana' 
   | 'word-romaji-to-hiragana' 
   | 'word-hiragana-to-romaji'
-  | 'hiragana-drawing';
+  | 'hiragana-drawing'
+  | 'phrase-speaking'
+  | 'interaction-speaking';
 
 export interface HiraganaChar {
   kana: string;

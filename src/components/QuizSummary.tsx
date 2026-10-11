@@ -87,7 +87,9 @@ export const QuizSummary: React.FC<QuizSummaryProps> = ({
       case 'romaji-to-hiragana': return { title: 'Exercise 2 Complete', sub: 'Romaji → Hiragana', next: 'word-romaji-to-hiragana' as ExerciseType, nextLabel: 'Try Exercise 3 (Words & Pictures)' };
       case 'word-romaji-to-hiragana': return { title: 'Exercise 3 Complete', sub: 'Words: Pic + Romaji → Kana', next: 'word-hiragana-to-romaji' as ExerciseType, nextLabel: 'Try Exercise 4 (Reverse Word Quiz)' };
       case 'word-hiragana-to-romaji': return { title: 'Exercise 4 Complete', sub: 'Words: Pic + Kana → Romaji', next: 'hiragana-drawing' as ExerciseType, nextLabel: 'Try Exercise 5 (Stroke Tracing)' };
-      case 'hiragana-drawing': return { title: 'Exercise 5 Complete', sub: 'Stroke Order Tracing', next: 'hiragana-to-romaji' as ExerciseType, nextLabel: 'Try Exercise 1 (Kana Training)' };
+      case 'hiragana-drawing': return { title: 'Exercise 5 Complete', sub: 'Stroke Order Tracing', next: 'phrase-speaking' as ExerciseType, nextLabel: 'Try Exercise 6 (Phrases & Speaking)' };
+      case 'phrase-speaking': return { title: 'Exercise 6 Complete', sub: 'Phrases: Situation & Voice Speaking', next: 'interaction-speaking' as ExerciseType, nextLabel: 'Try Exercise 7 (Interactions & Dialogue)' };
+      case 'interaction-speaking': return { title: 'Exercise 7 Complete', sub: 'Interactions: Spoken Dialogue & Logic', next: 'hiragana-to-romaji' as ExerciseType, nextLabel: 'Try Exercise 1 (Kana Training)' };
     }
   };
 

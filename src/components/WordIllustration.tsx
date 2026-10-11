@@ -441,6 +441,311 @@ export const WordIllustration: React.FC<WordIllustrationProps> = ({ name, classN
         </svg>
       );
 
+    // 17. kaban (かばん) - Bag
+    case 'bag':
+      return (
+        <svg viewBox="0 0 100 100" className={className} fill="none" stroke={strokeColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          {/* Bag body */}
+          <rect x="22" y="40" width="56" height="42" rx="7" fill="#fed7aa" strokeWidth="3.5" />
+          {/* Bag flap */}
+          <path d="M22 52 C22 52 38 60 50 60 C62 60 78 52 78 52" strokeWidth="3" fill="#fdba74" />
+          {/* Metal clasp */}
+          <rect x="46" y="56" width="8" height="8" rx="2" fill="#fde047" strokeWidth="2" />
+          {/* Handle */}
+          <path d="M36 40 V24 C36 20 42 18 50 18 C58 18 64 20 64 24 V40" strokeWidth="3.5" strokeLinecap="round" />
+        </svg>
+      );
+
+    // 18. pan (ぱん) - Bread
+    case 'bread':
+      return (
+        <svg viewBox="0 0 100 100" className={className} fill="none" stroke={strokeColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          {/* Toast / Bread loaf */}
+          <path d="M26 44 C20 38 22 24 38 24 C44 24 48 26 50 28 C52 26 56 24 62 24 C78 24 80 38 74 44 L72 74 C72 78 68 80 64 80 L36 80 C32 80 28 78 28 74 Z" fill="#fef08a" strokeWidth="3.5" />
+          {/* Crust contour */}
+          <path d="M28 44 C34 40 44 38 50 38 C56 38 66 40 72 44" strokeWidth="2.5" stroke="#d97706" />
+          {/* Butter slab */}
+          <polygon points="44,52 56,52 54,60 42,60" fill="#fde047" strokeWidth="2" />
+        </svg>
+      );
+
+    // 19. sora (そら) - Cloud / Sky
+    case 'cloud':
+      return (
+        <svg viewBox="0 0 100 100" className={className} fill="none" stroke={strokeColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          {/* Soft sky background hint */}
+          <circle cx="28" cy="38" r="12" fill="#e0f2fe" stroke="none" />
+          {/* Fluffy cloud */}
+          <path d="M26 66 H74 C82 66 86 60 86 52 C86 44 80 40 74 42 C72 32 64 26 52 26 C42 26 34 32 32 40 C26 40 20 44 20 52 C20 60 24 66 26 66 Z" fill="#f0f9ff" strokeWidth="3.5" />
+          <path d="M36 54 Q48 50 64 54" stroke="#93c5fd" strokeWidth="2" />
+        </svg>
+      );
+
+    // 20. tamago (たまご) - Egg
+    case 'egg':
+      return (
+        <svg viewBox="0 0 100 100" className={className} fill="none" stroke={strokeColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          {/* Egg silhouette */}
+          <path d="M50 18 C34 18 24 40 24 62 C24 76 35 84 50 84 C65 84 76 76 76 62 C76 40 66 18 50 18 Z" fill="#fffbeb" strokeWidth="3.5" />
+          {/* Shell gloss reflection */}
+          <path d="M38 32 C34 38 32 48 34 56" stroke="#fef08a" strokeWidth="2.5" strokeLinecap="round" />
+        </svg>
+      );
+
+    // 21. tomodachi / otousan / okaasan (ともだち) - Friends / People
+    case 'friends':
+      return (
+        <svg viewBox="0 0 100 100" className={className} fill="none" stroke={strokeColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          {/* Left person */}
+          <circle cx="36" cy="34" r="11" fill="#fed7aa" strokeWidth="3" />
+          <path d="M20 74 C20 56 52 56 52 74" fill="#93c5fd" strokeWidth="3.5" />
+          {/* Right person */}
+          <circle cx="64" cy="34" r="11" fill="#fbcfe8" strokeWidth="3" />
+          <path d="M48 74 C48 56 80 56 80 74" fill="#a7f3d0" strokeWidth="3.5" />
+          {/* Cheerful smiles */}
+          <path d="M33 37 Q36 40 39 37" strokeWidth="2" strokeLinecap="round" />
+          <path d="M61 37 Q64 40 67 37" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      );
+
+    // 22. tsuki (つき) - Full Moon
+    case 'full-moon':
+      return (
+        <svg viewBox="0 0 100 100" className={className} fill="none" stroke={strokeColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="50" cy="50" r="32" fill="#fef08a" strokeWidth="3.5" />
+          {/* Craters / moon surface */}
+          <circle cx="38" cy="40" r="6" fill="#fde047" stroke="#eab308" strokeWidth="1.5" />
+          <circle cx="62" cy="54" r="8" fill="#fde047" stroke="#eab308" strokeWidth="1.5" />
+          <circle cx="44" cy="66" r="4" fill="#fde047" stroke="#eab308" strokeWidth="1.5" />
+        </svg>
+      );
+
+    // 23. megane (めがね) - Glasses
+    case 'glasses':
+      return (
+        <svg viewBox="0 0 100 100" className={className} fill="none" stroke={strokeColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          {/* Left lens */}
+          <circle cx="32" cy="52" r="16" fill="#e0f2fe" strokeWidth="3.5" />
+          {/* Right lens */}
+          <circle cx="68" cy="52" r="16" fill="#e0f2fe" strokeWidth="3.5" />
+          {/* Bridge */}
+          <path d="M48 50 Q50 46 52 50" strokeWidth="3.5" />
+          {/* Left temple */}
+          <line x1="16" y1="52" x2="8" y2="44" strokeWidth="3" strokeLinecap="round" />
+          {/* Right temple */}
+          <line x1="84" y1="52" x2="92" y2="44" strokeWidth="3" strokeLinecap="round" />
+          {/* Lens glare */}
+          <line x1="28" y1="44" x2="36" y2="44" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
+          <line x1="64" y1="44" x2="72" y2="44" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      );
+
+    // 24. byooin (びょういん) - Hospital
+    case 'hospital':
+      return (
+        <svg viewBox="0 0 100 100" className={className} fill="none" stroke={strokeColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          {/* Hospital building */}
+          <rect x="22" y="26" width="56" height="58" rx="4" fill="#f4f4f5" strokeWidth="3.5" />
+          {/* Red cross banner */}
+          <rect x="42" y="14" width="16" height="16" rx="2" fill="#ef4444" strokeWidth="2.5" />
+          <line x1="50" y1="17" x2="50" y2="27" stroke="#ffffff" strokeWidth="2.5" />
+          <line x1="45" y1="22" x2="55" y2="22" stroke="#ffffff" strokeWidth="2.5" />
+          {/* Windows */}
+          <rect x="30" y="36" width="10" height="10" rx="1" fill="#bae6fd" strokeWidth="2" />
+          <rect x="60" y="36" width="10" height="10" rx="1" fill="#bae6fd" strokeWidth="2" />
+          <rect x="30" y="52" width="10" height="10" rx="1" fill="#bae6fd" strokeWidth="2" />
+          <rect x="60" y="52" width="10" height="10" rx="1" fill="#bae6fd" strokeWidth="2" />
+          {/* Door */}
+          <rect x="44" y="66" width="12" height="18" fill="#e2e8f0" strokeWidth="2.5" />
+        </svg>
+      );
+
+    // 25. kagi (かぎ) - Key
+    case 'key':
+      return (
+        <svg viewBox="0 0 100 100" className={className} fill="none" stroke={strokeColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          {/* Golden key bow (head) */}
+          <circle cx="34" cy="46" r="16" fill="#fde047" strokeWidth="3.5" />
+          <circle cx="34" cy="46" r="6" fill="#ffffff" strokeWidth="2.5" />
+          {/* Shaft */}
+          <line x1="50" y1="46" x2="84" y2="46" strokeWidth="4" strokeLinecap="round" />
+          {/* Bits / teeth */}
+          <line x1="74" y1="46" x2="74" y2="58" strokeWidth="3.5" strokeLinecap="round" />
+          <line x1="82" y1="46" x2="82" y2="55" strokeWidth="3.5" strokeLinecap="round" />
+        </svg>
+      );
+
+    // 26. tegami (てがみ) - Letter / Envelope
+    case 'letter':
+      return (
+        <svg viewBox="0 0 100 100" className={className} fill="none" stroke={strokeColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          {/* Envelope rectangle */}
+          <rect x="18" y="30" width="64" height="46" rx="4" fill="#ffffff" strokeWidth="3.5" />
+          {/* Flap fold */}
+          <path d="M18 32 L50 56 L82 32" strokeWidth="3" strokeLinejoin="round" />
+          {/* Bottom diagonal corner folds */}
+          <line x1="18" y1="74" x2="40" y2="52" strokeWidth="2" stroke="#a1a1aa" />
+          <line x1="82" y1="74" x2="60" y2="52" strokeWidth="2" stroke="#a1a1aa" />
+          {/* Small red postal stamp */}
+          <rect x="64" y="36" width="10" height="12" fill="#fee2e2" stroke="#ef4444" strokeWidth="1.5" />
+        </svg>
+      );
+
+    // 27. enpitsu (えんぴつ) - Pencil
+    case 'pencil':
+      return (
+        <svg viewBox="0 0 100 100" className={className} fill="none" stroke={strokeColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          {/* Hexagonal pencil body angled */}
+          <g transform="rotate(45 50 50)">
+            <polygon points="50,14 42,28 58,28" fill="#fed7aa" strokeWidth="2.5" />
+            <polygon points="50,14 46,20 54,20" fill="#18181b" stroke="none" />
+            <rect x="42" y="28" width="16" height="44" fill="#facc15" strokeWidth="3" />
+            <line x1="47" y1="28" x2="47" y2="72" strokeWidth="1.5" stroke="#ca8a04" />
+            <line x1="53" y1="28" x2="53" y2="72" strokeWidth="1.5" stroke="#ca8a04" />
+            {/* Ferrule */}
+            <rect x="42" y="72" width="16" height="6" fill="#e2e8f0" strokeWidth="2.5" />
+            {/* Pink Eraser */}
+            <path d="M42 78 H58 V84 C58 87 54 88 50 88 C46 88 42 87 42 84 Z" fill="#f472b6" strokeWidth="2.5" />
+          </g>
+        </svg>
+      );
+
+    // 28. denwa (でんわ) - Phone
+    case 'phone':
+      return (
+        <svg viewBox="0 0 100 100" className={className} fill="none" stroke={strokeColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          {/* Smartphone body */}
+          <rect x="30" y="16" width="40" height="68" rx="8" fill="#1e293b" strokeWidth="3.5" />
+          {/* Screen */}
+          <rect x="34" y="24" width="32" height="50" rx="3" fill="#38bdf8" strokeWidth="2" />
+          {/* Speaker slit */}
+          <line x1="45" y1="20" x2="55" y2="20" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" />
+          {/* Home indicator */}
+          <line x1="44" y1="78" x2="56" y2="78" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" />
+          {/* App icon sparkles on screen */}
+          <circle cx="50" cy="48" r="8" fill="#ffffff" stroke="none" />
+          <path d="M47 48 L50 43 L53 48 L50 53 Z" fill="#0284c7" />
+        </svg>
+      );
+
+    // 29. ame (あめ) - Rain
+    case 'rain':
+      return (
+        <svg viewBox="0 0 100 100" className={className} fill="none" stroke={strokeColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          {/* Rain cloud */}
+          <path d="M26 48 H74 C82 48 86 42 86 36 C86 28 80 24 72 26 C70 18 62 14 52 14 C42 14 34 18 32 26 C26 26 20 30 20 36 C20 42 24 48 26 48 Z" fill="#cbd5e1" strokeWidth="3" />
+          {/* Rain drops */}
+          <line x1="30" y1="58" x2="26" y2="74" stroke="#0284c7" strokeWidth="3" strokeLinecap="round" />
+          <line x1="46" y1="56" x2="42" y2="78" stroke="#0284c7" strokeWidth="3" strokeLinecap="round" />
+          <line x1="62" y1="58" x2="58" y2="74" stroke="#0284c7" strokeWidth="3" strokeLinecap="round" />
+          <line x1="76" y1="56" x2="72" y2="76" stroke="#0284c7" strokeWidth="3" strokeLinecap="round" />
+        </svg>
+      );
+
+    // 30. kawa (かわ) - River
+    case 'river':
+      return (
+        <svg viewBox="0 0 100 100" className={className} fill="none" stroke={strokeColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          {/* River banks / green grass */}
+          <path d="M12 20 L38 20 C34 40 18 60 14 84 L12 84 Z" fill="#86efac" strokeWidth="2.5" />
+          <path d="M88 20 L62 20 C68 44 82 62 86 84 L88 84 Z" fill="#86efac" strokeWidth="2.5" />
+          {/* River flow */}
+          <path d="M38 20 C34 40 18 60 14 84 L86 84 C82 62 68 44 62 20 Z" fill="#93c5fd" strokeWidth="3.5" />
+          {/* Water flow ripples */}
+          <path d="M42 34 Q50 38 58 34" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" />
+          <path d="M34 54 Q50 60 66 54" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" />
+          <path d="M28 72 Q50 78 72 72" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" />
+        </svg>
+      );
+
+    // 31. gakkoo (がっこう) - School
+    case 'school':
+      return (
+        <svg viewBox="0 0 100 100" className={className} fill="none" stroke={strokeColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          {/* School building */}
+          <rect x="20" y="32" width="60" height="52" rx="3" fill="#fef3c7" strokeWidth="3.5" />
+          {/* Roof gable */}
+          <polygon points="50,14 74,32 26,32" fill="#f87171" strokeWidth="3" />
+          {/* School clock tower */}
+          <circle cx="50" cy="24" r="5" fill="#ffffff" strokeWidth="1.5" />
+          <line x1="50" y1="24" x2="50" y2="21" stroke="#18181b" strokeWidth="1" />
+          {/* Windows */}
+          <rect x="28" y="42" width="10" height="10" fill="#bae6fd" strokeWidth="2" />
+          <rect x="62" y="42" width="10" height="10" fill="#bae6fd" strokeWidth="2" />
+          <rect x="28" y="58" width="10" height="10" fill="#bae6fd" strokeWidth="2" />
+          <rect x="62" y="58" width="10" height="10" fill="#bae6fd" strokeWidth="2" />
+          {/* Entrance door */}
+          <rect x="44" y="62" width="12" height="22" fill="#d97706" strokeWidth="2.5" />
+        </svg>
+      );
+
+    // 32. kutsu (くつ) - Shoes / Sneaker
+    case 'shoes':
+      return (
+        <svg viewBox="0 0 100 100" className={className} fill="none" stroke={strokeColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          {/* Sneaker silhouette */}
+          <path d="M18 64 C18 48 30 46 40 46 L58 46 L74 54 C82 58 84 64 82 72 L18 72 Z" fill="#38bdf8" strokeWidth="3.5" />
+          {/* Sole */}
+          <rect x="14" y="72" width="72" height="10" rx="3" fill="#ffffff" strokeWidth="3" />
+          {/* Toe cap */}
+          <path d="M70 54 Q82 56 82 72 L70 72 Z" fill="#ffffff" strokeWidth="2.5" />
+          {/* Laces */}
+          <line x1="42" y1="46" x2="48" y2="54" stroke="#ffffff" strokeWidth="2" />
+          <line x1="48" y1="46" x2="54" y2="54" stroke="#ffffff" strokeWidth="2" />
+          <line x1="54" y1="46" x2="60" y2="54" stroke="#ffffff" strokeWidth="2" />
+        </svg>
+      );
+
+    // 33. hoshi (ほし) - Star
+    case 'star':
+      return (
+        <svg viewBox="0 0 100 100" className={className} fill="none" stroke={strokeColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          <polygon points="50,16 60,38 84,40 66,56 72,80 50,67 28,80 34,56 16,40 40,38" fill="#fde047" strokeWidth="3.5" strokeLinejoin="round" />
+          <circle cx="50" cy="50" r="3" fill="#f59e0b" stroke="none" />
+        </svg>
+      );
+
+    // 34. eki (えき) - Train Station
+    case 'station':
+      return (
+        <svg viewBox="0 0 100 100" className={className} fill="none" stroke={strokeColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          {/* Station platform canopy */}
+          <rect x="14" y="24" width="72" height="10" rx="2" fill="#22c55e" strokeWidth="3" />
+          <line x1="28" y1="34" x2="28" y2="70" strokeWidth="3.5" />
+          <line x1="72" y1="34" x2="72" y2="70" strokeWidth="3.5" />
+          {/* Station name sign */}
+          <rect x="36" y="38" width="28" height="16" rx="2" fill="#ffffff" strokeWidth="2" />
+          <text x="50" y="50" fontSize="8" fontWeight="bold" textAnchor="middle" fill={strokeColor}>EKI</text>
+          {/* Platform ground */}
+          <rect x="10" y="70" width="80" height="12" fill="#e2e8f0" strokeWidth="3" />
+          {/* Railway tracks below platform */}
+          <line x1="10" y1="86" x2="90" y2="86" strokeWidth="3" stroke="#64748b" />
+          <line x1="20" y1="84" x2="20" y2="88" strokeWidth="2" stroke="#64748b" />
+          <line x1="40" y1="84" x2="40" y2="88" strokeWidth="2" stroke="#64748b" />
+          <line x1="60" y1="84" x2="60" y2="88" strokeWidth="2" stroke="#64748b" />
+          <line x1="80" y1="84" x2="80" y2="88" strokeWidth="2" stroke="#64748b" />
+        </svg>
+      );
+
+    // 35. arigatoo (ありがとう) - Thank You (Gift / Bow)
+    case 'thankyou':
+      return (
+        <svg viewBox="0 0 100 100" className={className} fill="none" stroke={strokeColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          {/* Gift box */}
+          <rect x="24" y="44" width="52" height="40" rx="4" fill="#fed7aa" strokeWidth="3.5" />
+          {/* Box lid */}
+          <rect x="20" y="36" width="60" height="12" rx="2" fill="#fb923c" strokeWidth="3" />
+          {/* Vertical ribbon */}
+          <rect x="46" y="36" width="8" height="48" fill="#ef4444" strokeWidth="1.5" />
+          {/* Horizontal ribbon */}
+          <line x1="24" y1="62" x2="76" y2="62" stroke="#ef4444" strokeWidth="3" />
+          {/* Ribbon bow loops */}
+          <ellipse cx="42" cy="30" rx="8" ry="6" transform="rotate(-20 42 30)" fill="#fca5a5" stroke="#ef4444" strokeWidth="2" />
+          <ellipse cx="58" cy="30" rx="8" ry="6" transform="rotate(20 58 30)" fill="#fca5a5" stroke="#ef4444" strokeWidth="2" />
+          <circle cx="50" cy="32" r="3" fill="#ef4444" stroke="none" />
+        </svg>
+      );
+
     default:
       // Generic neat Japanese item icon
       return (
@@ -452,3 +757,4 @@ export const WordIllustration: React.FC<WordIllustrationProps> = ({ name, classN
       );
   }
 };
+

@@ -9,7 +9,7 @@ import {
   Cookie
 } from 'lucide-react';
 
-export type ActiveTab = 'exercise-1' | 'exercise-2' | 'exercise-3' | 'exercise-4' | 'exercise-5' | 'dashboard' | 'chart';
+export type ActiveTab = 'exercise-1' | 'exercise-2' | 'exercise-3' | 'exercise-4' | 'exercise-5' | 'exercise-6' | 'exercise-7' | 'dashboard' | 'chart';
 
 interface NavbarProps {
   activeTab: ActiveTab;
@@ -31,6 +31,8 @@ export const EXERCISE_OPTIONS: ExerciseOption[] = [
   { id: 'exercise-3', exerciseType: 'word-romaji-to-hiragana', number: '3' },
   { id: 'exercise-4', exerciseType: 'word-hiragana-to-romaji', number: '4' },
   { id: 'exercise-5', exerciseType: 'hiragana-drawing', number: '5' },
+  { id: 'exercise-6', exerciseType: 'phrase-speaking', number: '6' },
+  { id: 'exercise-7', exerciseType: 'interaction-speaking', number: '7' },
 ];
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -71,8 +73,8 @@ export const Navbar: React.FC<NavbarProps> = ({
             </span>
           </button>
 
-          {/* Centered Easy-to-Click 1, 2, 3, 4, 5 Buttons (No exercise names on top row) */}
-          <div className="flex items-center gap-1.5 sm:gap-2.5 justify-center flex-1 max-w-sm sm:max-w-md mx-auto">
+          {/* Centered Easy-to-Click 1, 2, 3, 4, 5, 6, 7 Buttons (No exercise names on top row) */}
+          <div className="flex items-center gap-1 sm:gap-2 justify-center flex-1 max-w-xs sm:max-w-xl mx-auto">
             {EXERCISE_OPTIONS.map(opt => {
               const isSelected = activeTab === opt.id;
               return (

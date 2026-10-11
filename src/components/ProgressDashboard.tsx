@@ -290,6 +290,20 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ onStartExe
               desc: 'Draw over the 30% faded Hiragana outline in proper stroke order.',
               tag: 'Kinesthetic Drawing',
             },
+            {
+              num: '6',
+              type: 'phrase-speaking' as ExerciseType,
+              name: 'Exercise 6: Phrases (Situation + Voice Speaking)',
+              desc: 'Look at situation picture and pure Hiragana; speak the phrase aloud into the mic.',
+              tag: 'Speech Recognition',
+            },
+            {
+              num: '7',
+              type: 'interaction-speaking' as ExerciseType,
+              name: 'Exercise 7: Interactions (Image + Hiragana Question & Spoken Reply)',
+              desc: 'Listen and read the question in Hiragana; reply aloud with a grammatically logical Japanese response.',
+              tag: 'Spoken Dialogue',
+            },
           ].map(mod => (
             <div
               key={mod.num}
@@ -388,6 +402,24 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ onStartExe
               }`}
             >
               Ex 5 (Stroke Tracing)
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilterType('phrase-speaking')}
+              className={`px-2.5 py-1.5 rounded-lg transition-all whitespace-nowrap ${
+                filterType === 'phrase-speaking' ? 'bg-white text-neutral-900 shadow-xs' : 'text-neutral-600 hover:text-neutral-900'
+              }`}
+            >
+              Ex 6 (Voice Speaking)
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilterType('interaction-speaking')}
+              className={`px-2.5 py-1.5 rounded-lg transition-all whitespace-nowrap ${
+                filterType === 'interaction-speaking' ? 'bg-white text-neutral-900 shadow-xs' : 'text-neutral-600 hover:text-neutral-900'
+              }`}
+            >
+              Ex 7 (Interactions)
             </button>
           </div>
         </div>
@@ -709,6 +741,16 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ onStartExe
                       {item.exerciseType === 'hiragana-drawing' && (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-md font-semibold text-[11px] bg-rose-50 text-rose-800 border border-rose-200">
                           Ex 5: Stroke Tracing
+                        </span>
+                      )}
+                      {item.exerciseType === 'phrase-speaking' && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md font-semibold text-[11px] bg-purple-50 text-purple-800 border border-purple-200">
+                          Ex 6: Phrases (Voice Speaking)
+                        </span>
+                      )}
+                      {item.exerciseType === 'interaction-speaking' && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md font-semibold text-[11px] bg-teal-50 text-teal-800 border border-teal-200">
+                          Ex 7: Interactions (Dialogue & Voice)
                         </span>
                       )}
                     </td>

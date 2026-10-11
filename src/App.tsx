@@ -8,6 +8,8 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { Navbar, ActiveTab } from './components/Navbar';
 import { FlashcardQuiz } from './components/FlashcardQuiz';
 import { DrawingTrainer } from './components/DrawingTrainer';
+import { PhraseSpeakingQuiz } from './components/PhraseSpeakingQuiz';
+import { InteractionSpeakingQuiz } from './components/InteractionSpeakingQuiz';
 import { QuizSummary } from './components/QuizSummary';
 import { ProgressDashboard } from './components/ProgressDashboard';
 import { CharacterTable } from './components/CharacterTable';
@@ -54,8 +56,12 @@ function MainContent() {
       setActiveTab('exercise-3');
     } else if (type === 'word-hiragana-to-romaji') {
       setActiveTab('exercise-4');
-    } else {
+    } else if (type === 'hiragana-drawing') {
       setActiveTab('exercise-5');
+    } else if (type === 'phrase-speaking') {
+      setActiveTab('exercise-6');
+    } else if (type === 'interaction-speaking') {
+      setActiveTab('exercise-7');
     }
   };
 
@@ -77,7 +83,7 @@ function MainContent() {
     }
   };
 
-  const isExerciseView = !activeResult && ['exercise-1', 'exercise-2', 'exercise-3', 'exercise-4', 'exercise-5'].includes(activeTab);
+  const isExerciseView = !activeResult && ['exercise-1', 'exercise-2', 'exercise-3', 'exercise-4', 'exercise-5', 'exercise-6', 'exercise-7'].includes(activeTab);
 
   return (
     <div className={`${
@@ -102,6 +108,12 @@ function MainContent() {
             setActiveResult(null);
           } else if (tab === 'exercise-5') {
             setCurrentQuizType('hiragana-drawing');
+            setActiveResult(null);
+          } else if (tab === 'exercise-6') {
+            setCurrentQuizType('phrase-speaking');
+            setActiveResult(null);
+          } else if (tab === 'exercise-7') {
+            setCurrentQuizType('interaction-speaking');
             setActiveResult(null);
           }
         }}
@@ -161,6 +173,20 @@ function MainContent() {
         ) : activeTab === 'exercise-5' ? (
           <DrawingTrainer
             key={`ex5_${currentQuizType}`}
+            soundEnabled={soundEnabled}
+            onComplete={handleQuizComplete}
+            onCancel={() => setActiveTab('dashboard')}
+          />
+        ) : activeTab === 'exercise-6' ? (
+          <PhraseSpeakingQuiz
+            key={`ex6_${currentQuizType}`}
+            soundEnabled={soundEnabled}
+            onComplete={handleQuizComplete}
+            onCancel={() => setActiveTab('dashboard')}
+          />
+        ) : activeTab === 'exercise-7' ? (
+          <InteractionSpeakingQuiz
+            key={`ex7_${currentQuizType}`}
             soundEnabled={soundEnabled}
             onComplete={handleQuizComplete}
             onCancel={() => setActiveTab('dashboard')}
