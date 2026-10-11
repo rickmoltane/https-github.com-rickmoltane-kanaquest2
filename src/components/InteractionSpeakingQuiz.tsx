@@ -227,7 +227,7 @@ export const InteractionSpeakingQuiz: React.FC<InteractionSpeakingQuizProps> = (
   }, []);
 
   // Start speech recognition session
-  const handleStartListening = () => {
+  const handleStartListening = async () => {
     const win = window as unknown as IWindowWithSpeech;
     const SpeechAPI = win.SpeechRecognition || win.webkitSpeechRecognition;
 
@@ -244,6 +244,22 @@ export const InteractionSpeakingQuiz: React.FC<InteractionSpeakingQuizProps> = (
         recognitionRef.current.abort();
       } catch {
         // ignore
+      }
+    }
+
+    // Request mic access first
+    if (navigator?.mediaDevices?.getUserMedia) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach(track => track.stop());
+      } catch (mediaErr: any) {
+        console.warn('Microphone permission check error:', mediaErr);
+        if (mediaErr?.name === 'NotAllowedError' || mediaErr?.name === 'PermissionDeniedError') {
+          setErrorMessage('Microphone access blocked. Use the typed input or sample replies below.');
+          setStatus('unsupported');
+          setShowKeyboardInput(true);
+          return;
+        }
       }
     }
 
@@ -586,6 +602,17 @@ export const InteractionSpeakingQuiz: React.FC<InteractionSpeakingQuizProps> = (
                   <RotateCcw className="w-3.5 h-3.5" />
                   <span>Try Again</span>
                 </button>
+              </div>
+            </div>
+          )}
+
+          {/* UNSUPPORTED / PERMISSION DENIED STATE */}
+          {status === 'unsupported' && (
+            <div className="p-3 rounded-2xl bg-amber-50 border-2 border-amber-300 flex items-start gap-2.5 animate-in fade-in-50">
+              <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <div className="flex-1 text-xs text-amber-900 font-medium">
+                <p className="font-bold mb-1">Microphone Access Notice</p>
+                <p>{errorMessage || 'Microphone access is not allowed in this window. You can type your reply or pick a sample reply below.'}</p>
               </div>
             </div>
           )}

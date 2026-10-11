@@ -193,8 +193,8 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
     }
   }, []);
 
-  // Start speech recognition
-  const startListening = () => {
+  // Request mic permission and start speech recognition
+  const startListening = async () => {
     if (!currentPhrase) return;
 
     const win = window as unknown as IWindowWithSpeech;
@@ -203,6 +203,7 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
     if (!SpeechAPI) {
       setHasSpeechSupport(false);
       setStatus('unsupported');
+      setErrorMessage('Voice recognition is not supported in this browser environment. You can use Self-Check.');
       return;
     }
 
@@ -213,6 +214,23 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
         recognitionRef.current.abort();
       } catch {
         // ignore
+      }
+    }
+
+    // Explicitly request microphone stream first if supported by navigator.mediaDevices
+    // This prompts browser permission modal if not already granted in iframe/subdomain
+    if (navigator?.mediaDevices?.getUserMedia) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // Close tracks immediately as SpeechRecognition will use the audio device
+        stream.getTracks().forEach(track => track.stop());
+      } catch (mediaErr: any) {
+        console.warn('Microphone permission check error:', mediaErr);
+        if (mediaErr?.name === 'NotAllowedError' || mediaErr?.name === 'PermissionDeniedError') {
+          setErrorMessage('Microphone permission was denied by browser or iframe. Please click "I Spoke It Correctly (Self-Check)" or allow mic in browser settings.');
+          setStatus('unsupported');
+          return;
+        }
       }
     }
 
@@ -595,6 +613,11 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
                 <div className="flex items-center gap-2 text-[#1A73E8] font-bold bg-[#E8F0FE] px-3 py-1.5 rounded-xl border border-[#BFDBFE]">
                   <div className="w-2.5 h-2.5 rounded-full bg-[#1A73E8] animate-ping shrink-0" />
                   <span>Listening... Speak Japanese phrase now</span>
+                </div>
+              ) : status === 'unsupported' ? (
+                <div className="flex items-center gap-1.5 text-amber-800 font-bold bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-200">
+                  <XCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>{errorMessage || 'Microphone blocked or not allowed. Use Self-Check or click to try granting permission.'}</span>
                 </div>
               ) : status === 'retry' ? (
                 <div className="flex items-center gap-1.5 text-rose-700 font-bold bg-rose-50 px-3 py-1.5 rounded-xl border border-rose-200">
