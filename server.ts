@@ -86,8 +86,9 @@ app.post("/api/transcribe", async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    // Clean base64 string
-    const cleanBase64 = audioBase64.replace(/^data:audio\/[^;]+;base64,/, "");
+    // Clean base64 string correctly (accounting for parameters like ;codecs=opus)
+    const base64Index = audioBase64.indexOf(";base64,");
+    const cleanBase64 = (base64Index !== -1 ? audioBase64.slice(base64Index + 8) : audioBase64).trim();
     const rawAudioBuffer = Buffer.from(cleanBase64, "base64");
 
     // Convert audio to 16kHz mono WAV for high accuracy ASR
@@ -104,7 +105,6 @@ app.post("/api/transcribe", async (req: Request, res: Response): Promise<void> =
         const fileBlob = new Blob([new Uint8Array(wavBuffer)], { type: "audio/wav" });
         formData.append("file", fileBlob, wavFilename);
         formData.append("language", language);
-        formData.append("translate", "true");
 
         const jptRes = await fetch("https://api.jptranscribe.com/v1/transcribe", {
           method: "POST",
@@ -243,7 +243,7 @@ app.post("/api/transcribe", async (req: Request, res: Response): Promise<void> =
         const { GoogleGenAI } = await import("@google/genai");
         const ai = new GoogleGenAI();
         const genaiRes = await ai.models.generateContent({
-          model: "gemini-3.8-flash",
+          model: "gemini-2.5-flash",
           contents: [
             {
               role: "user",

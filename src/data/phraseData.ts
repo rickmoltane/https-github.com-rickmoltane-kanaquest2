@@ -38,7 +38,7 @@ export const PHRASE_DATA: PhraseItem[] = [
     originalKanji: 'こんにちは',
     romaji: 'Konnichiwa',
     illustrationId: 'daytime-greeting',
-    spokenKeywords: ['こんにちは', '今日はお'],
+    spokenKeywords: ['こんにちは', '今日は'],
   },
   {
     id: 'phrase-3',
@@ -157,7 +157,16 @@ export const PHRASE_DATA: PhraseItem[] = [
     originalKanji: 'どうぞよろしく',
     romaji: 'Dōzo yoroshiku',
     illustrationId: 'pleased-to-meet',
-    spokenKeywords: ['どうぞよろしく', 'どうぞよろしくお願いします', 'よろしく'],
+    spokenKeywords: [
+      'どうぞよろしく',
+      'どうぞ宜しく',
+      'どうぞよろしくお願いします',
+      'どうぞ宜しくお願いします',
+      'よろしく',
+      '宜しく',
+      'よろしくお願いします',
+      '宜しくお願いします',
+    ],
   },
   {
     id: 'phrase-12',
@@ -269,7 +278,10 @@ export const PHRASE_DATA: PhraseItem[] = [
       'いいえ会社員じゃありません',
       'いいえかいしゃいんじゃありません',
       '会社員じゃありません',
-      'かいしゃいんじゃありません'
+      'かいしゃいんじゃありません',
+      'いいえ会社員ではありません',
+      '会社員ではありません',
+      'かいしゃいんではありません',
     ],
   },
   {

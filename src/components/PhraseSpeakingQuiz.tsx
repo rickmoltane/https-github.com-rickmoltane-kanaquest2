@@ -246,25 +246,40 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
 
     if (recorder && recorder.state !== "inactive") {
       audioBlob = await new Promise<Blob | null>((resolve) => {
-        recorder.addEventListener(
-          "stop",
-          () => {
-            const mime =
-              audioChunksRef.current[0]?.type ||
-              recorder.mimeType ||
-              "audio/webm";
-            if (audioChunksRef.current.length > 0) {
-              resolve(new Blob(audioChunksRef.current, { type: mime }));
-            } else {
-              resolve(null);
-            }
-          },
-          { once: true },
-        );
+        let timer: ReturnType<typeof setTimeout> | null = null;
+        let resolved = false;
+
+        const finish = () => {
+          if (resolved) return;
+          resolved = true;
+          if (timer) clearTimeout(timer);
+
+          const mime =
+            audioChunksRef.current[0]?.type ||
+            recorder.mimeType ||
+            "audio/webm";
+
+          if (audioChunksRef.current.length > 0) {
+            resolve(new Blob(audioChunksRef.current, { type: mime }));
+          } else {
+            resolve(null);
+          }
+        };
+
+        recorder.addEventListener("stop", finish, { once: true });
+        timer = setTimeout(finish, 1500);
+
         try {
+          if (recorder.state === "recording") {
+            try {
+              recorder.requestData();
+            } catch {
+              // ignore
+            }
+          }
           recorder.stop();
         } catch {
-          resolve(null);
+          finish();
         }
       });
     } else if (audioChunksRef.current.length > 0) {
