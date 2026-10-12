@@ -23,6 +23,7 @@ import {
   X,
   Square,
   Loader2,
+  ExternalLink,
 } from "lucide-react";
 
 interface InteractionSpeakingQuizProps {
@@ -385,16 +386,18 @@ export const InteractionSpeakingQuiz: React.FC<
         return;
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
-      });
+      // Universal audio: true constraint (least restrictive for iframes and mobile)
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (firstErr) {
+        console.warn("Direct audio: true getUserMedia attempt failed, retrying:", firstErr);
+        stream = await navigator.mediaDevices.getUserMedia({ audio: {} });
+      }
+
       mediaStreamRef.current = stream;
 
-      let mimeType = "audio/webm";
+      let mimeType = "";
       if (typeof MediaRecorder !== "undefined") {
         if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
           mimeType = "audio/webm;codecs=opus";
@@ -431,12 +434,34 @@ export const InteractionSpeakingQuiz: React.FC<
       recordingTimeoutRef.current = setTimeout(() => {
         handleStopListening();
       }, 10000);
-    } catch (err) {
+    } catch (err: unknown) {
       console.warn("Microphone access error:", err);
       setStatus("retry");
-      setErrorMessage(
-        "Microphone permission was denied or is unavailable. Please allow microphone access and try again.",
-      );
+      const errName =
+        err && typeof err === "object" && "name" in err
+          ? String((err as { name?: unknown }).name)
+          : "";
+      const errMsg =
+        err && typeof err === "object" && "message" in err
+          ? String((err as { message?: unknown }).message)
+          : "";
+
+      if (
+        errName === "NotAllowedError" ||
+        errName === "PermissionDeniedError" ||
+        errName === "SecurityError" ||
+        errMsg.toLowerCase().includes("permission") ||
+        errMsg.toLowerCase().includes("denied") ||
+        errMsg.toLowerCase().includes("disallowed")
+      ) {
+        setErrorMessage(
+          "Microphone permission is blocked by your browser. Please allow microphone access in your browser address bar (lock/camera icon), or open in a direct tab below.",
+        );
+      } else {
+        setErrorMessage(
+          "Microphone is unavailable. Please check that a microphone is plugged in and try again.",
+        );
+      }
     }
   };
 
@@ -653,7 +678,7 @@ export const InteractionSpeakingQuiz: React.FC<
           )}
 
           {/* RETRY STATE */}
-          {status === "retry" && evaluationResult && (
+          {status === "retry" && (
             <div className="p-3 rounded-2xl bg-amber-50 border-2 border-amber-300 flex flex-col gap-2 animate-in fade-in-50">
               <div className="flex items-start gap-2.5">
                 <div className="w-7 h-7 rounded-full bg-amber-500 text-white flex items-center justify-center shrink-0 mt-0.5">
@@ -661,10 +686,10 @@ export const InteractionSpeakingQuiz: React.FC<
                 </div>
                 <div className="flex-1">
                   <p className="text-xs sm:text-sm font-bold text-amber-900">
-                    {evaluationResult.headline}
+                    {evaluationResult?.headline || "マイクアクセス (Microphone Access)"}
                   </p>
                   <p className="text-xs text-amber-800 mt-0.5">
-                    {evaluationResult.feedbackExplanation}
+                    {errorMessage || evaluationResult?.feedbackExplanation || "Please speak clearly into the microphone and try again."}
                   </p>
                   {transcript && (
                     <p className="text-xs text-amber-800 mt-1">
@@ -673,6 +698,19 @@ export const InteractionSpeakingQuiz: React.FC<
                         &ldquo;{transcript}&rdquo;
                       </span>
                     </p>
+                  )}
+                  {errorMessage?.toLowerCase().includes("permission") && (
+                    <div className="mt-2">
+                      <a
+                        href={window.location.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs font-bold text-[#1A73E8] bg-white border border-[#BFDBFE] px-3 py-1.5 rounded-xl hover:underline inline-flex items-center gap-1.5 shadow-2xs"
+                      >
+                        <span>Open in New Tab (Unrestricted Mic)</span>
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    </div>
                   )}
                 </div>
               </div>

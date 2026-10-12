@@ -16,6 +16,7 @@ import {
   Flame,
   Square,
   Loader2,
+  ExternalLink,
 } from "lucide-react";
 
 interface PhraseSpeakingQuizProps {
@@ -374,16 +375,18 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
         return;
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
-      });
+      // Universal audio: true constraint (least restrictive for iframes and mobile)
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (firstErr) {
+        console.warn("Direct audio: true getUserMedia attempt failed, retrying:", firstErr);
+        stream = await navigator.mediaDevices.getUserMedia({ audio: {} });
+      }
+
       mediaStreamRef.current = stream;
 
-      let mimeType = "audio/webm";
+      let mimeType = "";
       if (typeof MediaRecorder !== "undefined") {
         if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
           mimeType = "audio/webm;codecs=opus";
@@ -420,12 +423,34 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
       recordingTimeoutRef.current = setTimeout(() => {
         handleStopListening();
       }, 10000);
-    } catch (err) {
+    } catch (err: unknown) {
       console.warn("Microphone access error:", err);
       setStatus("retry");
-      setErrorMessage(
-        "Microphone permission was denied or is unavailable. Please allow microphone access and try again.",
-      );
+      const errName =
+        err && typeof err === "object" && "name" in err
+          ? String((err as { name?: unknown }).name)
+          : "";
+      const errMsg =
+        err && typeof err === "object" && "message" in err
+          ? String((err as { message?: unknown }).message)
+          : "";
+
+      if (
+        errName === "NotAllowedError" ||
+        errName === "PermissionDeniedError" ||
+        errName === "SecurityError" ||
+        errMsg.toLowerCase().includes("permission") ||
+        errMsg.toLowerCase().includes("denied") ||
+        errMsg.toLowerCase().includes("disallowed")
+      ) {
+        setErrorMessage(
+          "Microphone permission is blocked by your browser. Please allow microphone access in your browser address bar (lock/camera icon), or open in a direct tab.",
+        );
+      } else {
+        setErrorMessage(
+          "Microphone is unavailable. Please check that a microphone is plugged in and try again.",
+        );
+      }
     }
   };
 
@@ -680,12 +705,25 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
                   </span>
                 </div>
               ) : status === "retry" ? (
-                <div className="flex items-center gap-1.5 text-rose-700 font-bold bg-rose-50 px-3 py-1.5 rounded-xl border border-rose-200">
-                  <XCircle className="w-4 h-4 text-rose-600 shrink-0" />
-                  <span>
-                    {errorMessage ||
-                      "不正解 (Incorrect). Try speaking clearly into the mic."}
-                  </span>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 text-rose-700 font-bold bg-rose-50 px-3 py-1.5 rounded-xl border border-rose-200">
+                  <div className="flex items-center gap-1.5">
+                    <XCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                    <span>
+                      {errorMessage ||
+                        "不正解 (Incorrect). Try speaking clearly into the mic."}
+                    </span>
+                  </div>
+                  {errorMessage?.toLowerCase().includes("permission") && (
+                    <a
+                      href={window.location.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[11px] font-extrabold text-[#1A73E8] bg-white border border-[#BFDBFE] px-2.5 py-1 rounded-lg hover:underline inline-flex items-center gap-1 shrink-0"
+                    >
+                      <span>Open in New Tab (Unrestricted Mic)</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  )}
                 </div>
               ) : (
                 <div className="flex items-center gap-1.5 text-[#5F6368] font-semibold">

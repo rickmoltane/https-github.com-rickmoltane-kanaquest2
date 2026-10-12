@@ -11,6 +11,12 @@ dotenv.config();
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 
+app.use((_req, res, next) => {
+  res.setHeader("Permissions-Policy", "microphone=*");
+  res.setHeader("Feature-Policy", "microphone *");
+  next();
+});
+
 app.use(express.json({ limit: "25mb" }));
 
 /**
