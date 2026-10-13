@@ -1,6 +1,6 @@
 export interface PhraseItem {
   id: string;
-  category: 'greetings' | 'introduction' | 'occupation-conversation' | 'occupations';
+  category: 'greetings' | 'introduction' | 'occupation-conversation' | 'occupations' | 'places-work' | 'useful-sentences';
   categoryLabel: string;
   situationTitle: string;
   situationDetail: string;
@@ -389,5 +389,72 @@ export const PHRASE_DATA: PhraseItem[] = [
     romaji: 'Enjinia',
     illustrationId: 'engineer',
     spokenKeywords: ['エンジニア', 'えんじにあ'],
+  },
+
+  // --- Category 5: Useful Sentences & Work Expressions ---
+  {
+    id: 'phrase-27',
+    category: 'useful-sentences',
+    categoryLabel: 'Useful Sentences',
+    situationTitle: 'Company Work',
+    situationDetail: 'Expressing employment at a company',
+    english: 'I work at a company.',
+    hiragana: 'かいしゃではたらいています',
+    originalKanji: '会社で働いています。',
+    romaji: 'Kaisha de hataraite imasu.',
+    illustrationId: 'leaving-office',
+    spokenKeywords: ['会社で働いています', 'かいしゃではたらいています', '会社で働いてます'],
+  },
+  {
+    id: 'phrase-28',
+    category: 'useful-sentences',
+    categoryLabel: 'Useful Sentences',
+    situationTitle: 'School Work',
+    situationDetail: 'Expressing employment at a school',
+    english: 'I work at a school.',
+    hiragana: 'がっこうではたらいています',
+    originalKanji: '学校で働いています。',
+    romaji: 'Gakkō de hataraite imasu.',
+    illustrationId: 'school-teacher',
+    spokenKeywords: ['学校で働いています', 'がっこうではたらいています', '学校で働いてます'],
+  },
+  {
+    id: 'phrase-29',
+    category: 'useful-sentences',
+    categoryLabel: 'Useful Sentences',
+    situationTitle: 'Hospital Work',
+    situationDetail: 'Expressing employment at a hospital',
+    english: 'I work at a hospital.',
+    hiragana: 'びょういんではたらいています',
+    originalKanji: '病院で働いています。',
+    romaji: 'Byōin de hataraite imasu.',
+    illustrationId: 'doctor',
+    spokenKeywords: ['病院で働いています', 'びょういんではたらいています', '病院で働いてます'],
+  },
+  {
+    id: 'phrase-30',
+    category: 'useful-sentences',
+    categoryLabel: 'Useful Sentences',
+    situationTitle: 'Living on Pension',
+    situationDetail: 'Expressing living on retirement pension',
+    english: 'I live on a pension.',
+    hiragana: 'ねんきんでせいかつしています',
+    originalKanji: '年金で生活しています。',
+    romaji: 'Nenkin de seikatsu shite imasu.',
+    illustrationId: 'leaving-office',
+    spokenKeywords: ['年金で生活しています', 'ねんきんでせいかつしています', '年金で生活してます'],
+  },
+  {
+    id: 'phrase-31',
+    category: 'useful-sentences',
+    categoryLabel: 'Useful Sentences',
+    situationTitle: 'Instruction to Read',
+    situationDetail: 'Politely requesting someone to read aloud',
+    english: 'Please read.',
+    hiragana: 'よんでください',
+    originalKanji: '読んでください。',
+    romaji: 'Yonde kudasai.',
+    illustrationId: 'pleased-to-meet',
+    spokenKeywords: ['読んでください', 'よんでください', '読んで下さい'],
   },
 ];

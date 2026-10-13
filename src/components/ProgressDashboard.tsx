@@ -292,17 +292,17 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ onStartExe
             },
             {
               num: '6',
-              type: 'phrase-speaking' as ExerciseType,
-              name: 'Exercise 6: Phrases (Situation + Voice Speaking)',
-              desc: 'Look at situation picture and pure Hiragana; speak the phrase aloud into the mic.',
-              tag: 'Speech Recognition',
+              type: 'exchange-romaji' as ExerciseType,
+              name: 'Exercise 6: Conversational Exchanges (Romaji)',
+              desc: 'Read the prompt question in Romaji and select the polite, natural reply.',
+              tag: 'Romaji Dialogue',
             },
             {
               num: '7',
-              type: 'interaction-speaking' as ExerciseType,
-              name: 'Exercise 7: Interactions (Image + Hiragana Question & Spoken Reply)',
-              desc: 'Listen and read the question in Hiragana; reply aloud with a grammatically logical Japanese response.',
-              tag: 'Spoken Dialogue',
+              type: 'exchange-hiragana' as ExerciseType,
+              name: 'Exercise 7: Conversational Exchanges (Hiragana & Audio)',
+              desc: 'Read the Hiragana question and tap audio buttons to hear native pronunciation of all choices.',
+              tag: 'Kana + Native Audio',
             },
           ].map(mod => (
             <div
@@ -405,21 +405,21 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ onStartExe
             </button>
             <button
               type="button"
-              onClick={() => setFilterType('phrase-speaking')}
+              onClick={() => setFilterType('exchange-romaji')}
               className={`px-2.5 py-1.5 rounded-lg transition-all whitespace-nowrap ${
-                filterType === 'phrase-speaking' ? 'bg-white text-neutral-900 shadow-xs' : 'text-neutral-600 hover:text-neutral-900'
+                filterType === 'exchange-romaji' ? 'bg-white text-neutral-900 shadow-xs' : 'text-neutral-600 hover:text-neutral-900'
               }`}
             >
-              Ex 6 (Voice Speaking)
+              Ex 6 (Romaji Exchange)
             </button>
             <button
               type="button"
-              onClick={() => setFilterType('interaction-speaking')}
+              onClick={() => setFilterType('exchange-hiragana')}
               className={`px-2.5 py-1.5 rounded-lg transition-all whitespace-nowrap ${
-                filterType === 'interaction-speaking' ? 'bg-white text-neutral-900 shadow-xs' : 'text-neutral-600 hover:text-neutral-900'
+                filterType === 'exchange-hiragana' ? 'bg-white text-neutral-900 shadow-xs' : 'text-neutral-600 hover:text-neutral-900'
               }`}
             >
-              Ex 7 (Interactions)
+              Ex 7 (Kana Exchange)
             </button>
           </div>
         </div>
@@ -743,14 +743,24 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ onStartExe
                           Ex 5: Stroke Tracing
                         </span>
                       )}
+                      {item.exerciseType === 'exchange-romaji' && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md font-semibold text-[11px] bg-indigo-50 text-indigo-800 border border-indigo-200">
+                          Ex 6: Romaji Exchange
+                        </span>
+                      )}
+                      {item.exerciseType === 'exchange-hiragana' && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md font-semibold text-[11px] bg-sky-50 text-sky-800 border border-sky-200">
+                          Ex 7: Kana Exchange
+                        </span>
+                      )}
                       {item.exerciseType === 'phrase-speaking' && (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-md font-semibold text-[11px] bg-purple-50 text-purple-800 border border-purple-200">
-                          Ex 6: Phrases (Voice Speaking)
+                          Voice Practice
                         </span>
                       )}
                       {item.exerciseType === 'interaction-speaking' && (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-md font-semibold text-[11px] bg-teal-50 text-teal-800 border border-teal-200">
-                          Ex 7: Interactions (Dialogue & Voice)
+                          Dialogue Practice
                         </span>
                       )}
                     </td>

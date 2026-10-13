@@ -57,6 +57,61 @@ export const EVERYDAY_WORDS: EverydayWord[] = [
   { id: 'arigatoo', romaji: 'arigatoo', kana: 'ありがとう', english: 'Thank You', category: 'Expressions', iconName: 'thankyou' },
   { id: 'otousan', romaji: 'otousan', kana: 'おとうさん', english: 'Father', category: 'People', iconName: 'friends' },
   { id: 'okaasan', romaji: 'okaasan', kana: 'おかあさん', english: 'Mother', category: 'People', iconName: 'friends' },
+
+  // --- 1. Introductions and greetings ---
+  { id: 'jiko-shoukai', romaji: 'Jiko shōkai', kana: 'じこしょうかい', english: 'Self-introduction', category: 'Introductions & Greetings', iconName: 'people', originalKanji: '自己紹介' },
+  { id: 'aisatsu', romaji: 'Aisatsu', kana: 'あいさつ', english: 'Greeting', category: 'Introductions & Greetings', iconName: 'thankyou', originalKanji: '挨拶' },
+  { id: 'namae', romaji: 'Namae', kana: 'なまえ', english: 'Name', category: 'Introductions & Greetings', iconName: 'letter', originalKanji: '名前' },
+  { id: 'meishi', romaji: 'Meishi', kana: 'めいし', english: 'Noun', category: 'Introductions & Greetings', iconName: 'book', originalKanji: '名詞' },
+  { id: 'yonde-kudasai', romaji: 'Yonde kudasai', kana: 'よんでください', english: 'Please read', category: 'Introductions & Greetings', iconName: 'book-nihongo', originalKanji: '読んでください' },
+
+  // --- 2. People and pronouns ---
+  { id: 'watashi', romaji: 'Watashi', kana: 'わたし', english: 'I / me', category: 'People & Pronouns', iconName: 'friends', originalKanji: '私' },
+  { id: 'watashitachi', romaji: 'Watashitachi', kana: 'わたしたち', english: 'We / us', category: 'People & Pronouns', iconName: 'friends', originalKanji: '私たち' },
+  { id: 'anata', romaji: 'Anata', kana: 'あなた', english: 'You', category: 'People & Pronouns', iconName: 'friends', originalKanji: 'あなた' },
+  { id: 'kare', romaji: 'Kare', kana: 'かれ', english: 'He / him', category: 'People & Pronouns', iconName: 'friends', originalKanji: '彼' },
+  { id: 'kanojo', romaji: 'Kanojo', kana: 'かのじょ', english: 'She / her; girlfriend', category: 'People & Pronouns', iconName: 'friends', originalKanji: '彼女' },
+  { id: 'jibun', romaji: 'Jibun', kana: 'じぶん', english: 'Oneself / myself', category: 'People & Pronouns', iconName: 'friends', originalKanji: '自分' },
+
+  // --- 3. People by age and gender ---
+  { id: 'akachan', romaji: 'Akachan', kana: 'あかちゃん', english: 'Baby', category: 'Age & Gender', iconName: 'friends', originalKanji: '赤ちゃん' },
+  { id: 'kodomo', romaji: 'Kodomo', kana: 'こども', english: 'Child', category: 'Age & Gender', iconName: 'friends', originalKanji: '子供' },
+  { id: 'wakamono', romaji: 'Wakamono', kana: 'わかもの', english: 'Young person', category: 'Age & Gender', iconName: 'friends', originalKanji: '若者' },
+  { id: 'otona', romaji: 'Otona', kana: 'おとな', english: 'Adult', category: 'Age & Gender', iconName: 'friends', originalKanji: '大人' },
+  { id: 'otoshiyori', romaji: 'Otoshiyori', kana: 'おとしより', english: 'Elderly person', category: 'Age & Gender', iconName: 'friends', originalKanji: 'お年寄り' },
+  { id: 'danjo', romaji: 'Danjo', kana: 'だんじょ', english: 'Men and women / both sexes', category: 'Age & Gender', iconName: 'friends', originalKanji: '男女' },
+  { id: 'otokonoko', romaji: 'Otokonoko', kana: 'おとこのこ', english: 'Boy', category: 'Age & Gender', iconName: 'friends', originalKanji: '男の子' },
+  { id: 'onnanoko', romaji: 'Onnanoko', kana: 'おんなのこ', english: 'Girl', category: 'Age & Gender', iconName: 'friends', originalKanji: '女の子' },
+  { id: 'otoko-no-hito', romaji: 'Otoko no hito', kana: 'おとこのひと', english: 'Man', category: 'Age & Gender', iconName: 'friends', originalKanji: '男の人' },
+  { id: 'onna-no-hito', romaji: 'Onna no hito', kana: 'おんなのひと', english: 'Woman', category: 'Age & Gender', iconName: 'friends', originalKanji: '女の人' },
+
+  // --- 4. Occupations — 仕事（しごと） ---
+  { id: 'isha', romaji: 'Isha', kana: 'いしゃ', english: 'Doctor', category: 'Occupations', iconName: 'hospital', originalKanji: '医者' },
+  { id: 'enjinia', romaji: 'Enjinia', kana: 'えんじにあ', english: 'Engineer', category: 'Occupations', iconName: 'phone', originalKanji: 'エンジニア' },
+  { id: 'kaishain', romaji: 'Kaishain', kana: 'かいしゃいん', english: 'Company employee', category: 'Occupations', iconName: 'desk', originalKanji: '会社員' },
+  { id: 'kaigoshi', romaji: 'Kaigoshi', kana: 'かいごし', english: 'Care worker', category: 'Occupations', iconName: 'hospital', originalKanji: '介護士' },
+  { id: 'gakusei', romaji: 'Gakusei', kana: 'がくせい', english: 'Student', category: 'Occupations', iconName: 'school', originalKanji: '学生' },
+  { id: 'kangoshi', romaji: 'Kangoshi', kana: 'かんごし', english: 'Nurse', category: 'Occupations', iconName: 'hospital', originalKanji: '看護師' },
+  { id: 'kyoushi', romaji: 'Kyōshi', kana: 'きょうし', english: 'Teacher', category: 'Occupations', iconName: 'school', originalKanji: '教師' },
+  { id: 'koumuin', romaji: 'Kōmuin', kana: 'こうむいん', english: 'Civil servant / government employee', category: 'Occupations', iconName: 'desk', originalKanji: '公務員' },
+  { id: 'jieigyou', romaji: 'Jieigyō', kana: 'じえいぎょう', english: 'Self-employment / self-employed', category: 'Occupations', iconName: 'desk', originalKanji: '自営業' },
+  { id: 'jigyounushi', romaji: 'Jigyōnushi', kana: 'じぎょうぬし', english: 'Business owner', category: 'Occupations', iconName: 'desk', originalKanji: '事業主' },
+  { id: 'shufu', romaji: 'Shufu', kana: 'しゅふ', english: 'Homemaker / housewife', category: 'Occupations', iconName: 'house', originalKanji: '主婦' },
+  { id: 'nouka', romaji: 'Nōka', kana: 'のうか', english: 'Farmer', category: 'Occupations', iconName: 'tree', originalKanji: '農家' },
+  { id: 'arubaito', romaji: 'Arubaito', kana: 'あるばいと', english: 'Part-time job; casual work', category: 'Occupations', iconName: 'clock', originalKanji: 'アルバイト' },
+  { id: 'paatotaimu', romaji: 'Pāto taimu', kana: 'ぱーとたいむ', english: 'Part-time', category: 'Occupations', iconName: 'clock', originalKanji: 'パートタイム' },
+
+  // --- 5. Places and work ---
+  { id: 'kaisha', romaji: 'Kaisha', kana: 'かいしゃ', english: 'Company', category: 'Places & Work', iconName: 'desk', originalKanji: '会社' },
+  { id: 'hataraite-imasu', romaji: 'Hataraite imasu', kana: 'はたらいています', english: 'Am working / work', category: 'Places & Work', iconName: 'desk', originalKanji: '働いています' },
+  { id: 'nenkin', romaji: 'Nenkin', kana: 'ねんきん', english: 'Pension', category: 'Places & Work', iconName: 'letter', originalKanji: '年金' },
+  { id: 'seikatsu-shite-imasu', romaji: 'Seikatsu shite imasu', kana: 'せいかつしています', english: 'Am living / making a living', category: 'Places & Work', iconName: 'house', originalKanji: '生活しています' },
+
+  // --- 6. Useful sentences ---
+  { id: 'sent-kaisha-hataraite', romaji: 'Kaisha de hataraite imasu.', kana: 'かいしゃではたらいています。', english: 'I work at a company.', category: 'Useful Sentences', iconName: 'desk', originalKanji: '会社で働いています。' },
+  { id: 'sent-gakkou-hataraite', romaji: 'Gakkō de hataraite imasu.', kana: 'がっこうではたらいています。', english: 'I work at a school.', category: 'Useful Sentences', iconName: 'school', originalKanji: '学校で働いています。' },
+  { id: 'sent-byouin-hataraite', romaji: 'Byōin de hataraite imasu.', kana: 'びょういんではたらいています。', english: 'I work at a hospital.', category: 'Useful Sentences', iconName: 'hospital', originalKanji: '病院で働いています。' },
+  { id: 'sent-nenkin-seikatsu', romaji: 'Nenkin de seikatsu shite imasu.', kana: 'ねんきんでせいかつしています。', english: 'I live on a pension.', category: 'Useful Sentences', iconName: 'house', originalKanji: '年金で生活しています。' },
 ];
 
 /**

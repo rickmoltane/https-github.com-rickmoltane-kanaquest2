@@ -43,19 +43,15 @@ export async function getOrCreateSessionStream(): Promise<MediaStream> {
         autoGainControl: true,
       },
     });
-  } catch (err: unknown) {
-    // If advanced constraints failed, attempt with plain { audio: true }
-    const errName = err && typeof err === 'object' && 'name' in err ? String((err as { name?: unknown }).name) : '';
-    if (errName !== 'NotAllowedError' && errName !== 'PermissionDeniedError' && errName !== 'SecurityError') {
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      } catch (innerErr) {
-        throw innerErr;
-      }
-    } else {
-      throw err;
-    }
+  } catch (_err: unknown) {
+    // Fall back to simple { audio: true }
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
   }
+
+  // Ensure tracks are enabled
+  stream.getAudioTracks().forEach((track) => {
+    track.enabled = true;
+  });
 
   sessionStream = stream;
   cachedPermissionState = 'granted';

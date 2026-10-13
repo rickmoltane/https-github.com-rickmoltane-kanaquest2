@@ -22,6 +22,7 @@ import {
 import {
   getOrCreateSessionStream,
   pauseSessionStream,
+  resumeSessionStream,
   getSupportedAudioMimeType,
 } from "../utils/audioSessionManager";
 
@@ -388,6 +389,7 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
       }
 
       // 1. Get or reuse persistent session stream (asks permission once on first tap)
+      resumeSessionStream();
       const stream = await getOrCreateSessionStream();
       mediaStreamRef.current = stream;
 
@@ -541,12 +543,12 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
           {/* Left: Exercise Indicator & Round Counter */}
           <div className="flex items-center gap-2.5">
             <span className="font-mono text-xs font-black px-2.5 py-1 rounded-lg bg-[#1F2329] text-white">
-              [6]
+              [8]
             </span>
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-xs sm:text-sm font-black text-[#1F2329] tracking-tight">
-                  Exercise 6: Phrases (会話・フレーズ)
+                  Exercise 8: Phrases Speaking (会話・フレーズ)
                 </span>
                 <span className="text-[11px] font-bold text-[#1A73E8] bg-[#E8F0FE] px-2 py-0.5 rounded-md border border-[#BFDBFE] hidden md:inline">
                   Voice Speaking

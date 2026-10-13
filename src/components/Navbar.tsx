@@ -9,7 +9,16 @@ import {
   Cookie
 } from 'lucide-react';
 
-export type ActiveTab = 'exercise-1' | 'exercise-2' | 'exercise-3' | 'exercise-4' | 'exercise-5' | 'exercise-6' | 'exercise-7' | 'dashboard' | 'chart';
+export type ActiveTab = 
+  | 'exercise-1' 
+  | 'exercise-2' 
+  | 'exercise-3' 
+  | 'exercise-4' 
+  | 'exercise-5' 
+  | 'exercise-6' 
+  | 'exercise-7' 
+  | 'dashboard' 
+  | 'chart';
 
 interface NavbarProps {
   activeTab: ActiveTab;
@@ -31,8 +40,8 @@ export const EXERCISE_OPTIONS: ExerciseOption[] = [
   { id: 'exercise-3', exerciseType: 'word-romaji-to-hiragana', number: '3' },
   { id: 'exercise-4', exerciseType: 'word-hiragana-to-romaji', number: '4' },
   { id: 'exercise-5', exerciseType: 'hiragana-drawing', number: '5' },
-  { id: 'exercise-6', exerciseType: 'phrase-speaking', number: '6' },
-  { id: 'exercise-7', exerciseType: 'interaction-speaking', number: '7' },
+  { id: 'exercise-6', exerciseType: 'exchange-romaji', number: '6' },
+  { id: 'exercise-7', exerciseType: 'exchange-hiragana', number: '7' },
 ];
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -55,15 +64,15 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <header className="shrink-0 z-40 w-full border-b border-[#E2E8F0] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
-      <div className="max-w-5xl mx-auto px-3 sm:px-6">
-        {/* Top Bar: Brand, Large [1] [2] [3] [4] [5] Buttons, and Utilities */}
-        <div className="flex items-center justify-between h-13 sm:h-14 gap-2">
+      <div className="max-w-5xl mx-auto px-2 sm:px-6">
+        {/* Top Bar: Brand, Large [1] to [7] Buttons, and Utilities */}
+        <div className="flex items-center justify-between h-13 sm:h-14 gap-1.5 sm:gap-3">
           
           {/* Brand Logo & Title */}
           <button
             type="button"
             onClick={() => handleSelectTab('exercise-1', 'hiragana-to-romaji')}
-            className="flex items-center gap-2 shrink-0 text-left cursor-pointer group"
+            className="flex items-center gap-1.5 sm:gap-2 shrink-0 text-left cursor-pointer group"
           >
             <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#1A73E8] text-white flex items-center justify-center font-black text-sm sm:text-base shadow-xs group-hover:bg-[#1557B0] transition-colors">
               あ
@@ -73,8 +82,8 @@ export const Navbar: React.FC<NavbarProps> = ({
             </span>
           </button>
 
-          {/* Centered Easy-to-Click 1, 2, 3, 4, 5, 6, 7 Buttons (No exercise names on top row) */}
-          <div className="flex items-center gap-1 sm:gap-2 justify-center flex-1 max-w-xs sm:max-w-xl mx-auto">
+          {/* Centered Easy-to-Click 1 to 7 Buttons (Strictly 1 to 7) */}
+          <div className="flex items-center gap-1 sm:gap-1.5 justify-center flex-1 max-w-[270px] sm:max-w-md mx-0.5 sm:mx-auto">
             {EXERCISE_OPTIONS.map(opt => {
               const isSelected = activeTab === opt.id;
               return (
@@ -83,7 +92,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   type="button"
                   onClick={() => handleSelectTab(opt.id, opt.exerciseType)}
                   aria-label={`Exercise ${opt.number}`}
-                  className={`flex-1 h-10 sm:h-11 max-w-[58px] sm:max-w-[70px] rounded-xl font-mono text-base sm:text-lg font-black flex items-center justify-center transition-all cursor-pointer ${
+                  className={`flex-1 h-8 sm:h-9 min-w-[24px] max-w-[34px] sm:max-w-[44px] rounded-lg sm:rounded-xl font-mono text-xs sm:text-base font-black flex items-center justify-center transition-all cursor-pointer ${
                     isSelected
                       ? 'bg-[#1A73E8] text-white shadow-md ring-2 ring-[#93C5FD] scale-105'
                       : 'bg-[#F8FAFF] text-[#1F2329] border-2 border-[#CBD5E1] hover:border-[#1A73E8] hover:bg-[#EDF2F7]'
@@ -102,7 +111,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               type="button"
               onClick={() => handleSelectTab('dashboard')}
-              className={`p-2 rounded-xl transition-colors cursor-pointer border ${
+              className={`p-1.5 sm:p-2 rounded-xl transition-colors cursor-pointer border ${
                 activeTab === 'dashboard' 
                   ? 'bg-[#1A73E8] text-white border-[#1A73E8]' 
                   : 'text-[#1F2329] hover:bg-[#F8FAFF] border-transparent hover:border-[#E2E8F0]'
@@ -116,7 +125,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               type="button"
               onClick={() => handleSelectTab('chart')}
-              className={`p-2 rounded-xl transition-colors cursor-pointer border ${
+              className={`p-1.5 sm:p-2 rounded-xl transition-colors cursor-pointer border ${
                 activeTab === 'chart' 
                   ? 'bg-[#1A73E8] text-white border-[#1A73E8]' 
                   : 'text-[#1F2329] hover:bg-[#F8FAFF] border-transparent hover:border-[#E2E8F0]'
@@ -131,7 +140,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               type="button"
               onClick={() => setSoundEnabled(prev => !prev)}
               aria-label={soundEnabled ? 'Mute sound' : 'Unmute sound'}
-              className="p-2 rounded-xl text-[#1F2329] hover:bg-[#F8FAFF] border border-transparent hover:border-[#E2E8F0] transition-colors cursor-pointer"
+              className="p-1.5 sm:p-2 rounded-xl text-[#1F2329] hover:bg-[#F8FAFF] border border-transparent hover:border-[#E2E8F0] transition-colors cursor-pointer"
               title={soundEnabled ? 'Sound is ON' : 'Sound is OFF'}
             >
               {soundEnabled ? <Volume2 className="w-4 h-4 sm:w-5 sm:h-5 text-[#1A73E8]" /> : <VolumeX className="w-4 h-4 sm:w-5 sm:h-5 text-[#5F6368]" />}
@@ -141,11 +150,11 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               type="button"
               onClick={() => handleSelectTab('dashboard')}
-              className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-xl bg-[#F8FAFF] border border-[#CBD5E1] hover:border-[#1A73E8] hover:bg-[#E8F0FE] text-[#1F2329] transition-all cursor-pointer group"
+              className="flex items-center gap-1 px-1.5 sm:px-2 py-1.5 rounded-xl bg-[#F8FAFF] border border-[#CBD5E1] hover:border-[#1A73E8] hover:bg-[#E8F0FE] text-[#1F2329] transition-all cursor-pointer group"
               title={`Recognized Guest Account: ${displayName}\nTracked via cookie (no login/registration required)`}
             >
               <Cookie className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#1A73E8] shrink-0 group-hover:rotate-12 transition-transform" />
-              <span className="text-[11px] sm:text-xs font-bold font-mono text-[#1F2329] max-w-[70px] sm:max-w-[110px] truncate">
+              <span className="text-[11px] sm:text-xs font-bold font-mono text-[#1F2329] max-w-[70px] sm:max-w-[110px] truncate hidden md:inline">
                 {displayName}
               </span>
             </button>

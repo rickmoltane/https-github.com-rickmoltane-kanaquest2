@@ -29,6 +29,7 @@ import {
 import {
   getOrCreateSessionStream,
   pauseSessionStream,
+  resumeSessionStream,
   getSupportedAudioMimeType,
 } from "../utils/audioSessionManager";
 
@@ -399,6 +400,7 @@ export const InteractionSpeakingQuiz: React.FC<
       }
 
       // 1. Get or reuse persistent session stream (prompts user once on first tap)
+      resumeSessionStream();
       const stream = await getOrCreateSessionStream();
       mediaStreamRef.current = stream;
 
@@ -545,10 +547,10 @@ export const InteractionSpeakingQuiz: React.FC<
           {/* Left: Exercise 7 Label */}
           <div className="flex items-center gap-2.5">
             <span className="font-mono text-xs font-black px-2 py-0.5 rounded-md bg-[#1F2329] text-white">
-              [7]
+              [9]
             </span>
             <span className="text-sm font-extrabold text-[#1F2329] tracking-tight">
-              Exercise 7: Interactions
+              Exercise 9: Interactions Speaking
             </span>
           </div>
 

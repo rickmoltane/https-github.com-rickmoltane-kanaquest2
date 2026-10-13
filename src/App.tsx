@@ -8,8 +8,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { Navbar, ActiveTab } from './components/Navbar';
 import { FlashcardQuiz } from './components/FlashcardQuiz';
 import { DrawingTrainer } from './components/DrawingTrainer';
-import { PhraseSpeakingQuiz } from './components/PhraseSpeakingQuiz';
-import { InteractionSpeakingQuiz } from './components/InteractionSpeakingQuiz';
+import { ExchangeQuiz } from './components/ExchangeQuiz';
 import { QuizSummary } from './components/QuizSummary';
 import { ProgressDashboard } from './components/ProgressDashboard';
 import { CharacterTable } from './components/CharacterTable';
@@ -58,9 +57,9 @@ function MainContent() {
       setActiveTab('exercise-4');
     } else if (type === 'hiragana-drawing') {
       setActiveTab('exercise-5');
-    } else if (type === 'phrase-speaking') {
+    } else if (type === 'exchange-romaji') {
       setActiveTab('exercise-6');
-    } else if (type === 'interaction-speaking') {
+    } else if (type === 'exchange-hiragana') {
       setActiveTab('exercise-7');
     }
   };
@@ -83,7 +82,15 @@ function MainContent() {
     }
   };
 
-  const isExerciseView = !activeResult && ['exercise-1', 'exercise-2', 'exercise-3', 'exercise-4', 'exercise-5', 'exercise-6', 'exercise-7'].includes(activeTab);
+  const isExerciseView = !activeResult && [
+    'exercise-1', 
+    'exercise-2', 
+    'exercise-3', 
+    'exercise-4', 
+    'exercise-5', 
+    'exercise-6', 
+    'exercise-7',
+  ].includes(activeTab);
 
   return (
     <div className={`${
@@ -110,10 +117,10 @@ function MainContent() {
             setCurrentQuizType('hiragana-drawing');
             setActiveResult(null);
           } else if (tab === 'exercise-6') {
-            setCurrentQuizType('phrase-speaking');
+            setCurrentQuizType('exchange-romaji');
             setActiveResult(null);
           } else if (tab === 'exercise-7') {
-            setCurrentQuizType('interaction-speaking');
+            setCurrentQuizType('exchange-hiragana');
             setActiveResult(null);
           }
         }}
@@ -178,15 +185,17 @@ function MainContent() {
             onCancel={() => setActiveTab('dashboard')}
           />
         ) : activeTab === 'exercise-6' ? (
-          <PhraseSpeakingQuiz
+          <ExchangeQuiz
             key={`ex6_${currentQuizType}`}
+            exerciseType="exchange-romaji"
             soundEnabled={soundEnabled}
             onComplete={handleQuizComplete}
             onCancel={() => setActiveTab('dashboard')}
           />
         ) : activeTab === 'exercise-7' ? (
-          <InteractionSpeakingQuiz
+          <ExchangeQuiz
             key={`ex7_${currentQuizType}`}
+            exerciseType="exchange-hiragana"
             soundEnabled={soundEnabled}
             onComplete={handleQuizComplete}
             onCancel={() => setActiveTab('dashboard')}

@@ -4,6 +4,8 @@ export type ExerciseType =
   | 'word-romaji-to-hiragana' 
   | 'word-hiragana-to-romaji'
   | 'hiragana-drawing'
+  | 'exchange-romaji'
+  | 'exchange-hiragana'
   | 'phrase-speaking'
   | 'interaction-speaking';
 
@@ -23,6 +25,7 @@ export interface EverydayWord {
   category: string;
   iconName: string;
   isFromTextbook?: boolean;
+  originalKanji?: string;
 }
 
 export interface QuizQuestion {
