@@ -17,7 +17,13 @@ import {
   Square,
   Loader2,
   ExternalLink,
+  ShieldAlert,
 } from "lucide-react";
+import {
+  getOrCreateSessionStream,
+  pauseSessionStream,
+  getSupportedAudioMimeType,
+} from "../utils/audioSessionManager";
 
 interface PhraseSpeakingQuizProps {
   soundEnabled: boolean;
@@ -73,16 +79,10 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
-  // Stop hardware microphone stream tracks
+  // Pause audio tracks between questions without revoking browser permission
   const stopMediaTracks = useCallback(() => {
-    if (mediaStreamRef.current) {
-      try {
-        mediaStreamRef.current.getTracks().forEach((t) => t.stop());
-      } catch {
-        // ignore
-      }
-      mediaStreamRef.current = null;
-    }
+    pauseSessionStream();
+    mediaStreamRef.current = null;
   }, []);
 
   // Clear 10s max recording timer & countdown
@@ -108,8 +108,8 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
         // ignore
       }
     }
-    stopMediaTracks();
-  }, [clearRecordingTimer, stopMediaTracks]);
+    pauseSessionStream();
+  }, [clearRecordingTimer]);
 
   // Initialize round questions
   const startNewRound = useCallback(
@@ -287,7 +287,7 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
       audioBlob = new Blob(audioChunksRef.current, { type: mime });
     }
 
-    stopMediaTracks();
+    pauseSessionStream();
 
     // If recording produced no audio (microphone muted or 0-length)
     if (!audioBlob || audioBlob.size === 0) {
@@ -364,7 +364,6 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
     }
   }, [
     clearRecordingTimer,
-    stopMediaTracks,
     soundEnabled,
     currentPhrase,
     evaluateSpokenResult,
@@ -376,8 +375,6 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
     if (!currentPhrase) return;
 
     clearRecordingTimer();
-    stopMediaTracks();
-
     audioChunksRef.current = [];
     setTranscript("");
     setErrorMessage(null);
@@ -390,28 +387,11 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
         return;
       }
 
-      // Universal audio: true constraint (least restrictive for iframes and mobile)
-      let stream: MediaStream;
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      } catch (firstErr) {
-        console.warn("Direct audio: true getUserMedia attempt failed, retrying:", firstErr);
-        stream = await navigator.mediaDevices.getUserMedia({ audio: {} });
-      }
-
+      // 1. Get or reuse persistent session stream (asks permission once on first tap)
+      const stream = await getOrCreateSessionStream();
       mediaStreamRef.current = stream;
 
-      let mimeType = "";
-      if (typeof MediaRecorder !== "undefined") {
-        if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
-          mimeType = "audio/webm;codecs=opus";
-        } else if (MediaRecorder.isTypeSupported("audio/webm")) {
-          mimeType = "audio/webm";
-        } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
-          mimeType = "audio/mp4";
-        }
-      }
-
+      const mimeType = getSupportedAudioMimeType();
       const recorder = new MediaRecorder(
         stream,
         mimeType ? { mimeType } : undefined,
@@ -459,7 +439,7 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
         errMsg.toLowerCase().includes("disallowed")
       ) {
         setErrorMessage(
-          "Microphone permission is blocked by your browser. Please allow microphone access in your browser address bar (lock/camera icon), or open in a direct tab.",
+          "Microphone permission is blocked in browser settings. Please allow microphone in your address bar (lock/camera icon) or tap below to prompt.",
         );
       } else {
         setErrorMessage(
@@ -722,20 +702,26 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
               ) : status === "retry" ? (
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 text-rose-700 font-bold bg-rose-50 px-3 py-1.5 rounded-xl border border-rose-200">
                   <div className="flex items-center gap-1.5">
-                    <XCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                    {errorMessage?.toLowerCase().includes("permission") ||
+                    errorMessage?.toLowerCase().includes("blocked") ? (
+                      <ShieldAlert className="w-4 h-4 text-rose-600 shrink-0" />
+                    ) : (
+                      <XCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                    )}
                     <span>
                       {errorMessage ||
                         "不正解 (Incorrect). Try speaking clearly into the mic."}
                     </span>
                   </div>
-                  {errorMessage?.toLowerCase().includes("permission") && (
+                  {(errorMessage?.toLowerCase().includes("permission") ||
+                    errorMessage?.toLowerCase().includes("blocked")) && (
                     <a
                       href={window.location.href}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-[11px] font-extrabold text-[#1A73E8] bg-white border border-[#BFDBFE] px-2.5 py-1 rounded-lg hover:underline inline-flex items-center gap-1 shrink-0"
                     >
-                      <span>Open in New Tab (Unrestricted Mic)</span>
+                      <span>Open in Direct Window</span>
                       <ExternalLink className="w-3 h-3" />
                     </a>
                   )}
@@ -824,10 +810,25 @@ export const PhraseSpeakingQuiz: React.FC<PhraseSpeakingQuizProps> = ({
               <button
                 type="button"
                 onClick={handleToggleListening}
-                className="h-14 sm:h-16 px-6 sm:px-10 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white font-black text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-md shadow-amber-100 hover:scale-102 transition-all cursor-pointer"
+                className={`h-14 sm:h-16 px-6 sm:px-10 rounded-2xl ${
+                  errorMessage?.toLowerCase().includes("permission") ||
+                  errorMessage?.toLowerCase().includes("blocked")
+                    ? "bg-rose-600 hover:bg-rose-700 shadow-rose-200"
+                    : "bg-amber-600 hover:bg-amber-700 shadow-amber-100"
+                } text-white font-black text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-md hover:scale-102 transition-all cursor-pointer`}
               >
-                <RotateCcw className="w-5 h-5" />
-                <span>Try Again (Speak)</span>
+                {errorMessage?.toLowerCase().includes("permission") ||
+                errorMessage?.toLowerCase().includes("blocked") ? (
+                  <>
+                    <Mic className="w-5 h-5" />
+                    <span>Grant Microphone & Speak</span>
+                  </>
+                ) : (
+                  <>
+                    <RotateCcw className="w-5 h-5" />
+                    <span>Try Again (Speak)</span>
+                  </>
+                )}
               </button>
             ) : (
               <button

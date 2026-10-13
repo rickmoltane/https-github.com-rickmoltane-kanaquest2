@@ -24,7 +24,13 @@ import {
   Square,
   Loader2,
   ExternalLink,
+  ShieldAlert,
 } from "lucide-react";
+import {
+  getOrCreateSessionStream,
+  pauseSessionStream,
+  getSupportedAudioMimeType,
+} from "../utils/audioSessionManager";
 
 interface InteractionSpeakingQuizProps {
   soundEnabled: boolean;
@@ -84,16 +90,10 @@ export const InteractionSpeakingQuiz: React.FC<
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
-  // Stop hardware microphone stream tracks
+  // Pause hardware microphone tracks between questions without killing browser permission
   const stopMediaTracks = useCallback(() => {
-    if (mediaStreamRef.current) {
-      try {
-        mediaStreamRef.current.getTracks().forEach((t) => t.stop());
-      } catch {
-        // ignore
-      }
-      mediaStreamRef.current = null;
-    }
+    pauseSessionStream();
+    mediaStreamRef.current = null;
   }, []);
 
   // Clear 10s recording timer & countdown
@@ -280,7 +280,7 @@ export const InteractionSpeakingQuiz: React.FC<
       audioBlob = new Blob(audioChunksRef.current, { type: mime });
     }
 
-    stopMediaTracks();
+    pauseSessionStream();
 
     // If recording produced no audio
     if (!audioBlob || audioBlob.size === 0) {
@@ -376,7 +376,6 @@ export const InteractionSpeakingQuiz: React.FC<
     }
   }, [
     clearRecordingTimer,
-    stopMediaTracks,
     soundEnabled,
     currentItem,
     handleProcessResponse,
@@ -386,8 +385,6 @@ export const InteractionSpeakingQuiz: React.FC<
   // Start 10s speech recording session
   const handleStartListening = async () => {
     clearRecordingTimer();
-    stopMediaTracks();
-
     audioChunksRef.current = [];
     setTranscript("");
     setEvaluationResult(null);
@@ -401,28 +398,11 @@ export const InteractionSpeakingQuiz: React.FC<
         return;
       }
 
-      // Universal audio: true constraint (least restrictive for iframes and mobile)
-      let stream: MediaStream;
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      } catch (firstErr) {
-        console.warn("Direct audio: true getUserMedia attempt failed, retrying:", firstErr);
-        stream = await navigator.mediaDevices.getUserMedia({ audio: {} });
-      }
-
+      // 1. Get or reuse persistent session stream (prompts user once on first tap)
+      const stream = await getOrCreateSessionStream();
       mediaStreamRef.current = stream;
 
-      let mimeType = "";
-      if (typeof MediaRecorder !== "undefined") {
-        if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
-          mimeType = "audio/webm;codecs=opus";
-        } else if (MediaRecorder.isTypeSupported("audio/webm")) {
-          mimeType = "audio/webm";
-        } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
-          mimeType = "audio/mp4";
-        }
-      }
-
+      const mimeType = getSupportedAudioMimeType();
       const recorder = new MediaRecorder(
         stream,
         mimeType ? { mimeType } : undefined,
@@ -470,7 +450,7 @@ export const InteractionSpeakingQuiz: React.FC<
         errMsg.toLowerCase().includes("disallowed")
       ) {
         setErrorMessage(
-          "Microphone permission is blocked by your browser. Please allow microphone access in your browser address bar (lock/camera icon), or open in a direct tab below.",
+          "Microphone permission is blocked in browser settings. Please allow microphone in your address bar (lock/camera icon) or tap below to prompt.",
         );
       } else {
         setErrorMessage(
@@ -714,7 +694,8 @@ export const InteractionSpeakingQuiz: React.FC<
                       </span>
                     </p>
                   )}
-                  {errorMessage?.toLowerCase().includes("permission") && (
+                  {(errorMessage?.toLowerCase().includes("permission") ||
+                    errorMessage?.toLowerCase().includes("blocked")) && (
                     <div className="mt-2">
                       <a
                         href={window.location.href}
@@ -722,7 +703,7 @@ export const InteractionSpeakingQuiz: React.FC<
                         rel="noopener noreferrer"
                         className="text-xs font-bold text-[#1A73E8] bg-white border border-[#BFDBFE] px-3 py-1.5 rounded-xl hover:underline inline-flex items-center gap-1.5 shadow-2xs"
                       >
-                        <span>Open in New Tab (Unrestricted Mic)</span>
+                        <span>Open in Direct Window</span>
                         <ExternalLink className="w-3.5 h-3.5" />
                       </a>
                     </div>
@@ -816,7 +797,12 @@ export const InteractionSpeakingQuiz: React.FC<
                     : status === "listening"
                     ? "h-14 sm:h-16 px-6 sm:px-8 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-black text-sm sm:text-base ring-4 ring-rose-200 cursor-pointer"
                     : status === "retry"
-                    ? "px-6 py-3.5 rounded-2xl font-black text-sm sm:text-base bg-amber-600 hover:bg-amber-700 text-white hover:scale-102 active:scale-98 cursor-pointer"
+                    ? `px-6 py-3.5 rounded-2xl font-black text-sm sm:text-base ${
+                        errorMessage?.toLowerCase().includes("permission") ||
+                        errorMessage?.toLowerCase().includes("blocked")
+                          ? "bg-rose-600 hover:bg-rose-700 shadow-rose-200"
+                          : "bg-amber-600 hover:bg-amber-700"
+                      } text-white hover:scale-102 active:scale-98 cursor-pointer`
                     : "px-6 py-3.5 rounded-2xl font-black text-sm sm:text-base bg-[#1A73E8] text-white hover:bg-[#1557B0] hover:scale-102 active:scale-98 cursor-pointer"
                 }`}
               >
@@ -836,10 +822,18 @@ export const InteractionSpeakingQuiz: React.FC<
                     </span>
                   </>
                 ) : status === "retry" ? (
-                  <>
-                    <RotateCcw className="w-5 h-5" />
-                    <span>Try Again (Speak)</span>
-                  </>
+                  errorMessage?.toLowerCase().includes("permission") ||
+                  errorMessage?.toLowerCase().includes("blocked") ? (
+                    <>
+                      <Mic className="w-5 h-5" />
+                      <span>Grant Microphone & Speak</span>
+                    </>
+                  ) : (
+                    <>
+                      <RotateCcw className="w-5 h-5" />
+                      <span>Try Again (Speak)</span>
+                    </>
+                  )
                 ) : (
                   <>
                     <Mic className="w-5 h-5" />
