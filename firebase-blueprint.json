@@ -87,6 +87,54 @@
         }
       },
       "required": ["id", "userId", "exerciseType", "score", "totalQuestions", "percentage", "createdAt"]
+    },
+    "UserVocabRecord": {
+      "title": "UserVocabRecord",
+      "description": "User-provided vocabulary or phrase item tracked in Firestore",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique item ID"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth UID or guest ID"
+        },
+        "kanji": {
+          "type": "string",
+          "description": "Kanji representation"
+        },
+        "hiragana": {
+          "type": "string",
+          "description": "Hiragana phonetic spelling"
+        },
+        "romaji": {
+          "type": "string",
+          "description": "Romaji reading"
+        },
+        "english": {
+          "type": "string",
+          "description": "English meaning"
+        },
+        "category": {
+          "type": "string",
+          "description": "Vocabulary category"
+        },
+        "batch": {
+          "type": "number",
+          "description": "Batch sequence number"
+        },
+        "source": {
+          "type": "string",
+          "description": "Source attribution"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO timestamp"
+        }
+      },
+      "required": ["id", "userId", "hiragana", "romaji", "english", "category", "batch"]
     }
   },
   "firestore": {
@@ -97,6 +145,10 @@
     "/users/{userId}/quizResults/{quizId}": {
       "schema": "QuizResult",
       "description": "Subcollection of quiz historical results"
+    },
+    "/users/{userId}/vocabulary/{vocabId}": {
+      "schema": "UserVocabRecord",
+      "description": "Subcollection of user-provided vocabulary and phrase items"
     }
   }
 }

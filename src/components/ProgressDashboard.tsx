@@ -17,14 +17,19 @@ import {
   Pencil,
   Check,
   X,
-  Volume2
+  Volume2,
+  Database
 } from 'lucide-react';
 
 interface ProgressDashboardProps {
   onStartExercise: (type: ExerciseType) => void;
+  onOpenVocabDb?: () => void;
 }
 
-export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ onStartExercise }) => {
+export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ 
+  onStartExercise,
+  onOpenVocabDb
+}) => {
   const { guestUser, profile, history, updateDisplayName } = useAuth();
   const [filterType, setFilterType] = useState<'all' | ExerciseType>('all');
   const [selectedKana, setSelectedKana] = useState<string | null>(null);
@@ -237,19 +242,51 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ onStartExe
         </div>
       </div>
 
-      {/* ALL EXERCISE NAMES & DIRECT LAUNCHERS (Names shown here on progress dashboard) */}
+      {/* USER CURRICULUM VOCABULARY & PHRASES DATABASE BANNER */}
+      {onOpenVocabDb && (
+        <div className="bg-linear-to-r from-blue-50 via-indigo-50 to-emerald-50 border-2 border-blue-200/80 rounded-3xl p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3.5">
+            <div className="w-10 h-10 rounded-2xl bg-[#1A73E8] text-white flex items-center justify-center shrink-0 shadow-xs">
+              <Database className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base sm:text-lg font-black text-[#1F2329]">
+                  My Vocab &amp; Phrases Database
+                </h2>
+                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                  75 User Items
+                </span>
+              </div>
+              <p className="text-xs text-[#5F6368] mt-1 max-w-xl leading-relaxed">
+                Strict Mode is active: all exercises draw 100% exclusively from your provided vocabulary. Zero unintroduced words. Review all words, audio, and batches anytime.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onOpenVocabDb}
+            className="px-4 py-2.5 rounded-xl bg-[#1A73E8] hover:bg-[#1557B0] text-white text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer self-start sm:self-auto shrink-0"
+          >
+            <Database className="w-4 h-4" />
+            <span>Open Vocab DB</span>
+          </button>
+        </div>
+      )}
+
+      {/* ALL EXERCISE NAMES & DIRECT LAUNCHERS */}
       <div className="bg-white border-2 border-[#CBD5E1] rounded-3xl p-6 sm:p-7 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-5 pb-3 border-b border-[#E2E8F0]">
           <div>
             <h2 className="text-lg sm:text-xl font-black text-[#1F2329] tracking-tight">
-              Exercise Catalog & Practice Modules
+              Exercise Catalog &amp; Practice Modules
             </h2>
             <p className="text-xs sm:text-sm text-[#5F6368]">
-              Names and descriptions for all 5 training exercises
+              Names and descriptions for all 7 active training exercises
             </p>
           </div>
           <span className="text-xs font-bold px-3 py-1 rounded-xl bg-[#F8FAFF] border border-[#CBD5E1] text-[#1F2329] self-start sm:self-auto">
-            5 Exercise Types
+            7 Active Modules
           </span>
         </div>
 
@@ -274,7 +311,7 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ onStartExe
               type: 'word-romaji-to-hiragana' as ExerciseType,
               name: 'Exercise 3: Everyday Words (Pic + Romaji → Kana)',
               desc: 'Everyday item illustration + Romaji; pick matching Hiragana spelling.',
-              tag: '50 Vocabulary Words',
+              tag: 'Approved User Vocab',
             },
             {
               num: '4',

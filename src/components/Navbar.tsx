@@ -6,7 +6,8 @@ import {
   Grid3X3, 
   Volume2, 
   VolumeX, 
-  Cookie
+  Cookie,
+  Database
 } from 'lucide-react';
 
 export type ActiveTab = 
@@ -18,7 +19,8 @@ export type ActiveTab =
   | 'exercise-6' 
   | 'exercise-7' 
   | 'dashboard' 
-  | 'chart';
+  | 'chart'
+  | 'vocab-db';
 
 interface NavbarProps {
   activeTab: ActiveTab;
@@ -119,6 +121,20 @@ export const Navbar: React.FC<NavbarProps> = ({
               title="Progress Dashboard"
             >
               <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5" />
+            </button>
+
+            {/* Quick Link: Curriculum Vocab & Phrases DB */}
+            <button
+              type="button"
+              onClick={() => handleSelectTab('vocab-db')}
+              className={`p-1.5 sm:p-2 rounded-xl transition-colors cursor-pointer border flex items-center gap-1 ${
+                activeTab === 'vocab-db' 
+                  ? 'bg-[#1A73E8] text-white border-[#1A73E8]' 
+                  : 'text-[#1F2329] hover:bg-[#F8FAFF] border-transparent hover:border-[#E2E8F0]'
+              }`}
+              title="Curriculum Vocab & Phrases DB (75 User Items)"
+            >
+              <Database className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
 
             {/* Quick Link: Kana Reference Chart */}

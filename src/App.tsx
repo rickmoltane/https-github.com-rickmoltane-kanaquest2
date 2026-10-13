@@ -12,6 +12,7 @@ import { ExchangeQuiz } from './components/ExchangeQuiz';
 import { QuizSummary } from './components/QuizSummary';
 import { ProgressDashboard } from './components/ProgressDashboard';
 import { CharacterTable } from './components/CharacterTable';
+import { UserVocabDatabase } from './components/UserVocabDatabase';
 import { ExerciseType, QuizResult } from './types';
 import { saveQuizResult } from './services/storageService';
 import { Cookie, X } from 'lucide-react';
@@ -201,7 +202,15 @@ function MainContent() {
             onCancel={() => setActiveTab('dashboard')}
           />
         ) : activeTab === 'dashboard' ? (
-          <ProgressDashboard onStartExercise={handleStartExercise} />
+          <ProgressDashboard 
+            onStartExercise={handleStartExercise} 
+            onOpenVocabDb={() => setActiveTab('vocab-db')}
+          />
+        ) : activeTab === 'vocab-db' ? (
+          <UserVocabDatabase
+            onStartExercise={handleStartExercise}
+            soundEnabled={soundEnabled}
+          />
         ) : (
           <CharacterTable onStartExercise={handleStartExercise} />
         )}

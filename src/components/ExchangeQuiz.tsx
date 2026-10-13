@@ -11,7 +11,8 @@ import {
   CheckCircle2, 
   XCircle, 
   ArrowRight, 
-  Flame 
+  Flame,
+  Lightbulb
 } from 'lucide-react';
 
 interface ExchangeQuizProps {
@@ -46,6 +47,7 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [selectedOptionIndex, setSelectedOptionIndex] = useState<number | null>(null);
   const [isAnswered, setIsAnswered] = useState<boolean>(false);
+  const [showHint, setShowHint] = useState<boolean>(false);
   const [answers, setAnswers] = useState<AnswerRecord[]>([]);
   const [streak, setStreak] = useState<number>(0);
   const [playingAudioKey, setPlayingAudioKey] = useState<string | null>(null);
@@ -62,6 +64,7 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
     setCurrentIndex(0);
     setSelectedOptionIndex(null);
     setIsAnswered(false);
+    setShowHint(false);
     setAnswers([]);
     setStreak(0);
     startTimeRef.current = Date.now();
@@ -100,6 +103,7 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
       setCurrentIndex(prev => prev + 1);
       setSelectedOptionIndex(null);
       setIsAnswered(false);
+      setShowHint(false);
     } else {
       // Complete quiz and prepare QuizResult
       const totalQuestions = answersToUse.length;
@@ -185,11 +189,17 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
     }, 2600);
   }, [isAnswered, currentQuestion, answers, soundEnabled, handleAdvance]);
 
-  // Keyboard shortcuts [1], [2], [3]
+  // Keyboard shortcuts [1], [2], [3], and [H] for hint toggle
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (isAnswered || !currentQuestion) return;
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+      if ((e.key === 'h' || e.key === 'H') && !e.ctrlKey && !e.metaKey) {
+        setShowHint(prev => !prev);
+        return;
+      }
+
+      if (isAnswered || !currentQuestion) return;
 
       if (e.key === '1' && currentQuestion.options[0]) {
         handleSelectOption(currentQuestion.options[0], 0);
@@ -243,7 +253,7 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
             </div>
           </div>
 
-          {/* Right: Streak & Exit */}
+          {/* Right: Streak, Hint toggle, & Exit */}
           <div className="flex items-center gap-2 shrink-0">
             {streak > 1 && (
               <div className="flex items-center gap-1 text-xs font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-200">
@@ -270,12 +280,12 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
         </div>
       </div>
 
-      {/* MAIN BODY: Pure prompt and 3 replies with ZERO English hints and NO overlapping elements */}
+      {/* MAIN BODY: Pure prompt and 3 replies with optional (hint) button for translations */}
       <div className="flex-1 min-h-0 flex flex-col items-center justify-between p-3 sm:p-5 max-w-2xl mx-auto w-full gap-3 overflow-y-auto">
         
-        {/* CENTER PROMPT CARD: Pure Phrase/Question without any English hint */}
-        <div className="w-full flex-1 min-h-[120px] sm:min-h-[150px] bg-white border-2 border-[#CBD5E1] rounded-2xl sm:rounded-3xl shadow-[0_4px_16px_rgba(0,0,0,0.05)] flex flex-col items-center justify-center p-4 sm:p-6 text-center">
-          <div className="w-full max-w-lg py-4 sm:py-6 px-3 sm:px-5 rounded-2xl bg-[#F0F7FF] border-2 border-[#BFDBFE] shadow-2xs flex flex-col items-center justify-center gap-3">
+        {/* CENTER PROMPT CARD: Japanese prompt with optional Play Audio and (hint) translation button */}
+        <div className="w-full flex-1 min-h-[120px] sm:min-h-[145px] bg-white border-2 border-[#CBD5E1] rounded-2xl sm:rounded-3xl shadow-[0_4px_16px_rgba(0,0,0,0.05)] flex flex-col items-center justify-center p-3.5 sm:p-5 text-center">
+          <div className="w-full max-w-lg py-3.5 sm:py-5 px-3 sm:px-5 rounded-2xl bg-[#F0F7FF] border-2 border-[#BFDBFE] shadow-2xs flex flex-col items-center justify-center gap-2.5 sm:gap-3">
             {/* The Target Phrase (Pure Romaji for Ex 6 or Pure Hiragana for Ex 7) */}
             <span
               className={`${
@@ -287,28 +297,71 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
               {currentQuestion.prompt}
             </span>
 
-            {/* Optional Play Audio Button (In Hiragana mode: available anytime; In Romaji mode: available after answered or replaying) */}
-            {(isHiragana || isAnswered) && (
+            {/* Prompt Action Buttons: Audio and Optional (hint) translation button */}
+            <div className="flex items-center justify-center gap-2 flex-wrap">
+              {/* Optional Play Audio Button (In Hiragana mode: available anytime; In Romaji mode: available after answered or replaying) */}
+              {(isHiragana || isAnswered) && (
+                <button
+                  type="button"
+                  onClick={() => handlePlayAudio(currentQuestion.promptAudio, 'prompt')}
+                  aria-label="Play prompt phrase audio"
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                    playingAudioKey === 'prompt'
+                      ? 'bg-[#1A73E8] text-white border-[#1A73E8] scale-105 shadow-xs'
+                      : 'bg-white text-[#1A73E8] border-[#BFDBFE] hover:border-[#1A73E8] hover:bg-[#F8FAFF] shadow-2xs'
+                  }`}
+                  title="Play prompt audio in Japanese"
+                >
+                  <Volume2 className="w-4 h-4" />
+                  <span>{playingAudioKey === 'prompt' ? 'Playing...' : 'Play Audio'}</span>
+                </button>
+              )}
+
+              {/* Optional (hint) Button that gives the English translation */}
               <button
                 type="button"
-                onClick={() => handlePlayAudio(currentQuestion.promptAudio, 'prompt')}
-                aria-label="Play prompt phrase audio"
+                onClick={() => setShowHint(prev => !prev)}
+                aria-label="Toggle English translation hint"
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
-                  playingAudioKey === 'prompt'
-                    ? 'bg-[#1A73E8] text-white border-[#1A73E8] scale-105 shadow-xs'
-                    : 'bg-white text-[#1A73E8] border-[#BFDBFE] hover:border-[#1A73E8] hover:bg-[#F8FAFF] shadow-2xs'
+                  showHint
+                    ? 'bg-amber-100 text-amber-900 border-amber-400 ring-1 ring-amber-300 shadow-xs'
+                    : 'bg-white text-[#5F6368] border-[#CBD5E1] hover:text-[#1F2329] hover:border-amber-400 hover:bg-amber-50/60 shadow-2xs'
                 }`}
-                title="Play prompt audio in Japanese"
+                title="Show English translation hint (Key: H)"
               >
-                <Volume2 className="w-4 h-4" />
-                <span>{playingAudioKey === 'prompt' ? 'Playing...' : 'Play Audio'}</span>
+                <Lightbulb className={`w-3.5 h-3.5 ${showHint ? 'text-amber-600 fill-amber-500' : 'text-amber-500'}`} />
+                <span>{showHint ? 'Hide (hint)' : '(hint)'}</span>
               </button>
+            </div>
+
+            {/* Revealed Translation Hint Container */}
+            {showHint && (
+              <div className="w-full max-w-md px-3.5 py-2.5 rounded-xl bg-amber-50/95 border border-amber-300 text-left animate-in fade-in duration-200">
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 bg-amber-200/80 px-1.5 py-0.5 rounded font-mono">
+                    Translation Hint
+                  </span>
+                  {currentQuestion.situationTitle && (
+                    <span className="text-[11px] text-amber-800 font-medium truncate">
+                      {currentQuestion.situationTitle}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs sm:text-sm font-bold text-neutral-900 leading-snug">
+                  "{currentQuestion.item.englishMeaning}"
+                </p>
+                {isHiragana && (
+                  <p className="text-[11px] font-mono text-neutral-600 mt-1">
+                    Romaji: {currentQuestion.item.promptRomaji}
+                  </p>
+                )}
+              </div>
             )}
           </div>
         </div>
 
         {/* BOTTOM OPTIONS AREA: Exactly 3 Possible Replies (Pure Romaji or Hiragana) */}
-        {/* Sibling elements: Option button and Audio button sit side-by-side cleanly */}
+        {/* Sibling elements: Option button and Audio button sit side-by-side cleanly with NO overlap */}
         <div className="w-full flex flex-col gap-2.5 sm:gap-3 shrink-0">
           {currentQuestion.options.map((option, idx) => {
             const isSelected = selectedOptionIndex === idx;
@@ -350,15 +403,23 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
                     </span>
 
                     {/* Option Text (Pure Japanese text, wraps cleanly without overflowing) */}
-                    <span
-                      className={`${
-                        isHiragana
-                          ? "font-['Noto_Sans_JP',_sans-serif] text-base sm:text-lg font-bold tracking-wide"
-                          : "font-mono text-sm sm:text-base font-bold"
-                      } break-words text-left leading-snug flex-1 min-w-0`}
-                    >
-                      {option.text}
-                    </span>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span
+                        className={`${
+                          isHiragana
+                            ? "font-['Noto_Sans_JP',_sans-serif] text-base sm:text-lg font-bold tracking-wide"
+                            : "font-mono text-sm sm:text-base font-bold"
+                        } break-words text-left leading-snug`}
+                      >
+                        {option.text}
+                      </span>
+                      {/* Optional English translation of options shown when hint is active and answer was revealed */}
+                      {showHint && showFeedback && (
+                        <span className="text-[11px] sm:text-xs text-[#5F6368] font-normal italic mt-0.5 break-words">
+                          {option.englishMeaning}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Feedback Status Icon */}
@@ -394,7 +455,7 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
           })}
         </div>
 
-        {/* BOTTOM ACTION BAR: Simple Clean Status */}
+        {/* BOTTOM ACTION BAR: Clean Status, Shortcuts, and Advance Button */}
         <div className="w-full bg-white border border-[#CBD5E1] rounded-2xl px-4 py-2.5 shadow-2xs flex items-center justify-between text-xs shrink-0 gap-2">
           <div className="flex items-center gap-2 min-w-0">
             {isAnswered ? (
@@ -402,30 +463,61 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
                 <div className="flex items-center gap-1.5 text-emerald-700 font-extrabold truncate">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                   <span>正解</span>
+                  {showHint && (
+                    <span className="text-[11px] font-normal text-emerald-800 hidden sm:inline ml-1 truncate">
+                      — {currentQuestion.item.correctEnglish}
+                    </span>
+                  )}
                 </div>
               ) : (
                 <div className="flex items-center gap-1.5 text-rose-700 font-extrabold truncate">
                   <XCircle className="w-4 h-4 text-rose-600 shrink-0" />
                   <span>不正解</span>
+                  {showHint && (
+                    <span className="text-[11px] font-normal text-neutral-700 hidden sm:inline ml-1 truncate">
+                      — {currentQuestion.item.correctEnglish}
+                    </span>
+                  )}
                 </div>
               )
             ) : (
-              <span className="text-[#5F6368] font-semibold truncate">
-                Keys <kbd className="px-1.5 py-0.5 rounded bg-neutral-100 border border-neutral-300 font-mono text-[10px]">1</kbd> <kbd className="px-1.5 py-0.5 rounded bg-neutral-100 border border-neutral-300 font-mono text-[10px]">2</kbd> <kbd className="px-1.5 py-0.5 rounded bg-neutral-100 border border-neutral-300 font-mono text-[10px]">3</kbd>
+              <span className="text-[#5F6368] font-semibold truncate flex items-center gap-1">
+                <span>Keys</span>
+                <kbd className="px-1.5 py-0.5 rounded bg-neutral-100 border border-neutral-300 font-mono text-[10px]">1</kbd>
+                <kbd className="px-1.5 py-0.5 rounded bg-neutral-100 border border-neutral-300 font-mono text-[10px]">2</kbd>
+                <kbd className="px-1.5 py-0.5 rounded bg-neutral-100 border border-neutral-300 font-mono text-[10px]">3</kbd>
+                <span className="text-neutral-400 mx-1">&bull;</span>
+                <kbd className="px-1.5 py-0.5 rounded bg-neutral-100 border border-neutral-300 font-mono text-[10px]">H</kbd>
+                <span className="text-[11px] text-neutral-500">Hint</span>
               </span>
             )}
           </div>
 
-          {isAnswered && (
-            <button
-              type="button"
-              onClick={() => handleAdvance()}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#1A73E8] text-white font-bold hover:bg-[#1557B0] cursor-pointer shrink-0"
-            >
-              <span>{currentIndex < questions.length - 1 ? 'Next' : 'Finish'}</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          )}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Mobile quick-toggle for hint when unanswered */}
+            {!isAnswered && (
+              <button
+                type="button"
+                onClick={() => setShowHint(prev => !prev)}
+                className={`text-[11px] font-bold px-2 py-1 rounded-lg border transition-colors cursor-pointer sm:hidden ${
+                  showHint ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-white text-neutral-600 border-neutral-300'
+                }`}
+              >
+                {showHint ? 'Hide (hint)' : '(hint)'}
+              </button>
+            )}
+
+            {isAnswered && (
+              <button
+                type="button"
+                onClick={() => handleAdvance()}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#1A73E8] text-white font-bold hover:bg-[#1557B0] cursor-pointer shrink-0"
+              >
+                <span>{currentIndex < questions.length - 1 ? 'Next' : 'Finish'}</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

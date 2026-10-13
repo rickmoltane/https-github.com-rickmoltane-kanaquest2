@@ -43,13 +43,26 @@ service cloud.firestore {
                data.exerciseType == 'romaji-to-hiragana' ||
                data.exerciseType == 'word-romaji-to-hiragana' ||
                data.exerciseType == 'word-hiragana-to-romaji' ||
-               data.exerciseType == 'hiragana-drawing'
+               data.exerciseType == 'hiragana-drawing' ||
+               data.exerciseType == 'exchange-romaji' ||
+               data.exerciseType == 'exchange-hiragana'
              ) &&
              data.score is number && data.score >= 0 && data.score <= 100 &&
              data.totalQuestions is number && data.totalQuestions > 0 && data.totalQuestions <= 100 &&
              data.percentage is number && data.percentage >= 0 && data.percentage <= 100 &&
              data.createdAt is string && data.createdAt.size() <= 50 &&
              (!('timeSpentSeconds' in data) || (data.timeSpentSeconds is number && data.timeSpentSeconds >= 0));
+    }
+
+    function isValidVocabRecord(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.userId is string && data.userId == request.auth.uid &&
+             data.hiragana is string && data.hiragana.size() <= 200 &&
+             data.romaji is string && data.romaji.size() <= 200 &&
+             data.english is string && data.english.size() <= 300 &&
+             data.category is string && data.category.size() <= 100 &&
+             data.batch is number && data.batch >= 1 &&
+             (!('kanji' in data) || (data.kanji is string && data.kanji.size() <= 200));
     }
 
     match /users/{userId} {
@@ -62,6 +75,13 @@ service cloud.firestore {
         allow read: if isOwner(userId);
         allow create: if isOwner(userId) && isValidQuizResult(incoming()) && incoming().userId == userId;
         allow update: if isOwner(userId) && isValidQuizResult(incoming()) && incoming().userId == userId;
+        allow delete: if isOwner(userId);
+      }
+
+      match /vocabulary/{vocabId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidVocabRecord(incoming()) && incoming().userId == userId;
+        allow update: if isOwner(userId) && isValidVocabRecord(incoming()) && incoming().userId == userId;
         allow delete: if isOwner(userId);
       }
     }
