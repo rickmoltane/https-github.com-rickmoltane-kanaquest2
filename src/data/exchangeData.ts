@@ -6,16 +6,16 @@ export interface ExchangeItem {
   englishMeaning: string;
   promptSpeaker?: string;
 
-  // Prompt / Question
+  // Prompt / Question (Full multi-word phrase)
   promptRomaji: string;
   promptHiragana: string;
 
-  // Correct Reply
+  // Correct Reply (Full multi-word phrase)
   correctRomaji: string;
   correctHiragana: string;
   correctEnglish: string;
 
-  // Distractors (strictly 2 distractors so there are always exactly 3 options)
+  // Distractors: Deceptive replies roughly similar to the correct one (swapped word order, particle error, or altered grammar)
   distractors: [
     { romaji: string; hiragana: string; english: string },
     { romaji: string; hiragana: string; english: string }
@@ -23,430 +23,12 @@ export interface ExchangeItem {
 }
 
 export const EXCHANGE_DATA: ExchangeItem[] = [
-  // 1. Morning Greeting
+  // 1. Where do you work? -> I work at a company.
   {
     id: 'exch-1',
-    category: 'greetings',
-    categoryLabel: 'Everyday Greetings',
-    situationTitle: 'Morning Greeting at School or Work',
-    englishMeaning: 'Someone greets you in the morning: "Good morning!"',
-    promptSpeaker: 'Coworker',
-    promptRomaji: 'Ohayō gozaimasu!',
-    promptHiragana: 'おはようございます！',
-    correctRomaji: 'Ohayō gozaimasu!',
-    correctHiragana: 'おはようございます！',
-    correctEnglish: 'Good morning!',
-    distractors: [
-      { romaji: 'Konbanwa!', hiragana: 'こんばんは！', english: 'Good evening!' },
-      { romaji: 'Oyasuminasai.', hiragana: 'おやすみなさい。', english: 'Good night.' },
-    ],
-  },
-
-  // 2. Daytime Greeting
-  {
-    id: 'exch-2',
-    category: 'greetings',
-    categoryLabel: 'Everyday Greetings',
-    situationTitle: 'Meeting in the Afternoon',
-    englishMeaning: 'A neighbor greets you in the afternoon: "Hello!"',
-    promptSpeaker: 'Neighbor',
-    promptRomaji: 'Konnichiwa!',
-    promptHiragana: 'こんにちは！',
-    correctRomaji: 'Konnichiwa!',
-    correctHiragana: 'こんにちは！',
-    correctEnglish: 'Hello!',
-    distractors: [
-      { romaji: 'Sayōnara.', hiragana: 'さようなら。', english: 'Goodbye.' },
-      { romaji: 'Itadakimasu!', hiragana: 'いただきます！', english: 'Let’s eat!' },
-    ],
-  },
-
-  // 3. Evening Greeting
-  {
-    id: 'exch-3',
-    category: 'greetings',
-    categoryLabel: 'Everyday Greetings',
-    situationTitle: 'Encounter After Sunset',
-    englishMeaning: 'Meeting someone at dusk: "Good evening!"',
-    promptSpeaker: 'Store Clerk',
-    promptRomaji: 'Konbanwa!',
-    promptHiragana: 'こんばんは！',
-    correctRomaji: 'Konbanwa!',
-    correctHiragana: 'こんばんは！',
-    correctEnglish: 'Good evening!',
-    distractors: [
-      { romaji: 'Ohayō gozaimasu!', hiragana: 'おはようございます！', english: 'Good morning!' },
-      { romaji: 'Gochisōsama deshita.', hiragana: 'ごちそうさまでした。', english: 'Thank you for the meal.' },
-    ],
-  },
-
-  // 4. Gratitude
-  {
-    id: 'exch-4',
-    category: 'courtesy',
-    categoryLabel: 'Courtesy & Gratitude',
-    situationTitle: 'Someone Expresses Thanks',
-    englishMeaning: 'A friend thanks you: "Thank you very much!"',
-    promptSpeaker: 'Friend',
-    promptRomaji: 'Arigatō gozaimasu!',
-    promptHiragana: 'ありがとうございます！',
-    correctRomaji: 'Dō itashimashite.',
-    correctHiragana: 'どういたしまして。',
-    correctEnglish: 'You are welcome.',
-    distractors: [
-      { romaji: 'Sayōnara.', hiragana: 'さようなら。', english: 'Goodbye.' },
-      { romaji: 'Itadakimasu.', hiragana: 'いただきます。', english: 'Let’s eat.' },
-    ],
-  },
-
-  // 5. Leaving Work / Office
-  {
-    id: 'exch-5',
-    category: 'parting',
-    categoryLabel: 'Workplace Courtesy',
-    situationTitle: 'Colleague Leaving the Office First',
-    englishMeaning: 'Coworker bows to leave: "Excuse me for leaving before you."',
-    promptSpeaker: 'Colleague',
-    promptRomaji: 'Osaki ni shitsurei shimasu.',
-    promptHiragana: 'おさきにしつれいします。',
-    correctRomaji: 'Otsukaresama deshita.',
-    correctHiragana: 'おつかれさまでした。',
-    correctEnglish: 'Thank you for your hard work today.',
-    distractors: [
-      { romaji: 'Hajimemashite.', hiragana: 'はじめまして。', english: 'Nice to meet you.' },
-      { romaji: 'Dō itashimashite.', hiragana: 'どういたしまして。', english: 'You are welcome.' },
-    ],
-  },
-
-  // 6. First Meeting / Introducing Name
-  {
-    id: 'exch-6',
-    category: 'introductions',
-    categoryLabel: 'Self Introduction',
-    situationTitle: 'First Meeting at a Gathering',
-    englishMeaning: 'New acquaintance: "Nice to meet you. I am Eric. What is your name?"',
-    promptSpeaker: 'Eric',
-    promptRomaji: 'Hajimemashite. Erikku desu. O-namae wa?',
-    promptHiragana: 'はじめまして。えりっくです。おなまえは？',
-    correctRomaji: 'Hajimemashite, Tanaka desu. Dōzo yoroshiku.',
-    correctHiragana: 'はじめまして、たなかです。どうぞよろしく。',
-    correctEnglish: 'Nice to meet you, I am Tanaka. Pleased to meet you.',
-    distractors: [
-      { romaji: 'Kaishain ja arimasen.', hiragana: 'かいしゃいんじゃありません。', english: 'I am not an employee.' },
-      { romaji: 'Furansu kara kimashita.', hiragana: 'ふらんすからきました。', english: 'I came from France.' },
-    ],
-  },
-
-  // 7. Polite Pleasure to Meet
-  {
-    id: 'exch-7',
-    category: 'introductions',
-    categoryLabel: 'Self Introduction',
-    situationTitle: 'Concluding an Introduction',
-    englishMeaning: 'Partner bows: "Please treat me favorably."',
-    promptSpeaker: 'Partner',
-    promptRomaji: 'Dōzo yoroshiku onegaishimasu.',
-    promptHiragana: 'どうぞよろしくおねがいします。',
-    correctRomaji: 'Kochira koso, yoroshiku onegaishimasu.',
-    correctHiragana: 'こちらこそ、よろしくおねがいします。',
-    correctEnglish: 'Likewise, it is a pleasure.',
-    distractors: [
-      { romaji: 'Oyasuminasai.', hiragana: 'おやすみなさい。', english: 'Good night.' },
-      { romaji: 'Gochisōsama deshita.', hiragana: 'ごちそうさまでした。', english: 'Thank you for the meal.' },
-    ],
-  },
-
-  // 8. Asking Origin
-  {
-    id: 'exch-8',
-    category: 'origin',
-    categoryLabel: 'Country & Origin',
-    situationTitle: 'Asking Where You Came From',
-    englishMeaning: 'A classmate asks: "Where did you come from?"',
-    promptSpeaker: 'Classmate',
-    promptRomaji: 'Dochira kara kimashita ka?',
-    promptHiragana: 'どちらからきましたか？',
-    correctRomaji: 'Furansu kara kimashita.',
-    correctHiragana: 'ふらんすからきました。',
-    correctEnglish: 'I came from France.',
-    distractors: [
-      { romaji: 'Kaishain desu.', hiragana: 'かいしゃいんです。', english: 'I am an employee.' },
-      { romaji: 'Ja, mata ashita.', hiragana: 'じゃ、またあした。', english: 'Well, see you tomorrow.' },
-    ],
-  },
-
-  // 9. Are You From Japan?
-  {
-    id: 'exch-9',
-    category: 'origin',
-    categoryLabel: 'Country & Origin',
-    situationTitle: 'Inquiring Nationality or Origin',
-    englishMeaning: 'Someone asks: "Did you come from Japan?"',
-    promptSpeaker: 'Host',
-    promptRomaji: 'Nihon kara kimashita ka?',
-    promptHiragana: 'にほんからきましたか？',
-    correctRomaji: 'Hai, Nihon kara kimashita.',
-    correctHiragana: 'はい、にほんからきました。',
-    correctEnglish: 'Yes, I came from Japan.',
-    distractors: [
-      { romaji: 'Iie, ginkōin desu.', hiragana: 'いいえ、ぎんこういんです。', english: 'No, I am a banker.' },
-      { romaji: 'Dō itashimashite.', hiragana: 'どういたしまして。', english: 'You are welcome.' },
-    ],
-  },
-
-  // 10. Asking Occupation
-  {
-    id: 'exch-10',
-    category: 'occupation',
-    categoryLabel: 'Occupations',
-    situationTitle: 'Asking What Your Job Is',
-    englishMeaning: 'A peer asks: "What job do you do?"',
-    promptSpeaker: 'Interviewer',
-    promptRomaji: 'Nan no shigoto o shiteimasu ka?',
-    promptHiragana: 'なんのしごとをしていますか？',
-    correctRomaji: 'Kaishain desu.',
-    correctHiragana: 'かいしゃいんです。',
-    correctEnglish: 'I am a company employee.',
-    distractors: [
-      { romaji: 'Amerika kara kimashita.', hiragana: 'あめりかからきました。', english: 'I came from America.' },
-      { romaji: 'Sayōnara.', hiragana: 'さようなら。', english: 'Goodbye.' },
-    ],
-  },
-
-  // 11. Are You a Bank Employee?
-  {
-    id: 'exch-11',
-    category: 'occupation',
-    categoryLabel: 'Occupations',
-    situationTitle: 'Confirming Bank Employee Role',
-    englishMeaning: 'Someone asks: "Are you a bank employee?"',
-    promptSpeaker: 'Colleague',
-    promptRomaji: 'Ginkōin desu ka?',
-    promptHiragana: 'ぎんこういんですか？',
-    correctRomaji: 'Iie, ginkōin ja arimasen. Kenkyūsha desu.',
-    correctHiragana: 'いいえ、ぎんこういんじゃありません。けんきゅうしゃです。',
-    correctEnglish: 'No, I am not a bank employee. I am a researcher.',
-    distractors: [
-      { romaji: 'Hai, nihon kara kimashita.', hiragana: 'はい、にほんからきました。', english: 'Yes, I came from Japan.' },
-      { romaji: 'Ohayō gozaimasu.', hiragana: 'おはようございます。', english: 'Good morning.' },
-    ],
-  },
-
-  // 12. Are You a Student?
-  {
-    id: 'exch-12',
-    category: 'occupation',
-    categoryLabel: 'Occupations',
-    situationTitle: 'Confirming Student Status',
-    englishMeaning: 'A teacher asks: "Are you a student?"',
-    promptSpeaker: 'Professor',
-    promptRomaji: 'Gakusei desu ka?',
-    promptHiragana: 'がくせいですか？',
-    correctRomaji: 'Hai, gakusei desu.',
-    correctHiragana: 'はい、がくせいです。',
-    correctEnglish: 'Yes, I am a student.',
-    distractors: [
-      { romaji: 'Furansu desu.', hiragana: 'ふらんすです。', english: 'It is France.' },
-      { romaji: 'Otsukaresama deshita.', hiragana: 'おつかれさまでした。', english: 'Good work today.' },
-    ],
-  },
-
-  // 13. Are You a Doctor?
-  {
-    id: 'exch-13',
-    category: 'occupation',
-    categoryLabel: 'Occupations',
-    situationTitle: 'Confirming Medical Profession',
-    englishMeaning: 'A patient asks: "Are you a doctor?"',
-    promptSpeaker: 'Patient',
-    promptRomaji: 'Isha desu ka?',
-    promptHiragana: 'いしゃですか？',
-    correctRomaji: 'Iie, isha ja arimasen. Kaishain desu.',
-    correctHiragana: 'いいえ、いしゃじゃありません。かいしゃいんです。',
-    correctEnglish: 'No, I am not a doctor. I am an office worker.',
-    distractors: [
-      { romaji: 'Dō itashimashite.', hiragana: 'どういたしまして。', english: 'You are welcome.' },
-      { romaji: 'Itadakimasu.', hiragana: 'いただきます。', english: 'Let’s eat.' },
-    ],
-  },
-
-  // 14. Are You a Teacher?
-  {
-    id: 'exch-14',
-    category: 'occupation',
-    categoryLabel: 'Occupations',
-    situationTitle: 'Confirming Teacher Profession',
-    englishMeaning: 'Someone asks: "Are you a teacher?"',
-    promptSpeaker: 'Student',
-    promptRomaji: 'Sensei desu ka?',
-    promptHiragana: 'せんせいですか？',
-    correctRomaji: 'Hai, sensei desu.',
-    correctHiragana: 'はい、せんせいです。',
-    correctEnglish: 'Yes, I am a teacher.',
-    distractors: [
-      { romaji: 'Oyasuminasai.', hiragana: 'おやすみなさい。', english: 'Good night.' },
-      { romaji: 'Osaki ni shitsurei shimasu.', hiragana: 'おさきにしつれいします。', english: 'Excuse me for leaving.' },
-    ],
-  },
-
-  // 15. Casual Parting / See You Tomorrow
-  {
-    id: 'exch-15',
-    category: 'parting',
-    categoryLabel: 'Everyday Greetings',
-    situationTitle: 'Saying Goodbye to a Friend',
-    englishMeaning: 'A friend waves: "Well, see you tomorrow!"',
-    promptSpeaker: 'Friend',
-    promptRomaji: 'Ja, mata ashita!',
-    promptHiragana: 'じゃ、またあした！',
-    correctRomaji: 'Mata ashita!',
-    correctHiragana: 'またあした！',
-    correctEnglish: 'See you tomorrow!',
-    distractors: [
-      { romaji: 'Hajimemashite.', hiragana: 'はじめまして。', english: 'Nice to meet you.' },
-      { romaji: 'Gomen nasai.', hiragana: 'ごめんなさい。', english: 'I am sorry.' },
-    ],
-  },
-
-  // 16. Formal Farewell
-  {
-    id: 'exch-16',
-    category: 'parting',
-    categoryLabel: 'Everyday Greetings',
-    situationTitle: 'Formal Farewell / Long Parting',
-    englishMeaning: 'A host bows: "Goodbye."',
-    promptSpeaker: 'Host',
-    promptRomaji: 'Sayōnara.',
-    promptHiragana: 'さようなら。',
-    correctRomaji: 'Sayōnara, ki o tsukete!',
-    correctHiragana: 'さようなら、きをつけて！',
-    correctEnglish: 'Goodbye, take care!',
-    distractors: [
-      { romaji: 'Itadakimasu!', hiragana: 'いただきます！', english: 'Let’s eat!' },
-      { romaji: 'Kaishain desu.', hiragana: 'かいしゃいんです。', english: 'I am an employee.' },
-    ],
-  },
-
-  // 17. Before Meal
-  {
-    id: 'exch-17',
-    category: 'meals',
-    categoryLabel: 'Meal Etiquette',
-    situationTitle: 'Food Served at the Table',
-    englishMeaning: 'The host announces: "The meal is served."',
-    promptSpeaker: 'Cook',
-    promptRomaji: 'Gohan ga dekimashita yo.',
-    promptHiragana: 'ごはんができましたよ。',
-    correctRomaji: 'Itadakimasu!',
-    correctHiragana: 'いただきます！',
-    correctEnglish: 'Thank you for the meal / Let’s eat!',
-    distractors: [
-      { romaji: 'Gochisōsama deshita.', hiragana: 'ごちそうさまでした。', english: 'Thank you for the meal (after).' },
-      { romaji: 'Otsukaresama deshita.', hiragana: 'おつかれさまでした。', english: 'Good work today.' },
-    ],
-  },
-
-  // 18. After Meal
-  {
-    id: 'exch-18',
-    category: 'meals',
-    categoryLabel: 'Meal Etiquette',
-    situationTitle: 'Finishing a Delicious Meal',
-    englishMeaning: 'The host asks: "How was the meal?"',
-    promptSpeaker: 'Host',
-    promptRomaji: 'Gohan wa dō deshita ka?',
-    promptHiragana: 'ごはんはどうでしたか？',
-    correctRomaji: 'Gochisōsama deshita!',
-    correctHiragana: 'ごちそうさまでした！',
-    correctEnglish: 'Thank you for the delicious meal!',
-    distractors: [
-      { romaji: 'Itadakimasu!', hiragana: 'いただきます！', english: 'Let’s eat!' },
-      { romaji: 'Sayōnara.', hiragana: 'さようなら。', english: 'Goodbye.' },
-    ],
-  },
-
-  // 19. Excuse Me / Apology
-  {
-    id: 'exch-19',
-    category: 'courtesy',
-    categoryLabel: 'Courtesy & Gratitude',
-    situationTitle: 'Bumping Gently on a Train',
-    englishMeaning: 'Someone says: "Excuse me / I am sorry!"',
-    promptSpeaker: 'Passerby',
-    promptRomaji: 'Sumimasen!',
-    promptHiragana: 'すみません！',
-    correctRomaji: 'Iie, daijōbu desu yo.',
-    correctHiragana: 'いいえ、だいじょうぶですよ。',
-    correctEnglish: 'No problem / It is quite alright.',
-    distractors: [
-      { romaji: 'Hajimemashite.', hiragana: 'はじめまして。', english: 'Nice to meet you.' },
-      { romaji: 'Itadakimasu.', hiragana: 'いただきます。', english: 'Let’s eat.' },
-    ],
-  },
-
-  // 20. Offering Something (Dōzo)
-  {
-    id: 'exch-20',
-    category: 'courtesy',
-    categoryLabel: 'Courtesy & Gratitude',
-    situationTitle: 'Being Offered a Seat or Item',
-    englishMeaning: 'Someone gestures: "Please, go ahead."',
-    promptSpeaker: 'Friendly Passenger',
-    promptRomaji: 'Dōzo.',
-    promptHiragana: 'どうぞ。',
-    correctRomaji: 'Dōmo arigatō gozaimasu.',
-    correctHiragana: 'どうもありがとうございます。',
-    correctEnglish: 'Thank you very much indeed.',
-    distractors: [
-      { romaji: 'Oyasuminasai.', hiragana: 'おやすみなさい。', english: 'Good night.' },
-      { romaji: 'Osaki ni shitsurei shimasu.', hiragana: 'おさきにしつれいします。', english: 'Excuse me for leaving.' },
-    ],
-  },
-
-  // 21. Night Farewell / Going to Bed
-  {
-    id: 'exch-21',
-    category: 'greetings',
-    categoryLabel: 'Everyday Greetings',
-    situationTitle: 'Heading to Bed',
-    englishMeaning: 'Family member: "Good night."',
-    promptSpeaker: 'Host Parent',
-    promptRomaji: 'Oyasuminasai.',
-    promptHiragana: 'おやすみなさい。',
-    correctRomaji: 'Oyasuminasai.',
-    correctHiragana: 'おやすみなさい。',
-    correctEnglish: 'Good night.',
-    distractors: [
-      { romaji: 'Konnichiwa.', hiragana: 'こんにちは。', english: 'Hello.' },
-      { romaji: 'Dō itashimashite.', hiragana: 'どういたしまして。', english: 'You are welcome.' },
-    ],
-  },
-
-  // 22. Welcoming / Good Work
-  {
-    id: 'exch-22',
-    category: 'courtesy',
-    categoryLabel: 'Workplace Courtesy',
-    situationTitle: 'Ending a Project or Shift',
-    englishMeaning: 'Team leader says: "Thank you all for your great effort today!"',
-    promptSpeaker: 'Team Lead',
-    promptRomaji: 'Kyō wa otsukaresama deshita!',
-    promptHiragana: 'きょうはおつかれさまでした！',
-    correctRomaji: 'Otsukaresama deshita!',
-    correctHiragana: 'おつかれさまでした！',
-    correctEnglish: 'Thank you for your hard work!',
-    distractors: [
-      { romaji: 'Gochisōsama deshita.', hiragana: 'ごちそうさまでした。', english: 'Thank you for the meal.' },
-      { romaji: 'Hajimemashite.', hiragana: 'はじめまして。', english: 'Nice to meet you.' },
-    ],
-  },
-
-  // 23. Working at a Company
-  {
-    id: 'exch-23',
     category: 'places-work',
     categoryLabel: 'Places and Work',
-    situationTitle: 'Asking Where Someone Works',
+    situationTitle: 'Asking Workplace',
     englishMeaning: 'Where do you work?',
     promptSpeaker: 'Acquaintance',
     promptRomaji: 'Doko de hataraite imasu ka?',
@@ -455,17 +37,17 @@ export const EXCHANGE_DATA: ExchangeItem[] = [
     correctHiragana: 'かいしゃではたらいています。',
     correctEnglish: 'I work at a company.',
     distractors: [
-      { romaji: 'Sayōnara.', hiragana: 'さようなら。', english: 'Goodbye.' },
-      { romaji: 'Itadakimasu.', hiragana: 'いただきます。', english: 'Let us eat.' },
+      { romaji: 'Kaisha o hataraite imasu.', hiragana: 'かいしゃをはたらいています。', english: 'Incorrect particle: o instead of de' },
+      { romaji: 'Hataraite kaisha de imasu.', hiragana: 'はたらいてかいしゃでいます。', english: 'Incorrect word order' },
     ],
   },
 
-  // 24. Working at a School
+  // 2. Do you work at a school? -> Yes, I work at a school.
   {
-    id: 'exch-24',
+    id: 'exch-2',
     category: 'places-work',
     categoryLabel: 'Places and Work',
-    situationTitle: 'Asking About School Employment',
+    situationTitle: 'School Employment',
     englishMeaning: 'Do you work at a school?',
     promptSpeaker: 'Neighbor',
     promptRomaji: 'Gakkō de hataraite imasu ka?',
@@ -474,17 +56,17 @@ export const EXCHANGE_DATA: ExchangeItem[] = [
     correctHiragana: 'はい、がっこうではたらいています。',
     correctEnglish: 'Yes, I work at a school.',
     distractors: [
-      { romaji: 'Gochisōsama deshita.', hiragana: 'ごちそうさまでした。', english: 'Thank you for the meal.' },
-      { romaji: 'Oyasuminasai.', hiragana: 'おやすみなさい。', english: 'Good night.' },
+      { romaji: 'Hai, gakkō ni hataraite imasu.', hiragana: 'はい、がっこうにはたらいています。', english: 'Incorrect particle: ni instead of de' },
+      { romaji: 'Hai, hataraite gakkō de imasu.', hiragana: 'はい、はたらいてがっこうでいます。', english: 'Incorrect word order' },
     ],
   },
 
-  // 25. Working at a Hospital
+  // 3. Do you work at a hospital? -> Yes, I work at a hospital.
   {
-    id: 'exch-25',
+    id: 'exch-3',
     category: 'places-work',
     categoryLabel: 'Places and Work',
-    situationTitle: 'Asking About Hospital Employment',
+    situationTitle: 'Hospital Employment',
     englishMeaning: 'Do you work at a hospital?',
     promptSpeaker: 'Colleague',
     promptRomaji: 'Byōin de hataraite imasu ka?',
@@ -493,17 +75,17 @@ export const EXCHANGE_DATA: ExchangeItem[] = [
     correctHiragana: 'はい、びょういんではたらいています。',
     correctEnglish: 'Yes, I work at a hospital.',
     distractors: [
-      { romaji: 'Konbanwa.', hiragana: 'こんばんは。', english: 'Good evening.' },
-      { romaji: 'Dō itashimashite.', hiragana: 'どういたしまして。', english: 'You are welcome.' },
+      { romaji: 'Hai, byōin o hataraite imasu.', hiragana: 'はい、びょういんをはたらいています。', english: 'Incorrect particle: o instead of de' },
+      { romaji: 'Hai, byōin de hataraki imasu.', hiragana: 'はい、びょういんではたらきます。', english: 'Incorrect verb form' },
     ],
   },
 
-  // 26. Living on Pension
+  // 4. Do you live on a pension? -> Yes, I live on a pension.
   {
-    id: 'exch-26',
+    id: 'exch-4',
     category: 'places-work',
     categoryLabel: 'Places and Work',
-    situationTitle: 'Retirement Living',
+    situationTitle: 'Living on Pension',
     englishMeaning: 'Do you live on a pension?',
     promptSpeaker: 'Friend',
     promptRomaji: 'Nenkin de seikatsu shite imasu ka?',
@@ -512,122 +94,502 @@ export const EXCHANGE_DATA: ExchangeItem[] = [
     correctHiragana: 'はい、ねんきんでせいかつしています。',
     correctEnglish: 'Yes, I live on a pension.',
     distractors: [
-      { romaji: 'Ohayō gozaimasu.', hiragana: 'おはようございます。', english: 'Good morning.' },
-      { romaji: 'Jā mata.', hiragana: 'じゃあまた。', english: 'See you later.' },
+      { romaji: 'Hai, nenkin o seikatsu shite imasu.', hiragana: 'はい、ねんきんをせいかつしています。', english: 'Incorrect particle: o instead of de' },
+      { romaji: 'Hai, seikatsu de nenkin shite imasu.', hiragana: 'はい、せいかつでねんきんしています。', english: 'Inverted noun phrase' },
     ],
   },
 
-  // 27. Occupation: Doctor
+  // 5. What is your name? -> My name is Tanaka.
   {
-    id: 'exch-27',
-    category: 'occupation',
-    categoryLabel: 'Occupations',
-    situationTitle: 'Asking for Occupation',
-    englishMeaning: 'What is your job?',
-    promptSpeaker: 'Interviewer',
-    promptRomaji: 'O-shigoto wa nan desu ka?',
-    promptHiragana: 'おしごとはなんですか？',
-    correctRomaji: 'Isha desu.',
-    correctHiragana: 'いしゃです。',
-    correctEnglish: 'I am a doctor.',
-    distractors: [
-      { romaji: 'Arigatō gozaimasu.', hiragana: 'ありがとうございます。', english: 'Thank you.' },
-      { romaji: 'Konnichiwa.', hiragana: 'こんにちは。', english: 'Hello.' },
-    ],
-  },
-
-  // 28. Occupation: Engineer
-  {
-    id: 'exch-28',
-    category: 'occupation',
-    categoryLabel: 'Occupations',
-    situationTitle: 'Confirming Profession',
-    englishMeaning: 'Are you an engineer?',
-    promptSpeaker: 'Colleague',
-    promptRomaji: 'Enjinia desu ka?',
-    promptHiragana: 'えんじにあですか？',
-    correctRomaji: 'Hai, enjinia desu.',
-    correctHiragana: 'はい、えんじにあです。',
-    correctEnglish: 'Yes, I am an engineer.',
-    distractors: [
-      { romaji: 'Sumimasen.', hiragana: 'すみません。', english: 'Excuse me.' },
-      { romaji: 'Sayōnara.', hiragana: 'さようなら。', english: 'Goodbye.' },
-    ],
-  },
-
-  // 29. Occupation: Student
-  {
-    id: 'exch-29',
-    category: 'occupation',
-    categoryLabel: 'Occupations',
-    situationTitle: 'Asking if Student',
-    englishMeaning: 'Are you a student?',
-    promptSpeaker: 'Professor',
-    promptRomaji: 'Gakusei desu ka?',
-    promptHiragana: 'がくせいですか？',
-    correctRomaji: 'Hai, gakusei desu.',
-    correctHiragana: 'はい、がくせいです。',
-    correctEnglish: 'Yes, I am a student.',
-    distractors: [
-      { romaji: 'Itadakimasu.', hiragana: 'いただきます。', english: 'Let us eat.' },
-      { romaji: 'Oyasuminasai.', hiragana: 'おやすみなさい。', english: 'Good night.' },
-    ],
-  },
-
-  // 30. Occupation: Company Employee
-  {
-    id: 'exch-30',
-    category: 'occupation',
-    categoryLabel: 'Occupations',
-    situationTitle: 'Asking if Company Employee',
-    englishMeaning: 'Are you a company employee?',
-    promptSpeaker: 'Guest',
-    promptRomaji: 'Kaishain desu ka?',
-    promptHiragana: 'かいしゃいんですか？',
-    correctRomaji: 'Hai, kaishain desu.',
-    correctHiragana: 'はい、かいしゃいんです。',
-    correctEnglish: 'Yes, I am a company employee.',
-    distractors: [
-      { romaji: 'Gochisōsama deshita.', hiragana: 'ごちそうさまでした。', english: 'Thank you for the meal.' },
-      { romaji: 'Konnichiwa.', hiragana: 'こんにちは。', english: 'Hello.' },
-    ],
-  },
-
-  // 31. Please Read
-  {
-    id: 'exch-31',
-    category: 'sentences',
-    categoryLabel: 'Useful Sentences',
-    situationTitle: 'Classroom Instruction',
-    englishMeaning: 'Please read this.',
-    promptSpeaker: 'Teacher',
-    promptRomaji: 'Kore o yonde kudasai.',
-    promptHiragana: 'これをよんでください。',
-    correctRomaji: 'Hai, wakarimashita.',
-    correctHiragana: 'はい、わかりました。',
-    correctEnglish: 'Yes, understood.',
-    distractors: [
-      { romaji: 'Oyasuminasai.', hiragana: 'おやすみなさい。', english: 'Good night.' },
-      { romaji: 'Dōitashimashite.', hiragana: 'どういたしまして。', english: 'You are welcome.' },
-    ],
-  },
-
-  // 32. What is your Name
-  {
-    id: 'exch-32',
+    id: 'exch-5',
     category: 'introductions',
     categoryLabel: 'Introductions',
-    situationTitle: 'Asking Someone’s Name',
+    situationTitle: 'Asking Name',
     englishMeaning: 'What is your name?',
     promptSpeaker: 'Receptionist',
     promptRomaji: 'O-namae wa nan desu ka?',
     promptHiragana: 'おなまえはなんですか？',
-    correctRomaji: 'Tanaka desu.',
-    correctHiragana: 'たなかです。',
-    correctEnglish: 'I am Tanaka.',
+    correctRomaji: 'Watashi no namae wa Tanaka desu.',
+    correctHiragana: 'わたしのなまえはたなかです。',
+    correctEnglish: 'My name is Tanaka.',
     distractors: [
-      { romaji: 'Gomen nasai.', hiragana: 'ごめんなさい。', english: 'I am sorry.' },
-      { romaji: 'O-genki desu ka.', hiragana: 'おげんきですか。', english: 'How are you?' },
+      { romaji: 'Watashi wa namae no Tanaka desu.', hiragana: 'わたしはなまえのたなかです。', english: 'Misplaced particle no' },
+      { romaji: 'Namae wa watashi no Tanaka desu.', hiragana: 'なまえはわたしのたなかです。', english: 'Mismatched order' },
+    ],
+  },
+
+  // 6. Nice to meet you. I am Tanaka. Pleased to meet you. -> Nice to meet you, I am Suzuki. Likewise pleased to meet you.
+  {
+    id: 'exch-6',
+    category: 'introductions',
+    categoryLabel: 'Self Introduction',
+    situationTitle: 'Meeting for the First Time',
+    englishMeaning: 'Nice to meet you. I am Tanaka. Pleased to meet you.',
+    promptSpeaker: 'Tanaka',
+    promptRomaji: 'Hajimemashite. Watashi wa Tanaka desu.',
+    promptHiragana: 'はじめまして。わたしはたなかです。',
+    correctRomaji: 'Hajimemashite, Suzuki desu. Dōzo yoroshiku.',
+    correctHiragana: 'はじめまして、すずきです。どうぞよろしく。',
+    correctEnglish: 'Nice to meet you, I am Suzuki. Pleased to meet you.',
+    distractors: [
+      { romaji: 'Hajimemashite, Suzuki desu. Dōzo yoroshikunai.', hiragana: 'はじめまして、すずきです。どうぞよろしくない。', english: 'Negative polite ending error' },
+      { romaji: 'Hajimemashite, Suzuki no desu yoroshiku.', hiragana: 'はじめまして、すずきのですよろしく。', english: 'Grammatical particle error' },
+    ],
+  },
+
+  // 7. Pleased to make your acquaintance. -> The pleasure is mine, pleased to meet you.
+  {
+    id: 'exch-7',
+    category: 'introductions',
+    categoryLabel: 'Polite Introduction',
+    situationTitle: 'Closing an Introduction',
+    englishMeaning: 'Please treat me favorably.',
+    promptSpeaker: 'Partner',
+    promptRomaji: 'Dōzo yoroshiku onegaishimasu.',
+    promptHiragana: 'どうぞよろしくおねがいします。',
+    correctRomaji: 'Kochira koso, yoroshiku onegaishimasu.',
+    correctHiragana: 'こちらこそ、よろしくおねがいします。',
+    correctEnglish: 'The pleasure is mine, nice to meet you.',
+    distractors: [
+      { romaji: 'Kochira koso, onegaishimasu yoroshiku.', hiragana: 'こちらこそ、おねがいしますよろしく。', english: 'Inverted phrasing' },
+      { romaji: 'Yoroshiku koso, kochira onegaishimasu.', hiragana: 'よろしくこそ、こちらおねがいします。', english: 'Wrong particle placement' },
+    ],
+  },
+
+  // 8. Where did you come from? -> I came from France.
+  {
+    id: 'exch-8',
+    category: 'origin',
+    categoryLabel: 'Origin and Nationality',
+    situationTitle: 'Where are you from?',
+    englishMeaning: 'Where did you come from?',
+    promptSpeaker: 'Classmate',
+    promptRomaji: 'Dochira kara kimashita ka?',
+    promptHiragana: 'どちらからきましたか？',
+    correctRomaji: 'Watashi wa Furansu kara kimashita.',
+    correctHiragana: 'わたしはふらんすからきました。',
+    correctEnglish: 'I came from France.',
+    distractors: [
+      { romaji: 'Watashi kara Furansu wa kimashita.', hiragana: 'わたしからふらんすはきました。', english: 'Swapped origin particles' },
+      { romaji: 'Watashi wa Furansu made kimashita.', hiragana: 'わたしはふらんすまできました。', english: 'Incorrect destination particle made' },
+    ],
+  },
+
+  // 9. Did you come from Japan? -> Yes, I came from Japan.
+  {
+    id: 'exch-9',
+    category: 'origin',
+    categoryLabel: 'Origin and Nationality',
+    situationTitle: 'From Japan?',
+    englishMeaning: 'Did you come from Japan?',
+    promptSpeaker: 'Host',
+    promptRomaji: 'Nihon kara kimashita ka?',
+    promptHiragana: 'にほんからきましたか？',
+    correctRomaji: 'Hai, Nihon kara kimashita.',
+    correctHiragana: 'はい、にほんからきました。',
+    correctEnglish: 'Yes, I came from Japan.',
+    distractors: [
+      { romaji: 'Hai, Nihon made kimashita.', hiragana: 'はい、にほんまできました。', english: 'Wrong particle made' },
+      { romaji: 'Hai, kimashita Nihon kara.', hiragana: 'はい、きましたにほんから。', english: 'Inverted verb order' },
+    ],
+  },
+
+  // 10. What is your job? -> I work as an engineer.
+  {
+    id: 'exch-10',
+    category: 'occupation',
+    categoryLabel: 'Occupations',
+    situationTitle: 'Asking Job Role',
+    englishMeaning: 'What is your job?',
+    promptSpeaker: 'Interviewer',
+    promptRomaji: 'Anata no o-shigoto wa nan desu ka?',
+    promptHiragana: 'あなたのおしごとはなんですか？',
+    correctRomaji: 'Watashi wa enjinia o shite imasu.',
+    correctHiragana: 'わたしはえんじにあをしています。',
+    correctEnglish: 'I work as an engineer.',
+    distractors: [
+      { romaji: 'Watashi no enjinia o shite imasu.', hiragana: 'わたしのえんじにあをしています。', english: 'Incorrect particle no' },
+      { romaji: 'Watashi wa enjinia de shite imasu.', hiragana: 'わたしはえんじにあでしています。', english: 'Incorrect particle de' },
+    ],
+  },
+
+  // 11. Are you a student? -> Yes, I am a student.
+  {
+    id: 'exch-11',
+    category: 'occupation',
+    categoryLabel: 'Occupations',
+    situationTitle: 'Student Status',
+    englishMeaning: 'Are you a student?',
+    promptSpeaker: 'Professor',
+    promptRomaji: 'Anata wa gakusei desu ka?',
+    promptHiragana: 'あなたはがくせいですか？',
+    correctRomaji: 'Hai, watashi wa gakusei desu.',
+    correctHiragana: 'はい、わたしはがくせいです。',
+    correctEnglish: 'Yes, I am a student.',
+    distractors: [
+      { romaji: 'Hai, watashi no gakusei desu.', hiragana: 'はい、わたしのがくせいです。', english: 'Wrong particle no instead of wa' },
+      { romaji: 'Hai, gakusei wa watashi desu.', hiragana: 'はい、がくせいはわたしです。', english: 'Reversed topic and predicate' },
+    ],
+  },
+
+  // 12. Are you a doctor? -> No, I am not a doctor.
+  {
+    id: 'exch-12',
+    category: 'occupation',
+    categoryLabel: 'Occupations',
+    situationTitle: 'Doctor Inquiry',
+    englishMeaning: 'Are you a doctor?',
+    promptSpeaker: 'Patient',
+    promptRomaji: 'Anata wa isha desu ka?',
+    promptHiragana: 'あなたはいしゃですか？',
+    correctRomaji: 'Iie, watashi wa isha ja arimasen.',
+    correctHiragana: 'いいえ、わたしはいしゃじゃありません。',
+    correctEnglish: 'No, I am not a doctor.',
+    distractors: [
+      { romaji: 'Iie, watashi wa isha de arimasen.', hiragana: 'いいえ、わたしはいしゃでありません。', english: 'Grammatical slip de arimasen' },
+      { romaji: 'Iie, isha wa watashi ja arimasen.', hiragana: 'いいえ、いしゃはわたしじゃありません。', english: 'Inverted topic' },
+    ],
+  },
+
+  // 13. Are you a teacher? -> Yes, I am a school teacher.
+  {
+    id: 'exch-13',
+    category: 'occupation',
+    categoryLabel: 'Occupations',
+    situationTitle: 'Teacher Inquiry',
+    englishMeaning: 'Are you a teacher?',
+    promptSpeaker: 'Student',
+    promptRomaji: 'Anata wa kyōshi desu ka?',
+    promptHiragana: 'あなたはきょうしですか？',
+    correctRomaji: 'Hai, gakkō no kyōshi desu.',
+    correctHiragana: 'はい、がっこうのきょうしです。',
+    correctEnglish: 'Yes, I am a school teacher.',
+    distractors: [
+      { romaji: 'Hai, kyōshi no gakkō desu.', hiragana: 'はい、きょうしのがっこうです。', english: 'Inverted noun modifier order' },
+      { romaji: 'Hai, gakkō de kyōshi desu.', hiragana: 'はい、がっこうできょうしです。', english: 'Particle error: de instead of no' },
+    ],
+  },
+
+  // 14. Is she a nurse? -> Yes, she is a hospital nurse.
+  {
+    id: 'exch-14',
+    category: 'occupation',
+    categoryLabel: 'Occupations',
+    situationTitle: 'Nurse Inquiry',
+    englishMeaning: 'Is she a nurse?',
+    promptSpeaker: 'Visitor',
+    promptRomaji: 'Kanojo wa kangoshi desu ka?',
+    promptHiragana: 'かのじょはかんごしですか？',
+    correctRomaji: 'Hai, byōin no kangoshi desu.',
+    correctHiragana: 'はい、びょういんのかんごしです。',
+    correctEnglish: 'Yes, she is a hospital nurse.',
+    distractors: [
+      { romaji: 'Hai, kangoshi no byōin desu.', hiragana: 'はい、かんごしのびょういんです。', english: 'Inverted modifier' },
+      { romaji: 'Hai, byōin o kangoshi desu.', hiragana: 'はい、びょういんをかんごしです。', english: 'Wrong particle o' },
+    ],
+  },
+
+  // 15. Is he an office employee? -> Yes, he works at a company.
+  {
+    id: 'exch-15',
+    category: 'occupation',
+    categoryLabel: 'Occupations',
+    situationTitle: 'Office Employee Inquiry',
+    englishMeaning: 'Is he a company employee?',
+    promptSpeaker: 'Colleague',
+    promptRomaji: 'Kare wa kaishain desu ka?',
+    promptHiragana: 'かれはかいしゃいんですか？',
+    correctRomaji: 'Hai, kaisha de hataraite imasu.',
+    correctHiragana: 'はい、かいしゃではたらいています。',
+    correctEnglish: 'Yes, he works at a company.',
+    distractors: [
+      { romaji: 'Hai, kaisha o hataraite imasu.', hiragana: 'はい、かいしゃをはたらいています。', english: 'Wrong particle o instead of de' },
+      { romaji: 'Hai, hataraite kaisha de imasu.', hiragana: 'はい、はたらいてかいしゃでいます。', english: 'Mismatched word order' },
+    ],
+  },
+
+  // 16. Please read this business card. -> Yes, I will try reading it now.
+  {
+    id: 'exch-16',
+    category: 'sentences',
+    categoryLabel: 'Useful Sentences',
+    situationTitle: 'Reading Instruction',
+    englishMeaning: 'Please read this business card.',
+    promptSpeaker: 'Instructor',
+    promptRomaji: 'Kono meishi o yonde kudasai.',
+    promptHiragana: 'このめいしをよんでください。',
+    correctRomaji: 'Hai, ima yonde mimasu.',
+    correctHiragana: 'はい、いまよんでみます。',
+    correctEnglish: 'Yes, I will try reading it now.',
+    distractors: [
+      { romaji: 'Hai, ima yonde kudasai.', hiragana: 'はい、いまよんでください.', english: 'Echoing request kudasai instead of answering' },
+      { romaji: 'Hai, yonde ima mimasu.', hiragana: 'はい、よんでいまみます。', english: 'Incorrect adverbial placement' },
+    ],
+  },
+
+  // 17. Please do your self-introduction. -> Yes, I will do my self-introduction.
+  {
+    id: 'exch-17',
+    category: 'introductions',
+    categoryLabel: 'Self Introduction',
+    situationTitle: 'Request for Introduction',
+    englishMeaning: 'Please give your self-introduction.',
+    promptSpeaker: 'Host',
+    promptRomaji: 'Jiko shōkai o onegaishimasu.',
+    promptHiragana: 'じこしょうかいをおねがいします。',
+    correctRomaji: 'Hai, watashi no jiko shōkai o shimasu.',
+    correctHiragana: 'はい、わたしのじこしょうかいをします。',
+    correctEnglish: 'Yes, I will do my self-introduction.',
+    distractors: [
+      { romaji: 'Hai, watashi wa jiko shōkai o kudasai.', hiragana: 'はい、わたしはじこしょうかいをください。', english: 'Incorrect verb phrasing' },
+      { romaji: 'Hai, jiko shōkai de watashi o shimasu.', hiragana: 'はい、じこしょうかいでわたしをします。', english: 'Grammatical particle inversion' },
+    ],
+  },
+
+  // 18. Thank you for your hard work today as well. -> Thank you for your hard work, see you tomorrow.
+  {
+    id: 'exch-18',
+    category: 'courtesy',
+    categoryLabel: 'Workplace Courtesy',
+    situationTitle: 'End of Day Greeting',
+    englishMeaning: 'Thank you for your hard work today as well.',
+    promptSpeaker: 'Team Lead',
+    promptRomaji: 'Kyō mo o-tsukaresama deshita.',
+    promptHiragana: 'きょうもおつかれさまでした。',
+    correctRomaji: 'Otsukaresama deshita. Mata ashita.',
+    correctHiragana: 'おつかれさまでした。またあした。',
+    correctEnglish: 'Thank you for your hard work. See you tomorrow.',
+    distractors: [
+      { romaji: 'Otsukaresama deshita. Ashita mata wa.', hiragana: 'おつかれさまでした。あしたまたは。', english: 'Grammatical syntax error' },
+      { romaji: 'Mata otsukaresama deshita ashita.', hiragana: 'またおつかれさまでしたあした。', english: 'Confused word arrangement' },
+    ],
+  },
+
+  // 19. Excuse me for leaving before you. -> Thank you for your hard work. Take care.
+  {
+    id: 'exch-19',
+    category: 'parting',
+    categoryLabel: 'Workplace Courtesy',
+    situationTitle: 'Leaving the Workplace',
+    englishMeaning: 'Excuse me for leaving ahead of you.',
+    promptSpeaker: 'Colleague',
+    promptRomaji: 'Osaki ni shitsurei shimasu.',
+    promptHiragana: 'おさきにしつれいします。',
+    correctRomaji: 'Otsukaresama deshita. Ki o tsukete.',
+    correctHiragana: 'おつかれさまでした。きをつけて。',
+    correctEnglish: 'Thank you for your hard work. Take care on your way.',
+    distractors: [
+      { romaji: 'Otsukaresama deshita. Ki ga tsukete.', hiragana: 'おつかれさまでした。きがつけて。', english: 'Wrong particle ga instead of o' },
+      { romaji: 'Ki o tsukete. Osaki ni shimasu.', hiragana: 'きをつけて。おさきにします。', english: 'Incomplete reversed phrase' },
+    ],
+  },
+
+  // 20. Thank you very much for helping me. -> Not at all, you are very welcome.
+  {
+    id: 'exch-20',
+    category: 'courtesy',
+    categoryLabel: 'Courtesy & Gratitude',
+    situationTitle: 'Expressing Appreciation',
+    englishMeaning: 'Thank you very much for helping.',
+    promptSpeaker: 'Friend',
+    promptRomaji: 'Tetsudatte kurete arigatō gozaimasu.',
+    promptHiragana: 'てつだってくれてありがとうございます。',
+    correctRomaji: 'Iie, dō itashimashite.',
+    correctHiragana: 'いいえ、どういたしまして。',
+    correctEnglish: 'Not at all, you are welcome.',
+    distractors: [
+      { romaji: 'Iie, dō itashimashita.', hiragana: 'いいえ、どういたしました。', english: 'Past tense error' },
+      { romaji: 'Dōmo arigatō itashimashite.', hiragana: 'どうもありがとういたしまして。', english: 'Mismatched fused expression' },
+    ],
+  },
+
+  // 21. The meal is ready! -> Thank you very much, let us eat!
+  {
+    id: 'exch-21',
+    category: 'meals',
+    categoryLabel: 'Meal Etiquette',
+    situationTitle: 'Meal Announcement',
+    englishMeaning: 'The meal is ready!',
+    promptSpeaker: 'Cook',
+    promptRomaji: 'Gohan ga dekimashita yo.',
+    promptHiragana: 'ごはんができましたよ。',
+    correctRomaji: 'Arigatō gozaimasu, itadakimasu!',
+    correctHiragana: 'ありがとうございます、いただきます！',
+    correctEnglish: 'Thank you, let us eat!',
+    distractors: [
+      { romaji: 'Arigatō gozaimasu, itadakimashita!', hiragana: 'ありがとうございます、いただきました！', english: 'Premature past tense before eating' },
+      { romaji: 'Itadakimasu gozaimasu, arigatō!', hiragana: 'いただきますございます、ありがとう！', english: 'Garbled honorific order' },
+    ],
+  },
+
+  // 22. How was the food? -> It was very delicious. Thank you for the meal!
+  {
+    id: 'exch-22',
+    category: 'meals',
+    categoryLabel: 'Meal Etiquette',
+    situationTitle: 'After Finishing the Meal',
+    englishMeaning: 'How was the food?',
+    promptSpeaker: 'Host',
+    promptRomaji: 'Gohan wa dō deshita ka?',
+    promptHiragana: 'ごはんはどうでしたか？',
+    correctRomaji: 'Totemo oishikatta desu. Gochisōsama deshita.',
+    correctHiragana: 'とてもおいしかったです。ごちそうさまでした。',
+    correctEnglish: 'It was very delicious. Thank you for the meal.',
+    distractors: [
+      { romaji: 'Totemo oishikatta desu. Itadakimasu deshita.', hiragana: 'とてもおいしかったです。いただきますでした。', english: 'Wrong meal phrase used after eating' },
+      { romaji: 'Gochisōsama desu oishikatta totemo.', hiragana: 'ごちそうさまですおいしかったとても。', english: 'Scrambled clause order' },
+    ],
+  },
+
+  // 23. Is that person your friend? -> Yes, they are my friend.
+  {
+    id: 'exch-23',
+    category: 'introductions',
+    categoryLabel: 'Friends & People',
+    situationTitle: 'Friend Inquiry',
+    englishMeaning: 'Is that person your friend?',
+    promptSpeaker: 'Classmate',
+    promptRomaji: 'Ano hito wa anata no tomodachi desu ka?',
+    promptHiragana: 'あのひとはあなたのともだちですか？',
+    correctRomaji: 'Hai, watashi no tomodachi desu.',
+    correctHiragana: 'はい、わたしのともだちです。',
+    correctEnglish: 'Yes, they are my friend.',
+    distractors: [
+      { romaji: 'Hai, tomodachi no watashi desu.', hiragana: 'はい、ともだちのわたしです。', english: 'Inverted possessive order' },
+      { romaji: 'Hai, watashi wa tomodachi ga desu.', hiragana: 'はい、わたしはともだちがです。', english: 'Erroneous particle insertion' },
+    ],
+  },
+
+  // 24. Will you come together with us? -> Yes, I will go together.
+  {
+    id: 'exch-24',
+    category: 'courtesy',
+    categoryLabel: 'Invitation',
+    situationTitle: 'Inviting Along',
+    englishMeaning: 'Will you come together with us?',
+    promptSpeaker: 'Friend',
+    promptRomaji: 'Watashitachi to issho ni ikimasu ka?',
+    promptHiragana: 'わたしたちといっしょにいきますか？',
+    correctRomaji: 'Hai, issho ni ikimasu.',
+    correctHiragana: 'はい、いっしょにいきます。',
+    correctEnglish: 'Yes, I will go together.',
+    distractors: [
+      { romaji: 'Hai, issho de ikimasu.', hiragana: 'はい、いっしょでいきます。', english: 'Wrong particle de instead of ni' },
+      { romaji: 'Hai, ikimasu issho ni o.', hiragana: 'はい、いきますいっしょにお。', english: 'Scrambled predicate with trailing particle' },
+    ],
+  },
+
+  // 25. Do you work as a farmer? -> Yes, I work on a farm.
+  {
+    id: 'exch-25',
+    category: 'places-work',
+    categoryLabel: 'Places and Work',
+    situationTitle: 'Agricultural Work',
+    englishMeaning: 'Do you work as a farmer?',
+    promptSpeaker: 'Neighbor',
+    promptRomaji: 'Anata wa nōka de hataraite imasu ka?',
+    promptHiragana: 'あなたはのうかではたらいていますか？',
+    correctRomaji: 'Hai, nōka de hataraite imasu.',
+    correctHiragana: 'はい、のうかではたらいています。',
+    correctEnglish: 'Yes, I work as a farmer.',
+    distractors: [
+      { romaji: 'Hai, nōka o hataraite imasu.', hiragana: 'はい、のうかをはたらいています。', english: 'Wrong particle o instead of de' },
+      { romaji: 'Hai, hataraite nōka de imasu.', hiragana: 'はい、はたらいてのうかでいます。', english: 'Misordered clause structure' },
+    ],
+  },
+
+  // 26. Where does she work part-time? -> She works part-time at a school.
+  {
+    id: 'exch-26',
+    category: 'places-work',
+    categoryLabel: 'Places and Work',
+    situationTitle: 'Part-Time Work Location',
+    englishMeaning: 'Where does she work part-time?',
+    promptSpeaker: 'Friend',
+    promptRomaji: 'Kanojo wa doko de arubaito o shite imasu ka?',
+    promptHiragana: 'かのじょはどこであるばいとをしていますか？',
+    correctRomaji: 'Gakkō de arubaito o shite imasu.',
+    correctHiragana: 'がっこうであるばいとをしています。',
+    correctEnglish: 'She works part-time at a school.',
+    distractors: [
+      { romaji: 'Gakkō o arubaito de shite imasu.', hiragana: 'がっこうをあるばいとでしています。', english: 'Swapped particles o and de' },
+      { romaji: 'Arubaito de gakkō o shite imasu.', hiragana: 'あるばいとでがっこうをしています。', english: 'Scrambled noun objects' },
+    ],
+  },
+
+  // 27. Is that child your child? -> Yes, they are my child.
+  {
+    id: 'exch-27',
+    category: 'introductions',
+    categoryLabel: 'People and Family',
+    situationTitle: 'Child Inquiry',
+    englishMeaning: 'Is that child your child?',
+    promptSpeaker: 'Teacher',
+    promptRomaji: 'Ano ko wa anata no kodomo desu ka?',
+    promptHiragana: 'あのこはあなたのこどもですか？',
+    correctRomaji: 'Hai, watashi no kodomo desu.',
+    correctHiragana: 'はい、わたしのこどもです。',
+    correctEnglish: 'Yes, that is my child.',
+    distractors: [
+      { romaji: 'Hai, kodomo no watashi desu.', hiragana: 'はい、こどものわたしです。', english: 'Inverted modifier order' },
+      { romaji: 'Hai, watashi wa kodomo de desu.', hiragana: 'はい、わたしはこどもでです。', english: 'Extraneous particle de before copula' },
+    ],
+  },
+
+  // 28. Please read this book. -> Yes, I will read it from now on.
+  {
+    id: 'exch-28',
+    category: 'sentences',
+    categoryLabel: 'Useful Sentences',
+    situationTitle: 'Book Reading Request',
+    englishMeaning: 'Please read this book.',
+    promptSpeaker: 'Teacher',
+    promptRomaji: 'Kono hon o yonde kudasai.',
+    promptHiragana: 'このほんをよんでください。',
+    correctRomaji: 'Hai, kore kara yomimasu.',
+    correctHiragana: 'はい、これからよみます。',
+    correctEnglish: 'Yes, I will read it now.',
+    distractors: [
+      { romaji: 'Hai, kore made yomimasu.', hiragana: 'はい、これまでよみます。', english: 'Wrong temporal particle made instead of kara' },
+      { romaji: 'Hai, yomimasu kore kara o.', hiragana: 'はい、よみますこれからお。', english: 'Scrambled syntax' },
+    ],
+  },
+
+  // 29. Do you work as a care worker? -> Yes, I work as a care worker at a hospital.
+  {
+    id: 'exch-29',
+    category: 'places-work',
+    categoryLabel: 'Places and Work',
+    situationTitle: 'Care Worker Role',
+    englishMeaning: 'Do you work as a care worker?',
+    promptSpeaker: 'Colleague',
+    promptRomaji: 'Kaigoshi no shigoto o shite imasu ka?',
+    promptHiragana: 'かいごしのしごとをしていますか？',
+    correctRomaji: 'Hai, byōin de kaigoshi o shite imasu.',
+    correctHiragana: 'はい、びょういんでかいごしをしています。',
+    correctEnglish: 'Yes, I work as a care worker at a hospital.',
+    distractors: [
+      { romaji: 'Hai, byōin o kaigoshi de shite imasu.', hiragana: 'はい、びょういんをかいごしでしています。', english: 'Inverted particle assignment' },
+      { romaji: 'Hai, kaigoshi de byōin o shite imasu.', hiragana: 'はい、かいごしでびょういんをしています。', english: 'Garbled semantic relation' },
+    ],
+  },
+
+  // 30. Are you a homemaker? -> Yes, I am a homemaker.
+  {
+    id: 'exch-30',
+    category: 'occupation',
+    categoryLabel: 'Occupations',
+    situationTitle: 'Homemaker Status',
+    englishMeaning: 'Are you a homemaker?',
+    promptSpeaker: 'Interviewer',
+    promptRomaji: 'Anata wa shufu desu ka?',
+    promptHiragana: 'あなたはしゅふですか？',
+    correctRomaji: 'Hai, watashi wa shufu desu.',
+    correctHiragana: 'はい、わたしはしゅふです。',
+    correctEnglish: 'Yes, I am a homemaker.',
+    distractors: [
+      { romaji: 'Hai, watashi no shufu desu.', hiragana: 'はい、わたしのしゅふです。', english: 'Incorrect particle no instead of wa' },
+      { romaji: 'Hai, shufu wa watashi desu.', hiragana: 'はい、しゅふはわたしです。', english: 'Reversed topic and predicate' },
     ],
   },
 ];

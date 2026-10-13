@@ -88,7 +88,7 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
     speakKana(textToSpeak);
     setTimeout(() => {
       setPlayingAudioKey(null);
-    }, 1800);
+    }, 2000);
   }, []);
 
   // Advance to next question or complete quiz
@@ -160,27 +160,30 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
       setStreak(0);
     }
 
-    // Audio feedback
+    // Audio feedback:
+    // Play chime/buzz, and speak the selected Japanese phrase after choosing an answer
+    // (Both for Exercise 6 and Exercise 7, fulfilling "exercise 6, include the audio AFTER the player chooses an answer")
     if (soundEnabled) {
       if (isCorrect) {
         playSuccessChime();
       } else {
         playErrorBuzz();
       }
-      // Speak the selected Japanese reply in Hiragana mode
-      if (isHiragana && option.hiraganaAudio) {
+
+      // Play audio of the chosen Japanese reply phrase after choosing an answer
+      if (option.hiraganaAudio) {
         setTimeout(() => {
           speakKana(option.hiraganaAudio);
-        }, 120);
+        }, 180);
       }
     }
 
-    // Auto-advance after 1150ms
+    // Auto-advance after 2600ms so user has time to hear full audio phrase and see feedback
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
       handleAdvance(nextAnswers);
-    }, 1150);
-  }, [isAnswered, currentQuestion, answers, soundEnabled, isHiragana, handleAdvance]);
+    }, 2600);
+  }, [isAnswered, currentQuestion, answers, soundEnabled, handleAdvance]);
 
   // Keyboard shortcuts [1], [2], [3]
   useEffect(() => {
@@ -267,11 +270,11 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
         </div>
       </div>
 
-      {/* MAIN BODY: Pure prompt and 3 replies with ZERO English hints */}
+      {/* MAIN BODY: Pure prompt and 3 replies with ZERO English hints and NO overlapping elements */}
       <div className="flex-1 min-h-0 flex flex-col items-center justify-between p-3 sm:p-5 max-w-2xl mx-auto w-full gap-3 overflow-y-auto">
         
         {/* CENTER PROMPT CARD: Pure Phrase/Question without any English hint */}
-        <div className="w-full flex-1 min-h-[120px] sm:min-h-[160px] bg-white border-2 border-[#CBD5E1] rounded-2xl sm:rounded-3xl shadow-[0_4px_16px_rgba(0,0,0,0.05)] flex flex-col items-center justify-center p-4 sm:p-6 text-center">
+        <div className="w-full flex-1 min-h-[120px] sm:min-h-[150px] bg-white border-2 border-[#CBD5E1] rounded-2xl sm:rounded-3xl shadow-[0_4px_16px_rgba(0,0,0,0.05)] flex flex-col items-center justify-center p-4 sm:p-6 text-center">
           <div className="w-full max-w-lg py-4 sm:py-6 px-3 sm:px-5 rounded-2xl bg-[#F0F7FF] border-2 border-[#BFDBFE] shadow-2xs flex flex-col items-center justify-center gap-3">
             {/* The Target Phrase (Pure Romaji for Ex 6 or Pure Hiragana for Ex 7) */}
             <span
@@ -284,18 +287,18 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
               {currentQuestion.prompt}
             </span>
 
-            {/* Optional Play Audio Button (Hiragana mode) */}
-            {isHiragana && (
+            {/* Optional Play Audio Button (In Hiragana mode: available anytime; In Romaji mode: available after answered or replaying) */}
+            {(isHiragana || isAnswered) && (
               <button
                 type="button"
                 onClick={() => handlePlayAudio(currentQuestion.promptAudio, 'prompt')}
-                aria-label="Play phrase audio"
+                aria-label="Play prompt phrase audio"
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
                   playingAudioKey === 'prompt'
                     ? 'bg-[#1A73E8] text-white border-[#1A73E8] scale-105 shadow-xs'
                     : 'bg-white text-[#1A73E8] border-[#BFDBFE] hover:border-[#1A73E8] hover:bg-[#F8FAFF] shadow-2xs'
                 }`}
-                title="Play audio in Japanese"
+                title="Play prompt audio in Japanese"
               >
                 <Volume2 className="w-4 h-4" />
                 <span>{playingAudioKey === 'prompt' ? 'Playing...' : 'Play Audio'}</span>
@@ -305,7 +308,7 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
         </div>
 
         {/* BOTTOM OPTIONS AREA: Exactly 3 Possible Replies (Pure Romaji or Hiragana) */}
-        {/* Sibling buttons to prevent any overlapping or invalid HTML nested buttons */}
+        {/* Sibling elements: Option button and Audio button sit side-by-side cleanly */}
         <div className="w-full flex flex-col gap-2.5 sm:gap-3 shrink-0">
           {currentQuestion.options.map((option, idx) => {
             const isSelected = selectedOptionIndex === idx;
@@ -323,6 +326,10 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
                 buttonStyle = 'bg-[#F8FAFF] text-[#5F6368] border-2 border-[#E2E8F0] opacity-50';
               }
             }
+
+            // In Exercise 7 (Hiragana), audio buttons are always present for options.
+            // In Exercise 6 (Romaji), audio is included AFTER player chooses an answer.
+            const showAudioButton = isHiragana || (showFeedback && (isSelected || isCorrect));
 
             return (
               <div
@@ -342,7 +349,7 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
                       {idx + 1}
                     </span>
 
-                    {/* Option Text (Pure Japanese text, wrap cleanly without overflowing) */}
+                    {/* Option Text (Pure Japanese text, wraps cleanly without overflowing) */}
                     <span
                       className={`${
                         isHiragana
@@ -366,8 +373,8 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
                   )}
                 </button>
 
-                {/* Sibling Audio Button (Hiragana mode) - Clean, independent, never overlapping */}
-                {isHiragana && (
+                {/* Sibling Audio Button - Independent flex item, never overlapping */}
+                {showAudioButton && (
                   <button
                     type="button"
                     onClick={() => handlePlayAudio(option.hiraganaAudio, `opt_${idx}`)}
@@ -377,7 +384,7 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
                         ? 'bg-[#1A73E8] text-white border-[#1A73E8] scale-105'
                         : 'bg-white text-[#5F6368] hover:text-[#1A73E8] border-[#CBD5E1] hover:border-[#1A73E8] hover:bg-[#F8FAFF]'
                     }`}
-                    title="Play pronunciation"
+                    title="Play Japanese pronunciation"
                   >
                     <Volume2 className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>

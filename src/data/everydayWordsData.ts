@@ -72,6 +72,7 @@ export const EVERYDAY_WORDS: EverydayWord[] = [
   { id: 'kare', romaji: 'Kare', kana: 'かれ', english: 'He / him', category: 'People & Pronouns', iconName: 'friends', originalKanji: '彼' },
   { id: 'kanojo', romaji: 'Kanojo', kana: 'かのじょ', english: 'She / her; girlfriend', category: 'People & Pronouns', iconName: 'friends', originalKanji: '彼女' },
   { id: 'jibun', romaji: 'Jibun', kana: 'じぶん', english: 'Oneself / myself', category: 'People & Pronouns', iconName: 'friends', originalKanji: '自分' },
+  { id: 'tomodachi-pronoun', romaji: 'Tomodachi', kana: 'ともだち', english: 'Friend', category: 'People & Pronouns', iconName: 'friends', originalKanji: '友達' },
 
   // --- 3. People by age and gender ---
   { id: 'akachan', romaji: 'Akachan', kana: 'あかちゃん', english: 'Baby', category: 'Age & Gender', iconName: 'friends', originalKanji: '赤ちゃん' },
@@ -103,6 +104,8 @@ export const EVERYDAY_WORDS: EverydayWord[] = [
 
   // --- 5. Places and work ---
   { id: 'kaisha', romaji: 'Kaisha', kana: 'かいしゃ', english: 'Company', category: 'Places & Work', iconName: 'desk', originalKanji: '会社' },
+  { id: 'gakkou-place', romaji: 'Gakkō', kana: 'がっこう', english: 'School', category: 'Places & Work', iconName: 'school', originalKanji: '学校' },
+  { id: 'byouin-place', romaji: 'Byōin', kana: 'びょういん', english: 'Hospital', category: 'Places & Work', iconName: 'hospital', originalKanji: '病院' },
   { id: 'hataraite-imasu', romaji: 'Hataraite imasu', kana: 'はたらいています', english: 'Am working / work', category: 'Places & Work', iconName: 'desk', originalKanji: '働いています' },
   { id: 'nenkin', romaji: 'Nenkin', kana: 'ねんきん', english: 'Pension', category: 'Places & Work', iconName: 'letter', originalKanji: '年金' },
   { id: 'seikatsu-shite-imasu', romaji: 'Seikatsu shite imasu', kana: 'せいかつしています', english: 'Am living / making a living', category: 'Places & Work', iconName: 'house', originalKanji: '生活しています' },
