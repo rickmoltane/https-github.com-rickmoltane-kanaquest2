@@ -1,6 +1,6 @@
 export interface ExchangeItem {
   id: string;
-  category: 'places-work' | 'occupations' | 'introductions' | 'people' | 'courtesy';
+  category: 'places-work' | 'occupations' | 'introductions' | 'people' | 'courtesy' | 'countries-origin' | 'languages' | 'age-numbers';
   categoryLabel: string;
   situationTitle: string;
   englishMeaning: string;
@@ -596,6 +596,341 @@ export const EXCHANGE_DATA: ExchangeItem[] = [
     distractors: [
       { romaji: 'Hai, arigatō gozaimasu.', hiragana: 'はい、ありがとうございます。', english: 'Echoing thank you back' },
       { romaji: 'Iie, arigatō ja arimasen.', hiragana: 'いいえ、ありがとうじゃありません。', english: 'Nonsensical negative ending' },
+    ],
+  },
+
+  // ========================================================
+  // MAJOR COUNTRIES & ORIGIN (Conversational Phrases)
+  // ========================================================
+
+  // 31. Where are you from? -> I came from France.
+  {
+    id: 'exch-31',
+    category: 'countries-origin',
+    categoryLabel: 'Country & Origin',
+    situationTitle: 'Origin: France',
+    englishMeaning: 'Where are you from?',
+    promptSpeaker: 'Host',
+    promptRomaji: 'Dochira kara kimashita ka?',
+    promptHiragana: 'どちらからきましたか？',
+    correctRomaji: 'Furansu kara kimashita.',
+    correctHiragana: 'ふらんすからきました。',
+    correctEnglish: 'I am from France.',
+    distractors: [
+      { romaji: 'Furansu ni kimashita.', hiragana: 'ふらんすにきました。', english: 'Particle error: "ni" instead of "kara"' },
+      { romaji: 'Kimashita Furansu kara.', hiragana: 'きましたふらんすから。', english: 'Incorrect word order' },
+    ],
+  },
+
+  // 32. Where are you from? -> I came from America.
+  {
+    id: 'exch-32',
+    category: 'countries-origin',
+    categoryLabel: 'Country & Origin',
+    situationTitle: 'Origin: America',
+    englishMeaning: 'Where are you from?',
+    promptSpeaker: 'Interviewer',
+    promptRomaji: 'Dochira kara kimashita ka?',
+    promptHiragana: 'どちらからきましたか？',
+    correctRomaji: 'Amerika kara kimashita.',
+    correctHiragana: 'あめりかからきました。',
+    correctEnglish: 'I am from America.',
+    distractors: [
+      { romaji: 'Amerika o kimashita.', hiragana: 'あめりかをきました。', english: 'Particle error: "o" instead of "kara"' },
+      { romaji: 'Kara kimashita Amerika.', hiragana: 'からきましたあめりか。', english: 'Incorrect word order' },
+    ],
+  },
+
+  // 33. Did you come from Japan? -> Yes, I came from Japan.
+  {
+    id: 'exch-33',
+    category: 'countries-origin',
+    categoryLabel: 'Country & Origin',
+    situationTitle: 'Origin: Japan',
+    englishMeaning: 'Did you come from Japan?',
+    promptSpeaker: 'Friend',
+    promptRomaji: 'Anata wa Nihon kara kimashita ka?',
+    promptHiragana: 'あなたはにほんからきましたか？',
+    correctRomaji: 'Hai, Nihon kara kimashita.',
+    correctHiragana: 'はい、にほんからきました。',
+    correctEnglish: 'Yes, I came from Japan.',
+    distractors: [
+      { romaji: 'Hai, Nihon de kimashita.', hiragana: 'はい、にほんできました。', english: 'Particle error: "de" instead of "kara"' },
+      { romaji: 'Hai, kimashita Nihon kara.', hiragana: 'はい、きましたにほんから。', english: 'Incorrect word order' },
+    ],
+  },
+
+  // 34. Where are you from? -> I came from the UK.
+  {
+    id: 'exch-34',
+    category: 'countries-origin',
+    categoryLabel: 'Country & Origin',
+    situationTitle: 'Origin: United Kingdom',
+    englishMeaning: 'Where are you from?',
+    promptSpeaker: 'Colleague',
+    promptRomaji: 'Dochira kara kimashita ka?',
+    promptHiragana: 'どちらからきましたか？',
+    correctRomaji: 'Igirisu kara kimashita.',
+    correctHiragana: 'いぎりすからきました。',
+    correctEnglish: 'I am from the UK.',
+    distractors: [
+      { romaji: 'Igirisu wa kimashita.', hiragana: 'いぎりすはきました。', english: 'Particle error: "wa" instead of "kara"' },
+      { romaji: 'Kara Igirisu kimashita.', hiragana: 'からいぎりすきました。', english: 'Incorrect word order' },
+    ],
+  },
+
+  // 35. Did that person come from China? -> Yes, they came from China.
+  {
+    id: 'exch-35',
+    category: 'countries-origin',
+    categoryLabel: 'Country & Origin',
+    situationTitle: 'Origin: China',
+    englishMeaning: 'Did that person come from China?',
+    promptSpeaker: 'Observer',
+    promptRomaji: 'Ano hito wa Chūgoku kara kimashita ka?',
+    promptHiragana: 'あのひとはちゅうごくからきましたか？',
+    correctRomaji: 'Hai, Chūgoku kara kimashita.',
+    correctHiragana: 'はい、ちゅうごくからきました。',
+    correctEnglish: 'Yes, they came from China.',
+    distractors: [
+      { romaji: 'Hai, Chūgoku ni kimashita.', hiragana: 'はい、ちゅうごくにきました。', english: 'Particle error: "ni" instead of "kara"' },
+      { romaji: 'Hai, kimashita Chūgoku kara.', hiragana: 'はい、きましたちゅうごくから。', english: 'Incorrect word order' },
+    ],
+  },
+
+  // 36. Did she come from Korea? -> Yes, she came from Korea.
+  {
+    id: 'exch-36',
+    category: 'countries-origin',
+    categoryLabel: 'Country & Origin',
+    situationTitle: 'Origin: Korea',
+    englishMeaning: 'Did she come from Korea?',
+    promptSpeaker: 'Classmate',
+    promptRomaji: 'Kanojo wa Kankoku kara kimashita ka?',
+    promptHiragana: 'かのじょはかんこくからきましたか？',
+    correctRomaji: 'Hai, Kankoku kara kimashita.',
+    correctHiragana: 'はい、かんこくからきました。',
+    correctEnglish: 'Yes, she came from Korea.',
+    distractors: [
+      { romaji: 'Hai, Kankoku o kimashita.', hiragana: 'はい、かんこくをきました。', english: 'Particle error: "o" instead of "kara"' },
+      { romaji: 'Hai, kara kimashita Kankoku.', hiragana: 'はい、からきましたかんこく。', english: 'Incorrect word order' },
+    ],
+  },
+
+  // ========================================================
+  // MAJOR LANGUAGES SPOKEN (Conversational Phrases)
+  // ========================================================
+
+  // 37. What language do you speak? -> I speak Japanese.
+  {
+    id: 'exch-37',
+    category: 'languages',
+    categoryLabel: 'Languages Spoken',
+    situationTitle: 'Language: Japanese',
+    englishMeaning: 'What language do you speak?',
+    promptSpeaker: 'Interviewer',
+    promptRomaji: 'Nani-go o hanashimasu ka?',
+    promptHiragana: 'なにごをはなしますか？',
+    correctRomaji: 'Nihongo o hanashimasu.',
+    correctHiragana: 'にほんごをはなします。',
+    correctEnglish: 'I speak Japanese.',
+    distractors: [
+      { romaji: 'Nihongo de hanashimasu ka.', hiragana: 'にほんごではなしますか。', english: 'Question marker on answer' },
+      { romaji: 'Hanashimasu Nihongo o.', hiragana: 'はなしますにほんごを。', english: 'Incorrect word order' },
+    ],
+  },
+
+  // 38. What language do you speak? -> I speak English.
+  {
+    id: 'exch-38',
+    category: 'languages',
+    categoryLabel: 'Languages Spoken',
+    situationTitle: 'Language: English',
+    englishMeaning: 'What language do you speak?',
+    promptSpeaker: 'Tourist',
+    promptRomaji: 'Nani-go o hanashimasu ka?',
+    promptHiragana: 'なにごをはなしますか？',
+    correctRomaji: 'Eigo o hanashimasu.',
+    correctHiragana: 'えいごをはなします。',
+    correctEnglish: 'I speak English.',
+    distractors: [
+      { romaji: 'Eigo ni hanashimasu.', hiragana: 'えいごにはなします。', english: 'Particle error: "ni" instead of "o"' },
+      { romaji: 'O hanashimasu Eigo.', hiragana: 'をはなしますえいご。', english: 'Incorrect word order' },
+    ],
+  },
+
+  // 39. Do you speak French? -> Yes, I speak French.
+  {
+    id: 'exch-39',
+    category: 'languages',
+    categoryLabel: 'Languages Spoken',
+    situationTitle: 'Language: French',
+    englishMeaning: 'Do you speak French?',
+    promptSpeaker: 'Coworker',
+    promptRomaji: 'Anata wa Furansugo o hanashimasu ka?',
+    promptHiragana: 'あなたはふらんすごをはなしますか？',
+    correctRomaji: 'Hai, Furansugo o hanashimasu.',
+    correctHiragana: 'はい、ふらんすごをはなします。',
+    correctEnglish: 'Yes, I speak French.',
+    distractors: [
+      { romaji: 'Hai, Furansugo wa hanashimasu ka.', hiragana: 'はい、ふらんすごははなしますか。', english: 'Question marker on response' },
+      { romaji: 'Hai, hanashimasu Furansugo o.', hiragana: 'はい、はなしますふらんすごを。', english: 'Incorrect word order' },
+    ],
+  },
+
+  // 40. Does he speak Japanese? -> Yes, he speaks Japanese.
+  {
+    id: 'exch-40',
+    category: 'languages',
+    categoryLabel: 'Languages Spoken',
+    situationTitle: 'Third Person Language',
+    englishMeaning: 'Does he speak Japanese?',
+    promptSpeaker: 'Manager',
+    promptRomaji: 'Kare wa Nihongo o hanashimasu ka?',
+    promptHiragana: 'かれはにほんごをはなしますか？',
+    correctRomaji: 'Hai, Nihongo o hanashimasu.',
+    correctHiragana: 'はい、にほんごをはなします。',
+    correctEnglish: 'Yes, he speaks Japanese.',
+    distractors: [
+      { romaji: 'Hai, Nihongo de hanashimasu.', hiragana: 'はい、にほんごではなします。', english: 'Particle error: "de" instead of "o"' },
+      { romaji: 'Hai, o hanashimasu Nihongo.', hiragana: 'はい、をはなしますにほんご。', english: 'Incorrect word order' },
+    ],
+  },
+
+  // ========================================================
+  // AGE & NUMBERS (Conversational Phrases)
+  // ========================================================
+
+  // 41. How old are you? -> I am 20 years old.
+  {
+    id: 'exch-41',
+    category: 'age-numbers',
+    categoryLabel: 'Age & Numbers',
+    situationTitle: 'Age Inquiry: 20',
+    englishMeaning: 'How old are you?',
+    promptSpeaker: 'Doctor',
+    promptRomaji: 'Anata wa nan-sai desu ka?',
+    promptHiragana: 'あなたはなんさいですか？',
+    correctRomaji: 'Hatachi desu.',
+    correctHiragana: 'はたちです。',
+    correctEnglish: 'I am 20 years old.',
+    distractors: [
+      { romaji: 'Hatachi no desu.', hiragana: 'はたちのです。', english: 'Extraneous possessive particle' },
+      { romaji: 'Desu hatachi wa.', hiragana: 'です、はたちは。', english: 'Inverted word order' },
+    ],
+  },
+
+  // 42. How old is he? -> He is 19 years old.
+  {
+    id: 'exch-42',
+    category: 'age-numbers',
+    categoryLabel: 'Age & Numbers',
+    situationTitle: 'Age Inquiry: 19',
+    englishMeaning: 'How old is he?',
+    promptSpeaker: 'Teacher',
+    promptRomaji: 'Kare wa nan-sai desu ka?',
+    promptHiragana: 'かれはなんさいですか？',
+    correctRomaji: 'Jūkyūsai desu.',
+    correctHiragana: 'じゅうきゅうさいです。',
+    correctEnglish: 'He is 19 years old.',
+    distractors: [
+      { romaji: 'Jūkyūsai wa desu.', hiragana: 'じゅうきゅうさいはです。', english: 'Misplaced topic particle' },
+      { romaji: 'Desu jūkyūsai.', hiragana: 'ですじゅうきゅうさい。', english: 'Inverted word order' },
+    ],
+  },
+
+  // 43. How old is she? -> She is 22 years old.
+  {
+    id: 'exch-43',
+    category: 'age-numbers',
+    categoryLabel: 'Age & Numbers',
+    situationTitle: 'Age Inquiry: 22',
+    englishMeaning: 'How old is she?',
+    promptSpeaker: 'Registrar',
+    promptRomaji: 'Kanojo wa nan-sai desu ka?',
+    promptHiragana: 'かのじょはなんさいですか？',
+    correctRomaji: 'Nijūnisai desu.',
+    correctHiragana: 'にじゅうにさいです。',
+    correctEnglish: 'She is 22 years old.',
+    distractors: [
+      { romaji: 'Nijūnisai o desu.', hiragana: 'にじゅうにさいをです。', english: 'Extraneous object particle' },
+      { romaji: 'Desu nijūnisai wa.', hiragana: 'ですにじゅうにさいは。', english: 'Inverted word order' },
+    ],
+  },
+
+  // 44. How old is your friend? -> They are 25 years old.
+  {
+    id: 'exch-44',
+    category: 'age-numbers',
+    categoryLabel: 'Age & Numbers',
+    situationTitle: 'Age Inquiry: 25',
+    englishMeaning: 'How old is your friend?',
+    promptSpeaker: 'Acquaintance',
+    promptRomaji: 'Tomodachi wa nan-sai desu ka?',
+    promptHiragana: 'ともだちはなんさいですか？',
+    correctRomaji: 'Nijūgosai desu.',
+    correctHiragana: 'にじゅうごさいです。',
+    correctEnglish: 'They are 25 years old.',
+    distractors: [
+      { romaji: 'Nijūgosai de arimasu ka.', hiragana: 'にじゅうごさいでありますか。', english: 'Question marker on answer' },
+      { romaji: 'Desu nijūgosai.', hiragana: 'ですにじゅうごさい。', english: 'Inverted word order' },
+    ],
+  },
+
+  // 45. How old is the teacher? -> They are 30 years old.
+  {
+    id: 'exch-45',
+    category: 'age-numbers',
+    categoryLabel: 'Age & Numbers',
+    situationTitle: 'Age Inquiry: 30',
+    englishMeaning: 'How old is the teacher?',
+    promptSpeaker: 'Student',
+    promptRomaji: 'Sensei wa nan-sai desu ka?',
+    promptHiragana: 'せんせいはなんさいですか？',
+    correctRomaji: 'Sanjissai desu.',
+    correctHiragana: 'さんじゅっさいです。',
+    correctEnglish: 'They are 30 years old.',
+    distractors: [
+      { romaji: 'Sanjissai no desu.', hiragana: 'さんじゅっさいのです。', english: 'Extraneous possessive particle' },
+      { romaji: 'Desu sanjissai wa.', hiragana: 'ですさんじゅっさいは。', english: 'Inverted word order' },
+    ],
+  },
+
+  // 46. How old is that company employee? -> They are 40 years old.
+  {
+    id: 'exch-46',
+    category: 'age-numbers',
+    categoryLabel: 'Age & Numbers',
+    situationTitle: 'Age Inquiry: 40',
+    englishMeaning: 'How old is that company employee?',
+    promptSpeaker: 'Client',
+    promptRomaji: 'Ano kaishain wa nan-sai desu ka?',
+    promptHiragana: 'あのかいしゃいんはなんさいですか？',
+    correctRomaji: 'Yonjissai desu.',
+    correctHiragana: 'よんじゅっさいです。',
+    correctEnglish: 'They are 40 years old.',
+    distractors: [
+      { romaji: 'Yonjissai wa desu.', hiragana: 'よんじゅっさいはです。', english: 'Misplaced topic particle' },
+      { romaji: 'Desu yonjissai.', hiragana: 'ですよんじゅっさい。', english: 'Inverted word order' },
+    ],
+  },
+
+  // 47. How old is that elderly person? -> They are 65 years old.
+  {
+    id: 'exch-47',
+    category: 'age-numbers',
+    categoryLabel: 'Age & Numbers',
+    situationTitle: 'Age Inquiry: 65',
+    englishMeaning: 'How old is that elderly person?',
+    promptSpeaker: 'Nurse',
+    promptRomaji: 'Ano otoshiyori wa nan-sai desu ka?',
+    promptHiragana: 'あのおとしよりはなんさいですか？',
+    correctRomaji: 'Rokujūgosai desu.',
+    correctHiragana: 'ろくじゅうごさいです。',
+    correctEnglish: 'They are 65 years old.',
+    distractors: [
+      { romaji: 'Rokujūgosai o desu.', hiragana: 'ろくじゅうごさいをです。', english: 'Extraneous object particle' },
+      { romaji: 'Desu rokujūgosai wa.', hiragana: 'ですろくじゅうごさいは。', english: 'Inverted word order' },
     ],
   },
 ];
