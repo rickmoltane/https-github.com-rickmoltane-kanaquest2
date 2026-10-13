@@ -5,8 +5,45 @@
   50% { opacity: 0.25; }
 }
 
+@keyframes shakeWrong {
+  0%, 100% { transform: translateX(0); }
+  18%, 54%, 90% { transform: translateX(-6px); }
+  36%, 72% { transform: translateX(6px); }
+}
+
+@keyframes flashGreenCorrect {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 rgba(16, 185, 129, 0);
+  }
+  25% {
+    transform: scale(1.02);
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.45), 0 4px 14px rgba(16, 185, 129, 0.25);
+  }
+  50% {
+    transform: scale(1);
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+  }
+  75% {
+    transform: scale(1.02);
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.45), 0 4px 14px rgba(16, 185, 129, 0.25);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+  }
+}
+
 .animate-recording-flash {
   animation: flashSlow 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-shake-wrong {
+  animation: shakeWrong 0.45s ease-in-out both;
+}
+
+.animate-flash-green {
+  animation: flashGreenCorrect 0.9s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
 @layer base {

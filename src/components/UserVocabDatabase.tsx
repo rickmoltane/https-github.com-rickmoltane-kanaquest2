@@ -31,7 +31,7 @@ export const UserVocabDatabase: React.FC<UserVocabDatabaseProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<UserVocabCategoryFilter>('All');
-  const [selectedBatch, setSelectedBatch] = useState<'all' | 1 | 2>('all');
+  const [selectedBatch, setSelectedBatch] = useState<'all' | 1 | 2 | 3>('all');
   const [playingId, setPlayingId] = useState<string | null>(null);
 
   const handlePlayAudio = (item: UserVocabItem) => {
@@ -71,6 +71,7 @@ export const UserVocabDatabase: React.FC<UserVocabDatabaseProps> = ({
   const totalItems = USER_VOCAB_DB.length;
   const batch1Count = USER_VOCAB_DB.filter(i => i.batch === 1).length;
   const batch2Count = USER_VOCAB_DB.filter(i => i.batch === 2).length;
+  const batch3Count = USER_VOCAB_DB.filter(i => i.batch === 3).length;
   const wordCount = USER_VOCAB_DB.filter(i => i.itemType === 'word').length;
   const phraseCount = USER_VOCAB_DB.filter(i => i.itemType !== 'word').length;
 
@@ -138,7 +139,7 @@ export const UserVocabDatabase: React.FC<UserVocabDatabaseProps> = ({
       </div>
 
       {/* Database Metrics Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         <div className="p-3.5 rounded-2xl bg-white border border-[#E2E8F0] shadow-2xs">
           <div className="flex items-center justify-between text-[#5F6368] text-xs font-semibold">
             <span>Total Entries</span>
@@ -148,7 +149,7 @@ export const UserVocabDatabase: React.FC<UserVocabDatabaseProps> = ({
             {totalItems}
           </div>
           <div className="text-[11px] text-[#5F6368] mt-0.5 font-medium">
-            100% verified from your prompts
+            100% user verified
           </div>
         </div>
 
@@ -161,33 +162,73 @@ export const UserVocabDatabase: React.FC<UserVocabDatabaseProps> = ({
             {batch1Count}
           </div>
           <div className="text-[11px] text-[#5F6368] mt-0.5 font-medium">
-            16 Essentials + Core Greetings
+            Essentials &amp; Greetings
           </div>
         </div>
 
         <div className="p-3.5 rounded-2xl bg-white border border-[#E2E8F0] shadow-2xs">
           <div className="flex items-center justify-between text-[#5F6368] text-xs font-semibold">
-            <span>Batch 2 (Expansion)</span>
+            <span>Batch 2 (People &amp; Roles)</span>
             <Sparkles className="w-4 h-4 text-emerald-500" />
           </div>
           <div className="mt-2 text-2xl font-black text-[#1F2329] font-mono">
             {batch2Count}
           </div>
           <div className="text-[11px] text-[#5F6368] mt-0.5 font-medium">
-            Occupations, People, Sentences
+            Occupations, Places, Ages
           </div>
         </div>
 
         <div className="p-3.5 rounded-2xl bg-white border border-[#E2E8F0] shadow-2xs">
           <div className="flex items-center justify-between text-[#5F6368] text-xs font-semibold">
-            <span>Composition</span>
-            <Layers className="w-4 h-4 text-purple-500" />
+            <span>Batch 3 (Objects &amp; New)</span>
+            <Layers className="w-4 h-4 text-blue-500" />
           </div>
-          <div className="mt-2 text-lg font-black text-[#1F2329] font-mono">
+          <div className="mt-2 text-2xl font-black text-[#1F2329] font-mono">
+            {batch3Count}
+          </div>
+          <div className="text-[11px] text-[#5F6368] mt-0.5 font-medium">
+            Everyday Objects &amp; Eric
+          </div>
+        </div>
+
+        <div className="p-3.5 rounded-2xl bg-white border border-[#E2E8F0] shadow-2xs col-span-2 sm:col-span-1">
+          <div className="flex items-center justify-between text-[#5F6368] text-xs font-semibold">
+            <span>Composition</span>
+            <Hash className="w-4 h-4 text-purple-500" />
+          </div>
+          <div className="mt-2 text-base sm:text-lg font-black text-[#1F2329] font-mono leading-tight">
             {wordCount} <span className="text-xs font-normal text-[#5F6368]">words</span> &bull; {phraseCount} <span className="text-xs font-normal text-[#5F6368]">phrases</span>
           </div>
           <div className="text-[11px] text-[#5F6368] mt-1 font-medium">
-            Filtered into Ex 3, 4, 6, &amp; 7
+            In Ex 3, 4, 6, &amp; 7
+          </div>
+        </div>
+      </div>
+
+      {/* Useful Distinctions Callout */}
+      <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200/80 shadow-2xs">
+        <h4 className="text-xs font-extrabold uppercase tracking-wider text-amber-900 mb-2 flex items-center gap-1.5">
+          <span>💡 Useful Distinctions in Japanese</span>
+        </h4>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 text-xs text-amber-950">
+          <div className="bg-white/80 p-2 rounded-xl border border-amber-200/60">
+            <span className="font-bold text-amber-900">スマホ vs スマートフォン:</span> スマホ is everyday casual; スマートフォン is the full formal word.
+          </div>
+          <div className="bg-white/80 p-2 rounded-xl border border-amber-200/60">
+            <span className="font-bold text-amber-900">パソコン vs コンピューター:</span> パソコン is much more common in everyday Japanese for personal PC.
+          </div>
+          <div className="bg-white/80 p-2 rounded-xl border border-amber-200/60">
+            <span className="font-bold text-amber-900">時計（とけい）:</span> Refers to both a wall clock and a wristwatch.
+          </div>
+          <div className="bg-white/80 p-2 rounded-xl border border-amber-200/60">
+            <span className="font-bold text-amber-900">シャープペン:</span> Short for シャープペンシル; mechanical pencil, not wooden pencil (鉛筆).
+          </div>
+          <div className="bg-white/80 p-2 rounded-xl border border-amber-200/60">
+            <span className="font-bold text-amber-900">お土産（おみやげ）:</span> Specifically gifts brought back from a trip for others.
+          </div>
+          <div className="bg-white/80 p-2 rounded-xl border border-amber-200/60">
+            <span className="font-bold text-amber-900">三十五歳（さんじゅうごさい）:</span> Suffix 〜歳 (〜さい) expresses age (e.g. Eric is 35).
           </div>
         </div>
       </div>
@@ -217,7 +258,7 @@ export const UserVocabDatabase: React.FC<UserVocabDatabaseProps> = ({
           </div>
 
           {/* Batch Filter Buttons */}
-          <div className="flex items-center gap-1.5 bg-[#F8FAFF] p-1 rounded-xl border border-[#CBD5E1] self-start sm:self-auto shrink-0">
+          <div className="flex items-center gap-1 bg-[#F8FAFF] p-1 rounded-xl border border-[#CBD5E1] self-start sm:self-auto shrink-0 flex-wrap">
             <button
               type="button"
               onClick={() => setSelectedBatch('all')}
@@ -238,7 +279,7 @@ export const UserVocabDatabase: React.FC<UserVocabDatabaseProps> = ({
                   : 'text-[#5F6368] hover:text-[#1F2329]'
               }`}
             >
-              Batch 1 (28)
+              Batch 1 ({batch1Count})
             </button>
             <button
               type="button"
@@ -249,7 +290,18 @@ export const UserVocabDatabase: React.FC<UserVocabDatabaseProps> = ({
                   : 'text-[#5F6368] hover:text-[#1F2329]'
               }`}
             >
-              Batch 2 (47)
+              Batch 2 ({batch2Count})
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedBatch(3)}
+              className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
+                selectedBatch === 3 
+                  ? 'bg-white text-[#1F2329] shadow-xs' 
+                  : 'text-[#5F6368] hover:text-[#1F2329]'
+              }`}
+            >
+              Batch 3 ({batch3Count})
             </button>
           </div>
         </div>
@@ -331,6 +383,13 @@ export const UserVocabDatabase: React.FC<UserVocabDatabaseProps> = ({
                   <div className="text-xs font-medium text-[#1F2329] mt-1.5 bg-[#F8FAFF] px-2.5 py-1 rounded-lg border border-[#F1F5F9]">
                     {item.english}
                   </div>
+
+                  {item.notes && (
+                    <div className="text-[11px] text-amber-900 bg-amber-50 border border-amber-200/80 px-2 py-1 rounded-lg mt-2 leading-relaxed font-medium flex items-start gap-1">
+                      <span className="shrink-0">💡</span>
+                      <span>{item.notes}</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Footer action: Audio & Item Type */}

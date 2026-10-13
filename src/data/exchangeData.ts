@@ -20,6 +20,12 @@ export interface ExchangeItem {
     { romaji: string; hiragana: string; english: string },
     { romaji: string; hiragana: string; english: string }
   ];
+
+  // Optional: Decoys when the prompt is the answer/reply and options are the question
+  questionDistractors?: [
+    { romaji: string; hiragana: string; english: string },
+    { romaji: string; hiragana: string; english: string }
+  ];
 }
 
 /**
@@ -933,6 +939,52 @@ export const EXCHANGE_DATA: ExchangeItem[] = [
       { romaji: 'Desu rokujūgosai wa.', hiragana: 'ですろくじゅうごさいは。', english: 'Inverted word order' },
     ],
   },
+
+  // 48. Eric, where are you from? -> I'm from France.
+  {
+    id: 'exch-48',
+    category: 'countries-origin',
+    categoryLabel: 'Country & Origin',
+    situationTitle: 'Origin Inquiry: Eric (France)',
+    englishMeaning: 'Eric, where are you from?',
+    promptSpeaker: 'Colleague',
+    promptRomaji: 'Erikku-san, dochira kara desu ka?',
+    promptHiragana: 'エリックさん、どちらからですか？',
+    correctRomaji: 'Furansu kara kimashita.',
+    correctHiragana: 'フランスから来ました。',
+    correctEnglish: "I'm from France.",
+    distractors: [
+      { romaji: 'Furansu ni kimashita.', hiragana: 'フランスにきました。', english: 'Particle error: "ni" instead of "kara"' },
+      { romaji: 'Kimashita Furansu kara.', hiragana: 'きましたフランスから。', english: 'Incorrect word order' },
+    ],
+    questionDistractors: [
+      { romaji: 'Erikku-san, dochira ni desu ka?', hiragana: 'エリックさん、どちらにですか？', english: 'Particle error: "ni" instead of "kara"' },
+      { romaji: 'Kara desu ka Erikku-san, dochira?', hiragana: 'からですかエリックさん、どちら？', english: 'Inverted word order' },
+    ],
+  },
+
+  // 49. Eric, how old are you? -> I am 35 years old.
+  {
+    id: 'exch-49',
+    category: 'age-numbers',
+    categoryLabel: 'Age & Numbers',
+    situationTitle: 'Age Inquiry: Eric (35)',
+    englishMeaning: 'Eric, how old are you?',
+    promptSpeaker: 'Friend',
+    promptRomaji: 'Erikku-san, nan-sai desu ka?',
+    promptHiragana: 'エリックさん、なんさいですか？',
+    correctRomaji: 'Watashi wa sanjūgo-sai desu.',
+    correctHiragana: 'わたしはさんじゅうごさいです。',
+    correctEnglish: 'I am 35 years old.',
+    distractors: [
+      { romaji: 'Watashi wa sanjūgo-sai no desu.', hiragana: 'わたしはさんじゅうごさいのです。', english: 'Extraneous possessive particle' },
+      { romaji: 'Desu watashi wa sanjūgo-sai.', hiragana: 'ですわたしはさんじゅうごさい。', english: 'Inverted word order' },
+    ],
+    questionDistractors: [
+      { romaji: 'Erikku-san, nan-sai no desu ka?', hiragana: 'エリックさん、なんさいのですか？', english: 'Extraneous possessive particle' },
+      { romaji: 'Desu ka Erikku-san, nan-sai?', hiragana: 'ですかエリックさん、なんさい？', english: 'Inverted word order' },
+    ],
+  },
 ];
 
 export interface ExchangeOption {
@@ -945,8 +997,12 @@ export interface ExchangeOption {
 export interface ExchangeQuizQuestion {
   questionNumber: number;
   item: ExchangeItem;
+  direction: 'question-to-reply' | 'reply-to-question';
+  directionBadge: string;
+  directionInstruction: string;
   prompt: string;
   promptAudio: string;
+  promptEnglish: string;
   secondaryPrompt: string;
   categoryLabel: string;
   situationTitle: string;
@@ -955,8 +1011,86 @@ export interface ExchangeQuizQuestion {
 }
 
 /**
+ * Get or dynamically generate plausible decoy question phrases for reverse practice.
+ * 100% compliant with user's curriculum vocabulary and particle/grammar structure.
+ */
+export function getQuestionDistractors(
+  item: ExchangeItem
+): [{ romaji: string; hiragana: string; english: string }, { romaji: string; hiragana: string; english: string }] {
+  if (item.questionDistractors && item.questionDistractors.length === 2) {
+    return item.questionDistractors;
+  }
+
+  const romaji = item.promptRomaji;
+  const hiragana = item.promptHiragana;
+
+  // Decoy 1: Particle substitution using user curriculum rules
+  let d1Romaji = romaji;
+  let d1Hiragana = hiragana;
+  let d1Desc = 'Particle error';
+
+  if (romaji.includes(' wa ') && hiragana.includes('は')) {
+    d1Romaji = romaji.replace(' wa ', ' no ');
+    d1Hiragana = hiragana.replace('は', 'の');
+    d1Desc = 'Particle error: "no" instead of "wa"';
+  } else if (romaji.includes(' kara ') && hiragana.includes('から')) {
+    d1Romaji = romaji.replace(' kara ', ' ni ');
+    d1Hiragana = hiragana.replace('から', 'に');
+    d1Desc = 'Particle error: "ni" instead of "kara"';
+  } else if (romaji.includes(' de ') && hiragana.includes('で')) {
+    d1Romaji = romaji.replace(' de ', ' o ');
+    d1Hiragana = hiragana.replace('で', 'を');
+    d1Desc = 'Particle error: "o" instead of "de"';
+  } else if (romaji.includes(' o ') && hiragana.includes('を')) {
+    d1Romaji = romaji.replace(' o ', ' ni ');
+    d1Hiragana = hiragana.replace('を', 'に');
+    d1Desc = 'Particle error: "ni" instead of "o"';
+  } else if (romaji.includes('nan-sai') && hiragana.includes('なんさい')) {
+    d1Romaji = romaji.replace('nan-sai', 'nan-sai no');
+    d1Hiragana = hiragana.replace('なんさい', 'なんさいの');
+    d1Desc = 'Extraneous possessive particle "no"';
+  } else {
+    d1Romaji = romaji.replace(' desu ka?', ' no desu ka?').replace(' ka?', ' no ka?');
+    d1Hiragana = hiragana.replace('ですか？', 'のですか？').replace('か？', 'のか？');
+    d1Desc = 'Extraneous particle error';
+  }
+
+  // Decoy 2: Inverted word order / syntax structure
+  let d2Romaji = romaji;
+  let d2Hiragana = hiragana;
+  let d2Desc = 'Inverted word order';
+
+  if (romaji.includes(' desu ka?')) {
+    const core = romaji.replace(' desu ka?', '').replace('?', '').trim();
+    d2Romaji = `Desu ka ${core}?`;
+    const hCore = hiragana.replace('ですか？', '').replace('？', '').trim();
+    d2Hiragana = `ですか${hCore}？`;
+  } else if (romaji.includes(' ka?')) {
+    const parts = romaji.replace('?', '').split(' ');
+    if (parts.length >= 3) {
+      d2Romaji = `${parts.slice(1).join(' ')} ${parts[0]}?`;
+      d2Hiragana = `${hiragana.slice(2, -1)}${hiragana.slice(0, 2)}？`;
+    } else {
+      d2Romaji = `${romaji.replace(' ka?', '')} desu ka?`;
+      d2Hiragana = `${hiragana.replace('か？', '')}ですか？`;
+    }
+  } else {
+    d2Romaji = `Desu ka ${romaji.replace('?', '')}?`;
+    d2Hiragana = `ですか${hiragana.replace('？', '')}？`;
+  }
+
+  return [
+    { romaji: d1Romaji, hiragana: d1Hiragana, english: d1Desc },
+    { romaji: d2Romaji, hiragana: d2Hiragana, english: d2Desc },
+  ];
+}
+
+/**
  * Generate a 10-question quiz drawn from the exchanged conversation items.
  * STRICT: 100% compliant with user curriculum database.
+ * Supports BIDIRECTIONAL practice:
+ * - Some questions provide the QUESTION prompt and test finding the appropriate REPLY.
+ * - Some questions provide the REPLY / ANSWER prompt (e.g. "I am 35 years old") and test finding the QUESTION that was asked.
  * @param mode 'romaji' for Exercise 6, 'hiragana' for Exercise 7
  * @param count number of questions (default 10)
  */
@@ -968,34 +1102,92 @@ export function generateExchangeQuiz(mode: 'romaji' | 'hiragana', count = 10): E
   return selectedItems.map((item, index) => {
     const isRomaji = mode === 'romaji';
 
-    const correctOption: ExchangeOption = {
-      text: isRomaji ? item.correctRomaji : item.correctHiragana,
-      hiraganaAudio: item.correctHiragana,
-      isCorrect: true,
-      englishMeaning: item.correctEnglish,
-    };
+    // Eligible for reverse if prompt is a question inquiry
+    const isEligibleForReverse = 
+      item.promptRomaji.endsWith('ka?') || 
+      item.promptRomaji.endsWith('ka') || 
+      item.promptHiragana.endsWith('か？') || 
+      item.promptHiragana.endsWith('か') ||
+      item.category === 'age-numbers' ||
+      item.category === 'countries-origin' ||
+      item.category === 'languages' ||
+      item.category === 'places-work' ||
+      item.category === 'occupations';
 
-    const distractorOptions: ExchangeOption[] = item.distractors.map((d) => ({
-      text: isRomaji ? d.romaji : d.hiragana,
-      hiraganaAudio: d.hiragana,
-      isCorrect: false,
-      englishMeaning: d.english,
-    }));
+    // Balanced mix: roughly half (alternating indices 1, 3, 5, 7, 9) test Reply -> Find Question!
+    const isReverse = isEligibleForReverse && (index % 2 === 1);
 
-    // Randomize order of the 3 options
-    const allOptions = [correctOption, ...distractorOptions].sort(() => 0.5 - Math.random());
-    const correctIndex = allOptions.findIndex((opt) => opt.isCorrect);
+    if (isReverse) {
+      // REVERSE DIRECTION: Prompt is THE ANSWER TO A QUESTION -> user chooses THE QUESTION
+      const correctOption: ExchangeOption = {
+        text: isRomaji ? item.promptRomaji : item.promptHiragana,
+        hiraganaAudio: item.promptHiragana,
+        isCorrect: true,
+        englishMeaning: item.englishMeaning,
+      };
 
-    return {
-      questionNumber: index + 1,
-      item,
-      prompt: isRomaji ? item.promptRomaji : item.promptHiragana,
-      promptAudio: item.promptHiragana,
-      secondaryPrompt: item.englishMeaning,
-      categoryLabel: item.categoryLabel,
-      situationTitle: item.situationTitle,
-      options: allOptions,
-      correctOptionIndex: correctIndex,
-    };
+      const qDistractors = getQuestionDistractors(item);
+      const distractorOptions: ExchangeOption[] = qDistractors.map((d) => ({
+        text: isRomaji ? d.romaji : d.hiragana,
+        hiraganaAudio: d.hiragana,
+        isCorrect: false,
+        englishMeaning: d.english,
+      }));
+
+      // Randomize order of the 3 options
+      const allOptions = [correctOption, ...distractorOptions].sort(() => 0.5 - Math.random());
+      const correctIndex = allOptions.findIndex((opt) => opt.isCorrect);
+
+      return {
+        questionNumber: index + 1,
+        item,
+        direction: 'reply-to-question',
+        directionBadge: 'Statement / Reply → Which question was asked?',
+        directionInstruction: 'Select the Japanese question that leads to this reply',
+        prompt: isRomaji ? item.correctRomaji : item.correctHiragana,
+        promptAudio: item.correctHiragana,
+        promptEnglish: item.correctEnglish,
+        secondaryPrompt: item.correctEnglish,
+        categoryLabel: item.categoryLabel,
+        situationTitle: item.situationTitle,
+        options: allOptions,
+        correctOptionIndex: correctIndex,
+      };
+    } else {
+      // STANDARD DIRECTION: Prompt is THE QUESTION -> user chooses THE REPLY
+      const correctOption: ExchangeOption = {
+        text: isRomaji ? item.correctRomaji : item.correctHiragana,
+        hiraganaAudio: item.correctHiragana,
+        isCorrect: true,
+        englishMeaning: item.correctEnglish,
+      };
+
+      const distractorOptions: ExchangeOption[] = item.distractors.map((d) => ({
+        text: isRomaji ? d.romaji : d.hiragana,
+        hiraganaAudio: d.hiragana,
+        isCorrect: false,
+        englishMeaning: d.english,
+      }));
+
+      // Randomize order of the 3 options
+      const allOptions = [correctOption, ...distractorOptions].sort(() => 0.5 - Math.random());
+      const correctIndex = allOptions.findIndex((opt) => opt.isCorrect);
+
+      return {
+        questionNumber: index + 1,
+        item,
+        direction: 'question-to-reply',
+        directionBadge: 'Question asked → Choose the correct reply',
+        directionInstruction: 'Select the appropriate Japanese reply to this question',
+        prompt: isRomaji ? item.promptRomaji : item.promptHiragana,
+        promptAudio: item.promptHiragana,
+        promptEnglish: item.englishMeaning,
+        secondaryPrompt: item.englishMeaning,
+        categoryLabel: item.categoryLabel,
+        situationTitle: item.situationTitle,
+        options: allOptions,
+        correctOptionIndex: correctIndex,
+      };
+    }
   });
 }

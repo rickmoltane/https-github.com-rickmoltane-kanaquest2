@@ -151,8 +151,12 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
       correctText: correctOpt.text,
       isCorrect,
       timeTakenMs,
-      hiraganaKana: currentQuestion.item.promptHiragana,
-      romajiText: currentQuestion.item.promptRomaji,
+      hiraganaKana: currentQuestion.direction === 'reply-to-question' 
+        ? currentQuestion.item.correctHiragana 
+        : currentQuestion.item.promptHiragana,
+      romajiText: currentQuestion.direction === 'reply-to-question' 
+        ? currentQuestion.item.correctRomaji 
+        : currentQuestion.item.promptRomaji,
     };
 
     const nextAnswers = [...answers, newAnswer];
@@ -165,31 +169,49 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
     }
 
     // Audio feedback:
-    // Play chime/buzz, and speak the selected Japanese phrase after choosing an answer
-    // (Both for Exercise 6 and Exercise 7, fulfilling "exercise 6, include the audio AFTER the player chooses an answer")
     if (soundEnabled) {
       if (isCorrect) {
         playSuccessChime();
+        // Play audio of the chosen correct Japanese phrase
+        if (correctOpt.hiraganaAudio) {
+          setTimeout(() => {
+            speakKana(correctOpt.hiraganaAudio);
+          }, 180);
+        }
       } else {
         playErrorBuzz();
-      }
 
-      // Play audio of the chosen Japanese reply phrase after choosing an answer
-      if (option.hiraganaAudio) {
-        setTimeout(() => {
-          speakKana(option.hiraganaAudio);
-        }, 180);
+        // Physical vibration on supported mobile devices
+        if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+          try {
+            navigator.vibrate([45, 60, 45]);
+          } catch (e) {
+            // Ignore unsupported/denied vibration
+          }
+        }
+
+        // USER REQUEST: Do NOT play audio of the wrong answer.
+        // Instead, give the audio for the CORRECT one!
+        if (correctOpt.hiraganaAudio) {
+          setTimeout(() => {
+            speakKana(correctOpt.hiraganaAudio);
+          }, 300);
+        }
       }
     }
 
-    // Auto-advance after 2600ms so user has time to hear full audio phrase and see feedback
+    // Auto-advance logic:
+    // USER REQUEST: When wrong, do NOT go straight to the next question (let user click Next)!
     if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => {
-      handleAdvance(nextAnswers);
-    }, 2600);
+    if (isCorrect) {
+      // Auto-advance only when correct after 2400ms
+      timerRef.current = setTimeout(() => {
+        handleAdvance(nextAnswers);
+      }, 2400);
+    }
   }, [isAnswered, currentQuestion, answers, soundEnabled, handleAdvance]);
 
-  // Keyboard shortcuts [1], [2], [3], and [H] for hint toggle
+  // Keyboard shortcuts [1], [2], [3], [H] for hint toggle, and [Enter]/[Space] to advance
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
@@ -199,7 +221,15 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
         return;
       }
 
-      if (isAnswered || !currentQuestion) return;
+      if (isAnswered) {
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowRight') {
+          e.preventDefault();
+          handleAdvance();
+        }
+        return;
+      }
+
+      if (!currentQuestion) return;
 
       if (e.key === '1' && currentQuestion.options[0]) {
         handleSelectOption(currentQuestion.options[0], 0);
@@ -212,7 +242,7 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isAnswered, currentQuestion, handleSelectOption]);
+  }, [isAnswered, currentQuestion, handleSelectOption, handleAdvance]);
 
   if (!currentQuestion) {
     return (
@@ -284,8 +314,22 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
       <div className="flex-1 min-h-0 flex flex-col items-center justify-between p-3 sm:p-5 max-w-2xl mx-auto w-full gap-3 overflow-y-auto">
         
         {/* CENTER PROMPT CARD: Japanese prompt with optional Play Audio and (hint) translation button */}
-        <div className="w-full flex-1 min-h-[120px] sm:min-h-[145px] bg-white border-2 border-[#CBD5E1] rounded-2xl sm:rounded-3xl shadow-[0_4px_16px_rgba(0,0,0,0.05)] flex flex-col items-center justify-center p-3.5 sm:p-5 text-center">
-          <div className="w-full max-w-lg py-3.5 sm:py-5 px-3 sm:px-5 rounded-2xl bg-[#F0F7FF] border-2 border-[#BFDBFE] shadow-2xs flex flex-col items-center justify-center gap-2.5 sm:gap-3">
+        <div className="w-full flex-1 min-h-[130px] sm:min-h-[155px] bg-white border-2 border-[#CBD5E1] rounded-2xl sm:rounded-3xl shadow-[0_4px_16px_rgba(0,0,0,0.05)] flex flex-col items-center justify-center p-3.5 sm:p-5 text-center">
+          <div className="w-full max-w-lg py-3.5 sm:py-5 px-3 sm:px-5 rounded-2xl bg-[#F0F7FF] border-2 border-[#BFDBFE] shadow-2xs flex flex-col items-center justify-center gap-2 sm:gap-2.5">
+            {/* Direction Indicator Badge: Distinguishes Question->Reply vs Answer->Question */}
+            <div className="flex items-center justify-center gap-1.5 flex-wrap">
+              <span
+                className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-black tracking-wide border shadow-2xs ${
+                  currentQuestion.direction === 'reply-to-question'
+                    ? 'bg-purple-100 text-purple-900 border-purple-300 ring-1 ring-purple-200'
+                    : 'bg-blue-100 text-blue-900 border-blue-300 ring-1 ring-blue-200'
+                }`}
+              >
+                <span>{currentQuestion.direction === 'reply-to-question' ? '💬' : '❓'}</span>
+                <span>{currentQuestion.directionBadge}</span>
+              </span>
+            </div>
+
             {/* The Target Phrase (Pure Romaji for Ex 6 or Pure Hiragana for Ex 7) */}
             <span
               className={`${
@@ -298,7 +342,7 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
             </span>
 
             {/* Prompt Action Buttons: Audio and Optional (hint) translation button */}
-            <div className="flex items-center justify-center gap-2 flex-wrap">
+            <div className="flex items-center justify-center gap-2 flex-wrap pt-0.5">
               {/* Optional Play Audio Button (In Hiragana mode: available anytime; In Romaji mode: available after answered or replaying) */}
               {(isHiragana || isAnswered) && (
                 <button
@@ -336,23 +380,30 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
 
             {/* Revealed Translation Hint Container */}
             {showHint && (
-              <div className="w-full max-w-md px-3.5 py-2.5 rounded-xl bg-amber-50/95 border border-amber-300 text-left animate-in fade-in duration-200">
+              <div className="w-full max-w-md px-3.5 py-2.5 rounded-xl bg-amber-50/95 border border-amber-300 text-left animate-in fade-in duration-200 mt-1">
                 <div className="flex items-center justify-between gap-2 mb-1">
                   <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 bg-amber-200/80 px-1.5 py-0.5 rounded font-mono">
                     Translation Hint
                   </span>
-                  {currentQuestion.situationTitle && (
-                    <span className="text-[11px] text-amber-800 font-medium truncate">
-                      {currentQuestion.situationTitle}
-                    </span>
-                  )}
+                  <span className="text-[11px] text-amber-800 font-bold truncate">
+                    {currentQuestion.direction === 'reply-to-question' ? 'Statement / Answer' : 'Question Asked'}
+                  </span>
                 </div>
                 <p className="text-xs sm:text-sm font-bold text-neutral-900 leading-snug">
-                  "{currentQuestion.item.englishMeaning}"
+                  "{currentQuestion.promptEnglish}"
                 </p>
+                {currentQuestion.direction === 'reply-to-question' ? (
+                  <p className="text-[11px] text-amber-900/80 font-medium mt-1">
+                    💡 Challenge: Choose the Japanese question that leads to this reply.
+                  </p>
+                ) : (
+                  <p className="text-[11px] text-amber-900/80 font-medium mt-1">
+                    💡 Challenge: Choose the appropriate Japanese reply to this question.
+                  </p>
+                )}
                 {isHiragana && (
                   <p className="text-[11px] font-mono text-neutral-600 mt-1">
-                    Romaji: {currentQuestion.item.promptRomaji}
+                    Romaji: {currentQuestion.direction === 'reply-to-question' ? currentQuestion.item.correctRomaji : currentQuestion.item.promptRomaji}
                   </p>
                 )}
               </div>
@@ -367,14 +418,19 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
             const isSelected = selectedOptionIndex === idx;
             const isCorrect = option.isCorrect;
             const showFeedback = isAnswered;
+            const wasWrongChoiceMade = selectedOptionIndex !== null && !currentQuestion.options[selectedOptionIndex]?.isCorrect;
 
             let buttonStyle = 'bg-white text-[#1F2329] border-2 border-[#CBD5E1] hover:border-[#1A73E8] hover:bg-[#F8FAFF]';
 
             if (showFeedback) {
               if (isCorrect) {
-                buttonStyle = 'bg-emerald-50 text-emerald-900 border-2 border-emerald-500 ring-2 ring-emerald-200';
+                // If wrong answer was chosen, flash green the correct one!
+                buttonStyle = wasWrongChoiceMade
+                  ? 'bg-emerald-50 text-emerald-900 border-2 border-emerald-500 ring-2 ring-emerald-300 animate-flash-green'
+                  : 'bg-emerald-50 text-emerald-900 border-2 border-emerald-500 ring-2 ring-emerald-200';
               } else if (isSelected && !isCorrect) {
-                buttonStyle = 'bg-rose-50 text-rose-900 border-2 border-rose-500 ring-2 ring-rose-200';
+                // Vibrate the wrong (red) answer slightly!
+                buttonStyle = 'bg-rose-50 text-rose-900 border-2 border-rose-500 ring-2 ring-rose-300 animate-shake-wrong';
               } else {
                 buttonStyle = 'bg-[#F8FAFF] text-[#5F6368] border-2 border-[#E2E8F0] opacity-50';
               }
@@ -456,13 +512,13 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
         </div>
 
         {/* BOTTOM ACTION BAR: Clean Status, Shortcuts, and Advance Button */}
-        <div className="w-full bg-white border border-[#CBD5E1] rounded-2xl px-4 py-2.5 shadow-2xs flex items-center justify-between text-xs shrink-0 gap-2">
+        <div className="w-full bg-white border border-[#CBD5E1] rounded-2xl px-3.5 sm:px-4 py-2.5 shadow-2xs flex items-center justify-between text-xs shrink-0 gap-2">
           <div className="flex items-center gap-2 min-w-0">
             {isAnswered ? (
               selectedOptionIndex !== null && currentQuestion.options[selectedOptionIndex]?.isCorrect ? (
                 <div className="flex items-center gap-1.5 text-emerald-700 font-extrabold truncate">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>正解</span>
+                  <span>正解 (Correct!)</span>
                   {showHint && (
                     <span className="text-[11px] font-normal text-emerald-800 hidden sm:inline ml-1 truncate">
                       — {currentQuestion.item.correctEnglish}
@@ -470,14 +526,12 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
                   )}
                 </div>
               ) : (
-                <div className="flex items-center gap-1.5 text-rose-700 font-extrabold truncate">
+                <div className="flex items-center gap-1.5 text-rose-700 font-bold truncate">
                   <XCircle className="w-4 h-4 text-rose-600 shrink-0" />
-                  <span>不正解</span>
-                  {showHint && (
-                    <span className="text-[11px] font-normal text-neutral-700 hidden sm:inline ml-1 truncate">
-                      — {currentQuestion.item.correctEnglish}
-                    </span>
-                  )}
+                  <span className="font-extrabold">不正解</span>
+                  <span className="text-[11px] text-neutral-600 font-normal hidden sm:inline">
+                    — Take your time to review, then click Next or press [Enter]
+                  </span>
                 </div>
               )
             ) : (
@@ -511,9 +565,13 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
               <button
                 type="button"
                 onClick={() => handleAdvance()}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#1A73E8] text-white font-bold hover:bg-[#1557B0] cursor-pointer shrink-0"
+                className={`inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-xl font-bold cursor-pointer shrink-0 transition-all shadow-xs ${
+                  selectedOptionIndex !== null && !currentQuestion.options[selectedOptionIndex]?.isCorrect
+                    ? 'bg-rose-600 hover:bg-rose-700 text-white ring-2 ring-rose-200'
+                    : 'bg-[#1A73E8] hover:bg-[#1557B0] text-white'
+                }`}
               >
-                <span>{currentIndex < questions.length - 1 ? 'Next' : 'Finish'}</span>
+                <span>{currentIndex < questions.length - 1 ? 'Next Question' : 'Finish'}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             )}

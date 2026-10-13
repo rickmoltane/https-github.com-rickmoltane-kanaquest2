@@ -88,51 +88,6 @@ export const FlashcardQuiz: React.FC<FlashcardQuizProps> = ({
     return '';
   }, [currentQuestion]);
 
-  const handleSelectOption = useCallback((option: string) => {
-    if (isAnswered || !currentQuestion) return;
-
-    const isCorrect = option === currentQuestion.correctOption;
-    setSelectedOption(option);
-    setIsAnswered(true);
-
-    const timeTakenMs = Date.now() - questionStartTimeRef.current;
-    const newAnswer: AnswerRecord = {
-      character: currentQuestion.character,
-      word: currentQuestion.word,
-      selectedOption: option,
-      correctOption: currentQuestion.correctOption,
-      isCorrect,
-      timeTakenMs,
-    };
-
-    const nextAnswers = [...answers, newAnswer];
-    setAnswers(nextAnswers);
-
-    // Audio feedback:
-    // 1. Play chime / buzz
-    // 2. Play pronunciation sound ONLY AFTER answer selection!
-    if (soundEnabled) {
-      if (isCorrect) {
-        playSuccessChime();
-      } else {
-        playErrorBuzz();
-      }
-      const speechTarget = currentQuestion.word?.kana || currentQuestion.character?.kana;
-      if (speechTarget) {
-        // slight offset so chime starts first
-        setTimeout(() => {
-          speakKana(speechTarget);
-        }, 120);
-      }
-    }
-
-    // Auto-advance after 1100ms
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => {
-      handleAdvance(nextAnswers);
-    }, 1100);
-  }, [isAnswered, currentQuestion, answers, soundEnabled]);
-
   const handleAdvance = useCallback((currentAnswersList?: AnswerRecord[]) => {
     if (timerRef.current) clearTimeout(timerRef.current);
     const answersToUse = currentAnswersList || answers;
@@ -170,6 +125,61 @@ export const FlashcardQuiz: React.FC<FlashcardQuizProps> = ({
       onComplete(quizResult);
     }
   }, [currentIndex, answers, startTime, exerciseType, onComplete]);
+
+  const handleSelectOption = useCallback((option: string) => {
+    if (isAnswered || !currentQuestion) return;
+
+    const isCorrect = option === currentQuestion.correctOption;
+    setSelectedOption(option);
+    setIsAnswered(true);
+
+    const timeTakenMs = Date.now() - questionStartTimeRef.current;
+    const newAnswer: AnswerRecord = {
+      character: currentQuestion.character,
+      word: currentQuestion.word,
+      selectedOption: option,
+      correctOption: currentQuestion.correctOption,
+      isCorrect,
+      timeTakenMs,
+    };
+
+    const nextAnswers = [...answers, newAnswer];
+    setAnswers(nextAnswers);
+
+    // Audio feedback:
+    // 1. Play chime / buzz
+    // 2. Play pronunciation sound ONLY AFTER answer selection!
+    if (soundEnabled) {
+      if (isCorrect) {
+        playSuccessChime();
+      } else {
+        playErrorBuzz();
+        if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+          try {
+            navigator.vibrate([45, 60, 45]);
+          } catch (e) {
+            // ignore
+          }
+        }
+      }
+      const speechTarget = currentQuestion.word?.kana || currentQuestion.character?.kana;
+      if (speechTarget) {
+        // slight offset so chime/buzz starts first; always speaks the CORRECT target!
+        setTimeout(() => {
+          speakKana(speechTarget);
+        }, 180);
+      }
+    }
+
+    // Auto-advance only when correct!
+    // When wrong, do NOT go straight to next question (let user click Next)
+    if (timerRef.current) clearTimeout(timerRef.current);
+    if (isCorrect) {
+      timerRef.current = setTimeout(() => {
+        handleAdvance(nextAnswers);
+      }, 1200);
+    }
+  }, [isAnswered, currentQuestion, answers, soundEnabled, handleAdvance]);
 
   // Keyboard shortcut support (1, 2, 3 for options, Space for speech ONLY AFTER answered)
   useEffect(() => {
@@ -412,11 +422,14 @@ export const FlashcardQuiz: React.FC<FlashcardQuizProps> = ({
                 let badgeStyle = 'bg-[#F1F5F9] text-[#5F6368] border border-[#CBD5E1]';
 
                 if (isAnswered) {
+                  const wasWrong = selectedOption !== null && selectedOption !== currentQuestion.correctOption;
                   if (isCorrectOption) {
-                    buttonStyle = 'bg-[#16A34A] border-2 border-[#15803D] text-white shadow-md ring-2 ring-[#86EFAC]';
+                    buttonStyle = wasWrong
+                      ? 'bg-[#16A34A] border-2 border-[#15803D] text-white shadow-md ring-2 ring-[#86EFAC] animate-flash-green'
+                      : 'bg-[#16A34A] border-2 border-[#15803D] text-white shadow-md ring-2 ring-[#86EFAC]';
                     badgeStyle = 'bg-[#15803D] text-white border-transparent';
                   } else if (isSelected && !isCorrectOption) {
-                    buttonStyle = 'bg-[#E11D48] border-2 border-[#BE123C] text-white shadow-xs ring-2 ring-[#FDA4AF]';
+                    buttonStyle = 'bg-[#E11D48] border-2 border-[#BE123C] text-white shadow-xs ring-2 ring-[#FDA4AF] animate-shake-wrong';
                     badgeStyle = 'bg-[#BE123C] text-white border-transparent';
                   } else {
                     buttonStyle = 'bg-[#F8FAFF] border-2 border-[#E2E8F0] text-[#94A3B8] opacity-50';
@@ -475,11 +488,14 @@ export const FlashcardQuiz: React.FC<FlashcardQuizProps> = ({
                 let badgeStyle = 'bg-[#F1F5F9] text-[#5F6368] border border-[#CBD5E1]';
 
                 if (isAnswered) {
+                  const wasWrong = selectedOption !== null && selectedOption !== currentQuestion.correctOption;
                   if (isCorrectOption) {
-                    buttonStyle = 'bg-[#16A34A] border-2 border-[#15803D] text-white shadow-md ring-2 ring-[#86EFAC] scale-[1.01]';
+                    buttonStyle = wasWrong
+                      ? 'bg-[#16A34A] border-2 border-[#15803D] text-white shadow-md ring-2 ring-[#86EFAC] animate-flash-green'
+                      : 'bg-[#16A34A] border-2 border-[#15803D] text-white shadow-md ring-2 ring-[#86EFAC] scale-[1.01]';
                     badgeStyle = 'bg-[#15803D] text-white border-transparent';
                   } else if (isSelected && !isCorrectOption) {
-                    buttonStyle = 'bg-[#E11D48] border-2 border-[#BE123C] text-white shadow-xs ring-2 ring-[#FDA4AF]';
+                    buttonStyle = 'bg-[#E11D48] border-2 border-[#BE123C] text-white shadow-xs ring-2 ring-[#FDA4AF] animate-shake-wrong';
                     badgeStyle = 'bg-[#BE123C] text-white border-transparent';
                   } else {
                     buttonStyle = 'bg-[#F8FAFF] border-2 border-[#E2E8F0] text-[#94A3B8] opacity-50';
@@ -537,9 +553,13 @@ export const FlashcardQuiz: React.FC<FlashcardQuizProps> = ({
               <button
                 type="button"
                 onClick={() => handleAdvance()}
-                className="flex items-center gap-1 px-3.5 py-1 rounded-xl bg-[#1A73E8] text-white font-bold text-xs sm:text-sm hover:bg-[#1557B0] transition-all shadow-xs cursor-pointer"
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-xs cursor-pointer ${
+                  selectedOption !== null && selectedOption !== currentQuestion.correctOption
+                    ? 'bg-rose-600 hover:bg-rose-700 text-white ring-2 ring-rose-200'
+                    : 'bg-[#1A73E8] hover:bg-[#1557B0] text-white'
+                }`}
               >
-                <span>{currentIndex === 9 ? 'Finish' : 'Next'}</span>
+                <span>{currentIndex === 9 ? 'Finish' : 'Next Question'}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             ) : (
