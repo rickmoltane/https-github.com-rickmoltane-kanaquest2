@@ -164,10 +164,10 @@ export const FlashcardQuiz: React.FC<FlashcardQuizProps> = ({
       }
       const speechTarget = currentQuestion.word?.kana || currentQuestion.character?.kana;
       if (speechTarget) {
-        // slight offset so chime/buzz starts first; always speaks the CORRECT target!
+        // When correct: speaks after chime (180ms). When wrong: speaks after shake & buzz (360ms) exactly as the correct answer flashes green!
         setTimeout(() => {
           speakKana(speechTarget);
-        }, 180);
+        }, isCorrect ? 180 : 360);
       }
     }
 
@@ -425,7 +425,7 @@ export const FlashcardQuiz: React.FC<FlashcardQuizProps> = ({
                   const wasWrong = selectedOption !== null && selectedOption !== currentQuestion.correctOption;
                   if (isCorrectOption) {
                     buttonStyle = wasWrong
-                      ? 'bg-[#16A34A] border-2 border-[#15803D] text-white shadow-md ring-2 ring-[#86EFAC] animate-flash-green'
+                      ? 'bg-[#16A34A] border-2 border-[#15803D] text-white shadow-md ring-2 ring-[#86EFAC] animate-flash-green-delayed'
                       : 'bg-[#16A34A] border-2 border-[#15803D] text-white shadow-md ring-2 ring-[#86EFAC]';
                     badgeStyle = 'bg-[#15803D] text-white border-transparent';
                   } else if (isSelected && !isCorrectOption) {
@@ -491,7 +491,7 @@ export const FlashcardQuiz: React.FC<FlashcardQuizProps> = ({
                   const wasWrong = selectedOption !== null && selectedOption !== currentQuestion.correctOption;
                   if (isCorrectOption) {
                     buttonStyle = wasWrong
-                      ? 'bg-[#16A34A] border-2 border-[#15803D] text-white shadow-md ring-2 ring-[#86EFAC] animate-flash-green'
+                      ? 'bg-[#16A34A] border-2 border-[#15803D] text-white shadow-md ring-2 ring-[#86EFAC] animate-flash-green-delayed'
                       : 'bg-[#16A34A] border-2 border-[#15803D] text-white shadow-md ring-2 ring-[#86EFAC] scale-[1.01]';
                     badgeStyle = 'bg-[#15803D] text-white border-transparent';
                   } else if (isSelected && !isCorrectOption) {

@@ -1,6 +1,6 @@
 export interface ExchangeItem {
   id: string;
-  category: 'places-work' | 'occupations' | 'introductions' | 'people' | 'courtesy' | 'countries-origin' | 'languages' | 'age-numbers';
+  category: 'places-work' | 'occupations' | 'introductions' | 'people' | 'courtesy' | 'countries-origin' | 'languages' | 'age-numbers' | 'daily-inquiry' | 'time-days' | 'demonstratives';
   categoryLabel: string;
   situationTitle: string;
   englishMeaning: string;
@@ -983,6 +983,259 @@ export const EXCHANGE_DATA: ExchangeItem[] = [
     questionDistractors: [
       { romaji: 'Erikku-san, nan-sai no desu ka?', hiragana: 'エリックさん、なんさいのですか？', english: 'Extraneous possessive particle' },
       { romaji: 'Desu ka Erikku-san, nan-sai?', hiragana: 'ですかエリックさん、なんさい？', english: 'Inverted word order' },
+    ],
+  },
+
+  // 50. How have things been lately? -> I'm doing well.
+  {
+    id: 'exch-50',
+    category: 'daily-inquiry',
+    categoryLabel: 'Daily Inquiry & Feelings',
+    situationTitle: 'Catching Up: Lately',
+    englishMeaning: 'How have things been lately?',
+    promptSpeaker: 'Colleague',
+    promptRomaji: 'Saikin dō desu ka?',
+    promptHiragana: 'さいきんどうですか？',
+    correctRomaji: 'Genki desu.',
+    correctHiragana: 'げんきです。',
+    correctEnglish: "I'm doing well.",
+    distractors: [
+      { romaji: 'Genki o desu.', hiragana: 'げんきをです。', english: 'Extraneous object particle' },
+      { romaji: 'Desu genki wa.', hiragana: 'ですげんきは。', english: 'Inverted word order' },
+    ],
+    questionDistractors: [
+      { romaji: 'Saikin dō no desu ka?', hiragana: 'さいきんどうのですか？', english: 'Extraneous particle error' },
+      { romaji: 'Desu ka saikin dō?', hiragana: 'ですかさいきんどう？', english: 'Inverted word order' },
+    ],
+  },
+
+  // 51. How is your Japanese? -> It's interesting.
+  {
+    id: 'exch-51',
+    category: 'daily-inquiry',
+    categoryLabel: 'Daily Inquiry & Studies',
+    situationTitle: 'Language Progress',
+    englishMeaning: 'How is your Japanese?',
+    promptSpeaker: 'Teacher',
+    promptRomaji: 'Nihongo wa dō desu ka?',
+    promptHiragana: 'にほんごはどうですか？',
+    correctRomaji: 'Omoshiroi desu.',
+    correctHiragana: 'おもしろいです。',
+    correctEnglish: "It's interesting.",
+    distractors: [
+      { romaji: 'Omoshiroi o desu.', hiragana: 'おもしろいをです。', english: 'Extraneous particle error' },
+      { romaji: 'Desu omoshiroi wa.', hiragana: 'ですおもしろいは。', english: 'Inverted word order' },
+    ],
+    questionDistractors: [
+      { romaji: 'Nihongo no dō desu ka?', hiragana: 'にほんごのどうですか？', english: 'Particle error: "no" instead of "wa"' },
+      { romaji: 'Desu ka Nihongo wa dō?', hiragana: 'ですか日本語はどう？', english: 'Inverted word order' },
+    ],
+  },
+
+  // 52. How are your studies? -> It's difficult.
+  {
+    id: 'exch-52',
+    category: 'daily-inquiry',
+    categoryLabel: 'Daily Inquiry & Studies',
+    situationTitle: 'Study Check',
+    englishMeaning: 'How are your studies?',
+    promptSpeaker: 'Friend',
+    promptRomaji: 'Benkyō wa dō desu ka?',
+    promptHiragana: 'べんきょうはどうですか？',
+    correctRomaji: 'Muzukashii desu.',
+    correctHiragana: 'むずかしいです。',
+    correctEnglish: "It's difficult.",
+    distractors: [
+      { romaji: 'Muzukashii o desu.', hiragana: 'むずかしいをです。', english: 'Extraneous particle error' },
+      { romaji: 'Desu muzukashii wa.', hiragana: 'ですむずかしいは。', english: 'Inverted word order' },
+    ],
+    questionDistractors: [
+      { romaji: 'Benkyō ni dō desu ka?', hiragana: 'べんきょうにどうですか？', english: 'Particle error: "ni" instead of "wa"' },
+      { romaji: 'Desu ka Benkyō wa dō?', hiragana: 'ですかべんきょうはどう？', english: 'Inverted word order' },
+    ],
+  },
+
+  // 53. How is your family? -> Everyone is doing well.
+  {
+    id: 'exch-53',
+    category: 'daily-inquiry',
+    categoryLabel: 'Daily Inquiry & Family',
+    situationTitle: 'Family Well-being',
+    englishMeaning: 'How is your family?',
+    promptSpeaker: 'Neighbor',
+    promptRomaji: 'Kazoku wa dō desu ka?',
+    promptHiragana: 'かぞくはどうですか？',
+    correctRomaji: 'Minna genki desu.',
+    correctHiragana: 'みんなげんきです。',
+    correctEnglish: 'Everyone is doing well.',
+    distractors: [
+      { romaji: 'Minna o genki desu.', hiragana: 'みんなをげんきです。', english: 'Extraneous particle error' },
+      { romaji: 'Genki desu minna wa.', hiragana: 'げんきですみんなは。', english: 'Inverted word order' },
+    ],
+    questionDistractors: [
+      { romaji: 'Kazoku no dō desu ka?', hiragana: 'かぞくのどうですか？', english: 'Particle error: "no" instead of "wa"' },
+      { romaji: 'Desu ka Kazoku wa dō?', hiragana: 'ですかかぞくはどう？', english: 'Inverted word order' },
+    ],
+  },
+
+  // 54. What day of the week is it today? -> Today is Monday.
+  {
+    id: 'exch-54',
+    category: 'time-days',
+    categoryLabel: 'Days of the Week',
+    situationTitle: 'Calendar Check: Today',
+    englishMeaning: 'What day of the week is it today?',
+    promptSpeaker: 'Coworker',
+    promptRomaji: "Kyō wa nan'yōbi desu ka?",
+    promptHiragana: 'きょうはなんようびですか？',
+    correctRomaji: 'Kyō wa getsuyōbi desu.',
+    correctHiragana: 'きょうはげつようびです。',
+    correctEnglish: 'Today is Monday.',
+    distractors: [
+      { romaji: 'Kyō ni getsuyōbi desu.', hiragana: 'きょうにげつようびです。', english: 'Particle error: "ni" instead of "wa"' },
+      { romaji: 'Getsuyōbi desu kyō wa.', hiragana: 'げつようびですきょうは。', english: 'Inverted word order' },
+    ],
+    questionDistractors: [
+      { romaji: "Kyō no nan'yōbi desu ka?", hiragana: 'きょうのなんようびですか？', english: 'Particle error: "no" instead of "wa"' },
+      { romaji: "Desu ka kyō wa nan'yōbi?", hiragana: 'ですかきょうはなんようび？', english: 'Inverted word order' },
+    ],
+  },
+
+  // 55. What day is tomorrow? -> Tomorrow is Tuesday.
+  {
+    id: 'exch-55',
+    category: 'time-days',
+    categoryLabel: 'Days of the Week',
+    situationTitle: 'Calendar Check: Tomorrow',
+    englishMeaning: 'What day is tomorrow?',
+    promptSpeaker: 'Classmate',
+    promptRomaji: "Ashita wa nan'yōbi desu ka?",
+    promptHiragana: 'あしたはなんようびですか？',
+    correctRomaji: 'Ashita wa kayōbi desu.',
+    correctHiragana: 'あしたはかようびです。',
+    correctEnglish: 'Tomorrow is Tuesday.',
+    distractors: [
+      { romaji: 'Ashita ni kayōbi desu.', hiragana: 'あしたにかようびです。', english: 'Particle error: "ni" instead of "wa"' },
+      { romaji: 'Kayōbi desu ashita wa.', hiragana: 'かようびですあしたは。', english: 'Inverted word order' },
+    ],
+    questionDistractors: [
+      { romaji: "Ashita no nan'yōbi desu ka?", hiragana: 'あしたのなんようびですか？', english: 'Particle error: "no" instead of "wa"' },
+      { romaji: "Desu ka ashita wa nan'yōbi?", hiragana: 'ですかあしたはなんようび？', english: 'Inverted word order' },
+    ],
+  },
+
+  // 56. What time is it now? -> It is 3:30 PM.
+  {
+    id: 'exch-56',
+    category: 'time-days',
+    categoryLabel: 'Hours & Minutes',
+    situationTitle: 'Asking Time: Afternoon',
+    englishMeaning: 'What time is it now?',
+    promptSpeaker: 'Traveler',
+    promptRomaji: 'Ima, nanji desu ka?',
+    promptHiragana: 'いま、なんじですか？',
+    correctRomaji: 'Gogo sanji han desu.',
+    correctHiragana: 'ごごさんじはんです。',
+    correctEnglish: 'It is 3:30 PM.',
+    distractors: [
+      { romaji: 'Sanji han gogo desu.', hiragana: 'さんじはんごごです。', english: 'Incorrect word order (time before PM)' },
+      { romaji: 'Gogo sanji han o desu.', hiragana: 'ごごさんじはんをです。', english: 'Extraneous object particle' },
+    ],
+    questionDistractors: [
+      { romaji: 'Ima, nanji no desu ka?', hiragana: 'いま、なんじのですか？', english: 'Extraneous particle error' },
+      { romaji: 'Desu ka ima, nanji?', hiragana: 'ですか今、なんじ？', english: 'Inverted word order' },
+    ],
+  },
+
+  // 57. What time is it now? -> It is 8 AM.
+  {
+    id: 'exch-57',
+    category: 'time-days',
+    categoryLabel: 'Hours & Minutes',
+    situationTitle: 'Asking Time: Morning',
+    englishMeaning: 'What time is it now?',
+    promptSpeaker: 'Hotel clerk',
+    promptRomaji: 'Ima, nanji desu ka?',
+    promptHiragana: 'いま、なんじですか？',
+    correctRomaji: 'Gozen hachiji desu.',
+    correctHiragana: 'ごぜんはちじです。',
+    correctEnglish: 'It is 8 AM.',
+    distractors: [
+      { romaji: 'Hachiji gozen desu.', hiragana: 'はちじごぜんです。', english: 'Incorrect word order (time before AM)' },
+      { romaji: 'Gozen hachiji o desu.', hiragana: 'ごぜんはちじをです。', english: 'Extraneous object particle' },
+    ],
+    questionDistractors: [
+      { romaji: 'Ima, nanji ni desu ka?', hiragana: 'いま、なんじにですか？', english: 'Particle error: "ni" in equation sentence' },
+      { romaji: 'Nanji desu ka ima?', hiragana: 'なんじですか今？', english: 'Inverted word order' },
+    ],
+  },
+
+  // 58. What is this? -> This is a ballpoint pen.
+  {
+    id: 'exch-58',
+    category: 'demonstratives',
+    categoryLabel: 'Demonstratives & Identification',
+    situationTitle: 'Object Identification: This',
+    englishMeaning: 'What is this?',
+    promptSpeaker: 'Student',
+    promptRomaji: 'Kore wa nan desu ka?',
+    promptHiragana: 'これはなんですか？',
+    correctRomaji: 'Kore wa bōrupen desu.',
+    correctHiragana: 'これはボールペンです。',
+    correctEnglish: 'This is a ballpoint pen.',
+    distractors: [
+      { romaji: 'Kore ni bōrupen desu.', hiragana: 'これにボールペンです。', english: 'Particle error: "ni" instead of "wa"' },
+      { romaji: 'Bōrupen desu kore wa.', hiragana: 'ボールペンですこれは。', english: 'Inverted word order' },
+    ],
+    questionDistractors: [
+      { romaji: 'Kore no nan desu ka?', hiragana: 'これのなんですか？', english: 'Particle error: "no" instead of "wa"' },
+      { romaji: 'Desu ka kore wa nan?', hiragana: 'ですかこれは何？', english: 'Inverted word order' },
+    ],
+  },
+
+  // 59. What is that over there? -> That over there is a wallet.
+  {
+    id: 'exch-59',
+    category: 'demonstratives',
+    categoryLabel: 'Demonstratives & Identification',
+    situationTitle: 'Object Identification: That Over There',
+    englishMeaning: 'What is that over there?',
+    promptSpeaker: 'Shopper',
+    promptRomaji: 'Are wa nan desu ka?',
+    promptHiragana: 'あれはなんですか？',
+    correctRomaji: 'Are wa saifu desu.',
+    correctHiragana: 'あれはさいふです。',
+    correctEnglish: 'That over there is a wallet.',
+    distractors: [
+      { romaji: 'Are ni saifu desu.', hiragana: 'あれにさいふです。', english: 'Particle error: "ni" instead of "wa"' },
+      { romaji: 'Saifu desu are wa.', hiragana: 'さいふですあれは。', english: 'Inverted word order' },
+    ],
+    questionDistractors: [
+      { romaji: 'Are no nan desu ka?', hiragana: 'あれのなんですか？', english: 'Particle error: "no" instead of "wa"' },
+      { romaji: 'Desu ka are wa nan?', hiragana: 'ですかあれは何？', english: 'Inverted word order' },
+    ],
+  },
+
+  // 60. What is that? -> That is a wallet.
+  {
+    id: 'exch-60',
+    category: 'demonstratives',
+    categoryLabel: 'Demonstratives & Identification',
+    situationTitle: 'Object Identification: That',
+    englishMeaning: 'What is that?',
+    promptSpeaker: 'Customer',
+    promptRomaji: 'Sore wa nan desu ka?',
+    promptHiragana: 'それはなんですか？',
+    correctRomaji: 'Sore wa saifu desu.',
+    correctHiragana: 'それはさいふです。',
+    correctEnglish: 'That is a wallet.',
+    distractors: [
+      { romaji: 'Sore ni saifu desu.', hiragana: 'それにさいふです。', english: 'Particle error: "ni" instead of "wa"' },
+      { romaji: 'Saifu desu sore wa.', hiragana: 'さいふですそれは。', english: 'Inverted word order' },
+    ],
+    questionDistractors: [
+      { romaji: 'Sore no nan desu ka?', hiragana: 'それのなんですか？', english: 'Particle error: "no" instead of "wa"' },
+      { romaji: 'Desu ka sore wa nan?', hiragana: 'ですかそれは何？', english: 'Inverted word order' },
     ],
   },
 ];

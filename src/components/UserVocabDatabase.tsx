@@ -31,7 +31,7 @@ export const UserVocabDatabase: React.FC<UserVocabDatabaseProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<UserVocabCategoryFilter>('All');
-  const [selectedBatch, setSelectedBatch] = useState<'all' | 1 | 2 | 3>('all');
+  const [selectedBatch, setSelectedBatch] = useState<'all' | 1 | 2 | 3 | 4>('all');
   const [playingId, setPlayingId] = useState<string | null>(null);
 
   const handlePlayAudio = (item: UserVocabItem) => {
@@ -72,6 +72,7 @@ export const UserVocabDatabase: React.FC<UserVocabDatabaseProps> = ({
   const batch1Count = USER_VOCAB_DB.filter(i => i.batch === 1).length;
   const batch2Count = USER_VOCAB_DB.filter(i => i.batch === 2).length;
   const batch3Count = USER_VOCAB_DB.filter(i => i.batch === 3).length;
+  const batch4Count = USER_VOCAB_DB.filter(i => i.batch === 4).length;
   const wordCount = USER_VOCAB_DB.filter(i => i.itemType === 'word').length;
   const phraseCount = USER_VOCAB_DB.filter(i => i.itemType !== 'word').length;
 
@@ -181,14 +182,27 @@ export const UserVocabDatabase: React.FC<UserVocabDatabaseProps> = ({
 
         <div className="p-3.5 rounded-2xl bg-white border border-[#E2E8F0] shadow-2xs">
           <div className="flex items-center justify-between text-[#5F6368] text-xs font-semibold">
-            <span>Batch 3 (Objects &amp; New)</span>
+            <span>Batch 3 (Objects &amp; Eric)</span>
             <Layers className="w-4 h-4 text-blue-500" />
           </div>
           <div className="mt-2 text-2xl font-black text-[#1F2329] font-mono">
             {batch3Count}
           </div>
           <div className="text-[11px] text-[#5F6368] mt-0.5 font-medium">
-            Everyday Objects &amp; Eric
+            Everyday Objects &amp; Age
+          </div>
+        </div>
+
+        <div className="p-3.5 rounded-2xl bg-white border border-[#E2E8F0] shadow-2xs">
+          <div className="flex items-center justify-between text-[#5F6368] text-xs font-semibold">
+            <span>Batch 4 (Time &amp; Classroom)</span>
+            <Sparkles className="w-4 h-4 text-indigo-500" />
+          </div>
+          <div className="mt-2 text-2xl font-black text-[#1F2329] font-mono">
+            {batch4Count}
+          </div>
+          <div className="text-[11px] text-[#5F6368] mt-0.5 font-medium">
+            Days, Hours, Feelings, Kore/Sore/Are
           </div>
         </div>
 
@@ -209,11 +223,23 @@ export const UserVocabDatabase: React.FC<UserVocabDatabaseProps> = ({
       {/* Useful Distinctions Callout */}
       <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200/80 shadow-2xs">
         <h4 className="text-xs font-extrabold uppercase tracking-wider text-amber-900 mb-2 flex items-center gap-1.5">
-          <span>💡 Useful Distinctions in Japanese</span>
+          <span>💡 Useful Distinctions &amp; Grammar Tips</span>
         </h4>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 text-xs text-amber-950">
           <div className="bg-white/80 p-2 rounded-xl border border-amber-200/60">
-            <span className="font-bold text-amber-900">スマホ vs スマートフォン:</span> スマホ is everyday casual; スマートフォン is the full formal word.
+            <span className="font-bold text-amber-900">～てください (-te kudasai):</span> "Please do..." (聞いてください = listen, 書いてください = write, 読んでください = read, 見てください = look).
+          </div>
+          <div className="bg-white/80 p-2 rounded-xl border border-amber-200/60">
+            <span className="font-bold text-amber-900">X はどうですか:</span> "How is X?" or "What do you think of X?" (最近どうですか, 日本語はどうですか).
+          </div>
+          <div className="bg-white/80 p-2 rounded-xl border border-amber-200/60">
+            <span className="font-bold text-amber-900">これ・それ・あれ:</span> これ = near speaker; それ = near listener; あれ = away from both.
+          </div>
+          <div className="bg-white/80 p-2 rounded-xl border border-amber-200/60">
+            <span className="font-bold text-amber-900">Irregular Hours:</span> 4時 is <span className="font-mono font-bold">yoji</span>, 7時 is <span className="font-mono font-bold">shichiji</span>, 9時 is <span className="font-mono font-bold">kuji</span>.
+          </div>
+          <div className="bg-white/80 p-2 rounded-xl border border-amber-200/60">
+            <span className="font-bold text-amber-900">スマホ vs スマートフォン:</span> スマホ is everyday casual; スマートフォン is full formal word.
           </div>
           <div className="bg-white/80 p-2 rounded-xl border border-amber-200/60">
             <span className="font-bold text-amber-900">パソコン vs コンピューター:</span> パソコン is much more common in everyday Japanese for personal PC.
@@ -226,9 +252,6 @@ export const UserVocabDatabase: React.FC<UserVocabDatabaseProps> = ({
           </div>
           <div className="bg-white/80 p-2 rounded-xl border border-amber-200/60">
             <span className="font-bold text-amber-900">お土産（おみやげ）:</span> Specifically gifts brought back from a trip for others.
-          </div>
-          <div className="bg-white/80 p-2 rounded-xl border border-amber-200/60">
-            <span className="font-bold text-amber-900">三十五歳（さんじゅうごさい）:</span> Suffix 〜歳 (〜さい) expresses age (e.g. Eric is 35).
           </div>
         </div>
       </div>
@@ -302,6 +325,17 @@ export const UserVocabDatabase: React.FC<UserVocabDatabaseProps> = ({
               }`}
             >
               Batch 3 ({batch3Count})
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedBatch(4)}
+              className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
+                selectedBatch === 4 
+                  ? 'bg-white text-[#1F2329] shadow-xs' 
+                  : 'text-[#5F6368] hover:text-[#1F2329]'
+              }`}
+            >
+              Batch 4 ({batch4Count})
             </button>
           </div>
         </div>

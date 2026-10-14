@@ -195,7 +195,7 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
         if (correctOpt.hiraganaAudio) {
           setTimeout(() => {
             speakKana(correctOpt.hiraganaAudio);
-          }, 300);
+          }, 360);
         }
       }
     }
@@ -424,9 +424,9 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
 
             if (showFeedback) {
               if (isCorrect) {
-                // If wrong answer was chosen, flash green the correct one!
+                // If wrong answer was chosen, flash green the correct one right after the shake!
                 buttonStyle = wasWrongChoiceMade
-                  ? 'bg-emerald-50 text-emerald-900 border-2 border-emerald-500 ring-2 ring-emerald-300 animate-flash-green'
+                  ? 'bg-emerald-50 text-emerald-900 border-2 border-emerald-500 ring-2 ring-emerald-300 animate-flash-green-delayed'
                   : 'bg-emerald-50 text-emerald-900 border-2 border-emerald-500 ring-2 ring-emerald-200';
               } else if (isSelected && !isCorrect) {
                 // Vibrate the wrong (red) answer slightly!
