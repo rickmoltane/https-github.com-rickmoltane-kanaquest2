@@ -8,6 +8,7 @@ import {
 import { generateQuiz } from '../data/hiraganaData';
 import { generateWordQuiz } from '../data/everydayWordsData';
 import { speakKana, playSuccessChime, playErrorBuzz } from '../utils/audio';
+import { recordImmediateAnswer } from '../services/storageService';
 import { WordIllustration } from './WordIllustration';
 import { 
   Volume2, 
@@ -17,7 +18,9 @@ import {
   Lightbulb, 
   RotateCcw,
   HelpCircle,
-  Keyboard
+  Keyboard,
+  Target,
+  Sparkles
 } from 'lucide-react';
 
 interface FlashcardQuizProps {
@@ -146,6 +149,11 @@ export const FlashcardQuiz: React.FC<FlashcardQuizProps> = ({
     const nextAnswers = [...answers, newAnswer];
     setAnswers(nextAnswers);
 
+    const speechTarget = currentQuestion.word?.kana || currentQuestion.character?.kana;
+    if (speechTarget) {
+      recordImmediateAnswer(speechTarget, isCorrect);
+    }
+
     // Audio feedback:
     // 1. Play chime / buzz
     // 2. Play pronunciation sound ONLY AFTER answer selection!
@@ -162,7 +170,6 @@ export const FlashcardQuiz: React.FC<FlashcardQuizProps> = ({
           }
         }
       }
-      const speechTarget = currentQuestion.word?.kana || currentQuestion.character?.kana;
       if (speechTarget) {
         // When correct: speaks after chime (180ms). When wrong: speaks after shake & buzz (360ms) exactly as the correct answer flashes green!
         setTimeout(() => {
@@ -301,6 +308,30 @@ export const FlashcardQuiz: React.FC<FlashcardQuizProps> = ({
         {/* ================= TOP PART OF FLASHCARD ================= */}
         <div className={`flex-1 min-h-0 flex flex-col items-center justify-center ${isWordExercise ? 'p-2 sm:p-4' : 'p-3 sm:p-6'} bg-white border-b-2 border-[#E2E8F0] relative overflow-hidden text-center`}>
           
+          {/* Adaptive Focus Status Chip */}
+          {currentQuestion?.adaptiveStatus && (
+            <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex items-center z-20">
+              {currentQuestion.adaptiveStatus === 'needs_practice' && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 shadow-2xs">
+                  <Target className="w-3 h-3 text-rose-500 animate-pulse" />
+                  Needs Practice
+                </span>
+              )}
+              {currentQuestion.adaptiveStatus === 'unseen' && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 shadow-2xs">
+                  <Sparkles className="w-3 h-3 text-blue-500" />
+                  {isWordExercise ? 'New Word' : 'New Syllable'}
+                </span>
+              )}
+              {currentQuestion.adaptiveStatus === 'proven' && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-2xs">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                  Mastery Check
+                </span>
+              )}
+            </div>
+          )}
+
           {/* Audio button ONLY shown AFTER answered to avoid giveaway */}
           {isAnswered && (
             <div className="absolute top-2 right-2 sm:top-3 sm:right-3 flex items-center gap-1 animate-fade-in z-20">

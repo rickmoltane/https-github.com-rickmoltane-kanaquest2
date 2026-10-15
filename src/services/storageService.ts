@@ -66,6 +66,148 @@ export function saveLocalMastery(mastery: CharacterMastery) {
   }
 }
 
+const LOCAL_STORAGE_RECENT_CHARS_KEY = 'kanaquest_recent_characters_v2';
+const LOCAL_STORAGE_RECENT_WORDS_KEY = 'kanaquest_recent_words_v2';
+
+export function getRecentCharacters(): string[] {
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_RECENT_CHARS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function recordRecentCharacters(kanaList: string[]) {
+  try {
+    const existing = getRecentCharacters().filter(k => !kanaList.includes(k));
+    const combined = [...kanaList, ...existing].slice(0, 26);
+    localStorage.setItem(LOCAL_STORAGE_RECENT_CHARS_KEY, JSON.stringify(combined));
+  } catch (err) {
+    console.warn('Failed to save recent characters', err);
+  }
+}
+
+export function getRecentWords(): string[] {
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_RECENT_WORDS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function recordRecentWords(wordIdentifiers: string[]) {
+  try {
+    const existing = getRecentWords().filter(w => !wordIdentifiers.includes(w));
+    const combined = [...wordIdentifiers, ...existing].slice(0, 40);
+    localStorage.setItem(LOCAL_STORAGE_RECENT_WORDS_KEY, JSON.stringify(combined));
+  } catch (err) {
+    console.warn('Failed to save recent words', err);
+  }
+}
+
+const LOCAL_STORAGE_PHRASE_MASTERY_KEY = 'kanaquest_phrase_mastery_v2';
+const LOCAL_STORAGE_RECENT_PHRASES_KEY = 'kanaquest_recent_phrases_v2';
+
+export interface PhraseMasteryRecord {
+  attempts: number;
+  correct: number;
+  consecutiveCorrect: number;
+  lastPracticed: string; // ISO date
+  accuracy: number;
+}
+
+export type PhraseMasteryMap = Record<string, PhraseMasteryRecord>;
+
+export function getPhraseMastery(): PhraseMasteryMap {
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_PHRASE_MASTERY_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+export function savePhraseMastery(mastery: PhraseMasteryMap) {
+  try {
+    localStorage.setItem(LOCAL_STORAGE_PHRASE_MASTERY_KEY, JSON.stringify(mastery));
+  } catch (err) {
+    console.warn('Failed to save phrase mastery', err);
+  }
+}
+
+export function getRecentPhrases(): string[] {
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_RECENT_PHRASES_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function recordRecentPhrases(ids: string[]) {
+  try {
+    const existing = getRecentPhrases().filter(id => !ids.includes(id));
+    const combined = [...ids, ...existing].slice(0, 30);
+    localStorage.setItem(LOCAL_STORAGE_RECENT_PHRASES_KEY, JSON.stringify(combined));
+  } catch (err) {
+    console.warn('Failed to save recent phrases', err);
+  }
+}
+
+/**
+ * Records immediate answer for an exchange phrase (Exercise 6 & 7)
+ * Tracks consecutive correct count and timestamp for spaced repetition
+ */
+export function recordImmediatePhraseAnswer(phraseId: string, isCorrect: boolean) {
+  try {
+    const mastery = getPhraseMastery();
+    const existing = mastery[phraseId] || {
+      attempts: 0,
+      correct: 0,
+      consecutiveCorrect: 0,
+      lastPracticed: '',
+      accuracy: 0,
+    };
+    const attempts = existing.attempts + 1;
+    const correct = existing.correct + (isCorrect ? 1 : 0);
+    const consecutiveCorrect = isCorrect ? (existing.consecutiveCorrect || 0) + 1 : 0;
+
+    mastery[phraseId] = {
+      attempts,
+      correct,
+      consecutiveCorrect,
+      lastPracticed: new Date().toISOString(),
+      accuracy: Math.round((correct / attempts) * 100),
+    };
+    savePhraseMastery(mastery);
+  } catch (err) {
+    console.warn('Failed to record immediate phrase answer', err);
+  }
+}
+
+/**
+ * Immediately records answer for an individual character or word to keep mastery fresh
+ */
+export function recordImmediateAnswer(itemKey: string, isCorrect: boolean) {
+  try {
+    const currentMastery = getLocalMastery();
+    const existing = currentMastery[itemKey] || { attempts: 0, correct: 0, accuracy: 0, lastPracticed: '' };
+    const attempts = existing.attempts + 1;
+    const correct = existing.correct + (isCorrect ? 1 : 0);
+    currentMastery[itemKey] = {
+      attempts,
+      correct,
+      accuracy: Math.round((correct / attempts) * 100),
+      lastPracticed: new Date().toISOString(),
+    };
+    saveLocalMastery(currentMastery);
+  } catch (err) {
+    console.warn('Failed to record immediate answer', err);
+  }
+}
+
 /**
  * Saves a completed quiz result and updates user stats across local & cloud
  */

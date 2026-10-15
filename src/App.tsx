@@ -30,6 +30,7 @@ function MainContent() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('exercise-1');
   const [currentQuizType, setCurrentQuizType] = useState<ExerciseType>('hiragana-to-romaji');
   const [activeResult, setActiveResult] = useState<QuizResult | null>(null);
+  const [quizSessionId, setQuizSessionId] = useState<number>(() => Date.now());
   const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {
     try {
       const saved = localStorage.getItem('kanaquest_sound_enabled');
@@ -48,6 +49,7 @@ function MainContent() {
   const handleStartExercise = (type: ExerciseType) => {
     setCurrentQuizType(type);
     setActiveResult(null);
+    setQuizSessionId(Date.now());
     if (type === 'hiragana-to-romaji') {
       setActiveTab('exercise-1');
     } else if (type === 'romaji-to-hiragana') {
@@ -136,6 +138,7 @@ function MainContent() {
           <QuizSummary
             result={activeResult}
             onRetake={() => {
+              setQuizSessionId(Date.now());
               setActiveResult(null);
             }}
             onSwitchExercise={(newType) => {
@@ -148,7 +151,7 @@ function MainContent() {
           />
         ) : activeTab === 'exercise-1' ? (
           <FlashcardQuiz
-            key={`ex1_${currentQuizType}`}
+            key={`ex1_${quizSessionId}`}
             exerciseType="hiragana-to-romaji"
             soundEnabled={soundEnabled}
             onComplete={handleQuizComplete}
@@ -156,7 +159,7 @@ function MainContent() {
           />
         ) : activeTab === 'exercise-2' ? (
           <FlashcardQuiz
-            key={`ex2_${currentQuizType}`}
+            key={`ex2_${quizSessionId}`}
             exerciseType="romaji-to-hiragana"
             soundEnabled={soundEnabled}
             onComplete={handleQuizComplete}
@@ -164,7 +167,7 @@ function MainContent() {
           />
         ) : activeTab === 'exercise-3' ? (
           <FlashcardQuiz
-            key={`ex3_${currentQuizType}`}
+            key={`ex3_${quizSessionId}`}
             exerciseType="word-romaji-to-hiragana"
             soundEnabled={soundEnabled}
             onComplete={handleQuizComplete}
@@ -172,7 +175,7 @@ function MainContent() {
           />
         ) : activeTab === 'exercise-4' ? (
           <FlashcardQuiz
-            key={`ex4_${currentQuizType}`}
+            key={`ex4_${quizSessionId}`}
             exerciseType="word-hiragana-to-romaji"
             soundEnabled={soundEnabled}
             onComplete={handleQuizComplete}

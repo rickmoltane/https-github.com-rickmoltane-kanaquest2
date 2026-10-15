@@ -6,14 +6,18 @@ import {
   ExchangeOption 
 } from '../data/exchangeData';
 import { speakKana, playSuccessChime, playErrorBuzz } from '../utils/audio';
+import { recordImmediatePhraseAnswer } from '../services/storageService';
 import { 
   Volume2, 
   CheckCircle2, 
   XCircle, 
   ArrowRight, 
   Flame,
-  Lightbulb
+  Lightbulb,
+  Target,
+  Sparkles
 } from 'lucide-react';
+import { ConversationSprite } from './ConversationSprite';
 
 interface ExchangeQuizProps {
   exerciseType: 'exchange-romaji' | 'exchange-hiragana';
@@ -162,6 +166,9 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
     const nextAnswers = [...answers, newAnswer];
     setAnswers(nextAnswers);
 
+    // Record immediate phrase answer for spaced repetition and adaptive focus
+    recordImmediatePhraseAnswer(currentQuestion.item.id, isCorrect);
+
     if (isCorrect) {
       setStreak(prev => prev + 1);
     } else {
@@ -218,6 +225,11 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
 
       if ((e.key === 'h' || e.key === 'H') && !e.ctrlKey && !e.metaKey) {
         setShowHint(prev => !prev);
+        return;
+      }
+
+      if ((e.key === 'p' || e.key === 'P' || e.key === 'a' || e.key === 'A') && !e.ctrlKey && !e.metaKey && currentQuestion) {
+        handlePlayAudio(currentQuestion.promptAudio, 'prompt');
         return;
       }
 
@@ -310,110 +322,70 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
         </div>
       </div>
 
-      {/* MAIN BODY: Pure prompt and 3 replies with optional (hint) button for translations */}
-      <div className="flex-1 min-h-0 flex flex-col items-center justify-between p-3 sm:p-5 max-w-2xl mx-auto w-full gap-3 overflow-y-auto">
+      {/* MAIN BODY: Calibrated visual scene and 3 replies below with ZERO overlap */}
+      <div className="flex-1 min-h-0 flex flex-col items-center justify-between p-2 sm:p-3 max-w-xl mx-auto w-full gap-2 sm:gap-2.5 overflow-y-auto">
         
-        {/* CENTER PROMPT CARD: Japanese prompt with optional Play Audio and (hint) translation button */}
-        <div className="w-full flex-1 min-h-[130px] sm:min-h-[155px] bg-white border-2 border-[#CBD5E1] rounded-2xl sm:rounded-3xl shadow-[0_4px_16px_rgba(0,0,0,0.05)] flex flex-col items-center justify-center p-3.5 sm:p-5 text-center">
-          <div className="w-full max-w-lg py-3.5 sm:py-5 px-3 sm:px-5 rounded-2xl bg-[#F0F7FF] border-2 border-[#BFDBFE] shadow-2xs flex flex-col items-center justify-center gap-2 sm:gap-2.5">
-            {/* Direction Indicator Badge: Distinguishes Question->Reply vs Answer->Question */}
-            <div className="flex items-center justify-center gap-1.5 flex-wrap">
-              <span
-                className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-black tracking-wide border shadow-2xs ${
-                  currentQuestion.direction === 'reply-to-question'
-                    ? 'bg-purple-100 text-purple-900 border-purple-300 ring-1 ring-purple-200'
-                    : 'bg-blue-100 text-blue-900 border-blue-300 ring-1 ring-blue-200'
-                }`}
-              >
-                <span>{currentQuestion.direction === 'reply-to-question' ? '💬' : '❓'}</span>
-                <span>{currentQuestion.directionBadge}</span>
-              </span>
-            </div>
+        {/* UPPER QUESTION SPACE: Calibrated manga scene visual with overlaid white speech bubble box */}
+        <div className="w-full flex flex-col items-center justify-center shrink-0 my-auto py-0.5">
+          <ConversationSprite
+            spriteId={currentQuestion.spriteId}
+            size="full"
+            speechBubbleText={currentQuestion.prompt}
+            isHiragana={isHiragana}
+            direction={currentQuestion.direction}
+            directionBadge={currentQuestion.directionBadge}
+            adaptiveStatus={currentQuestion.adaptiveStatus}
+            isPlayingAudio={playingAudioKey === 'prompt'}
+            onPlayAudio={() => handlePlayAudio(currentQuestion.promptAudio, 'prompt')}
+            showHint={showHint}
+            onToggleHint={() => setShowHint(prev => !prev)}
+            hintEnglish={currentQuestion.promptEnglish}
+            hintDirectionInstruction={
+              currentQuestion.direction === 'reply-to-question'
+                ? '💡 Challenge: Select the Japanese question that leads to this reply.'
+                : '💡 Challenge: Select the appropriate Japanese reply to this question.'
+            }
+          />
 
-            {/* The Target Phrase (Pure Romaji for Ex 6 or Pure Hiragana for Ex 7) */}
-            <span
-              className={`${
-                isHiragana
-                  ? "font-['Noto_Sans_JP',_sans-serif] text-xl sm:text-2xl lg:text-3xl font-black text-[#1F2329] tracking-wide"
-                  : "font-mono text-lg sm:text-xl lg:text-2xl font-extrabold text-[#1F2329] tracking-tight"
-              } leading-relaxed break-words text-center max-w-full`}
-            >
-              {currentQuestion.prompt}
-            </span>
-
-            {/* Prompt Action Buttons: Audio and Optional (hint) translation button */}
-            <div className="flex items-center justify-center gap-2 flex-wrap pt-0.5">
-              {/* Optional Play Audio Button (In Hiragana mode: available anytime; In Romaji mode: available after answered or replaying) */}
-              {(isHiragana || isAnswered) && (
-                <button
-                  type="button"
-                  onClick={() => handlePlayAudio(currentQuestion.promptAudio, 'prompt')}
-                  aria-label="Play prompt phrase audio"
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
-                    playingAudioKey === 'prompt'
-                      ? 'bg-[#1A73E8] text-white border-[#1A73E8] scale-105 shadow-xs'
-                      : 'bg-white text-[#1A73E8] border-[#BFDBFE] hover:border-[#1A73E8] hover:bg-[#F8FAFF] shadow-2xs'
-                  }`}
-                  title="Play prompt audio in Japanese"
-                >
-                  <Volume2 className="w-4 h-4" />
-                  <span>{playingAudioKey === 'prompt' ? 'Playing...' : 'Play Audio'}</span>
-                </button>
-              )}
-
-              {/* Optional (hint) Button that gives the English translation */}
+          {/* Quick Play Audio & Hint helper controls under the visual */}
+          <div className="flex items-center justify-center gap-2 mt-1 sm:mt-1.5 shrink-0">
+            {(isHiragana || isAnswered) && (
               <button
                 type="button"
-                onClick={() => setShowHint(prev => !prev)}
-                aria-label="Toggle English translation hint"
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
-                  showHint
-                    ? 'bg-amber-100 text-amber-900 border-amber-400 ring-1 ring-amber-300 shadow-xs'
-                    : 'bg-white text-[#5F6368] border-[#CBD5E1] hover:text-[#1F2329] hover:border-amber-400 hover:bg-amber-50/60 shadow-2xs'
+                onClick={() => handlePlayAudio(currentQuestion.promptAudio, 'prompt')}
+                aria-label="Play prompt phrase audio"
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-bold transition-all cursor-pointer ${
+                  playingAudioKey === 'prompt'
+                    ? 'bg-[#1A73E8] text-white border-[#1A73E8] scale-105 shadow-xs'
+                    : 'bg-white text-[#1A73E8] border-[#BFDBFE] hover:border-[#1A73E8] hover:bg-[#F8FAFF] shadow-2xs'
                 }`}
-                title="Show English translation hint (Key: H)"
+                title="Play prompt audio in Japanese (Key: P or tap bubble)"
               >
-                <Lightbulb className={`w-3.5 h-3.5 ${showHint ? 'text-amber-600 fill-amber-500' : 'text-amber-500'}`} />
-                <span>{showHint ? 'Hide (hint)' : '(hint)'}</span>
+                <Volume2 className="w-3.5 h-3.5" />
+                <span>{playingAudioKey === 'prompt' ? 'Playing...' : 'Play Audio'}</span>
               </button>
-            </div>
-
-            {/* Revealed Translation Hint Container */}
-            {showHint && (
-              <div className="w-full max-w-md px-3.5 py-2.5 rounded-xl bg-amber-50/95 border border-amber-300 text-left animate-in fade-in duration-200 mt-1">
-                <div className="flex items-center justify-between gap-2 mb-1">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 bg-amber-200/80 px-1.5 py-0.5 rounded font-mono">
-                    Translation Hint
-                  </span>
-                  <span className="text-[11px] text-amber-800 font-bold truncate">
-                    {currentQuestion.direction === 'reply-to-question' ? 'Statement / Answer' : 'Question Asked'}
-                  </span>
-                </div>
-                <p className="text-xs sm:text-sm font-bold text-neutral-900 leading-snug">
-                  "{currentQuestion.promptEnglish}"
-                </p>
-                {currentQuestion.direction === 'reply-to-question' ? (
-                  <p className="text-[11px] text-amber-900/80 font-medium mt-1">
-                    💡 Challenge: Choose the Japanese question that leads to this reply.
-                  </p>
-                ) : (
-                  <p className="text-[11px] text-amber-900/80 font-medium mt-1">
-                    💡 Challenge: Choose the appropriate Japanese reply to this question.
-                  </p>
-                )}
-                {isHiragana && (
-                  <p className="text-[11px] font-mono text-neutral-600 mt-1">
-                    Romaji: {currentQuestion.direction === 'reply-to-question' ? currentQuestion.item.correctRomaji : currentQuestion.item.promptRomaji}
-                  </p>
-                )}
-              </div>
             )}
+
+            <button
+              type="button"
+              onClick={() => setShowHint(prev => !prev)}
+              aria-label="Toggle English translation hint"
+              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-bold transition-all cursor-pointer ${
+                showHint
+                  ? 'bg-amber-100 text-amber-900 border-amber-400 font-extrabold shadow-2xs'
+                  : 'bg-white text-[#5F6368] border-[#CBD5E1] hover:text-[#1F2329] hover:bg-amber-50/50 shadow-2xs'
+              }`}
+              title="Toggle English Translation Hint (Key: H)"
+            >
+              <Lightbulb className={`w-3.5 h-3.5 ${showHint ? 'text-amber-600 fill-amber-500' : 'text-amber-500'}`} />
+              <span>{showHint ? 'Hide Hint' : 'Hint'}</span>
+            </button>
           </div>
         </div>
 
         {/* BOTTOM OPTIONS AREA: Exactly 3 Possible Replies (Pure Romaji or Hiragana) */}
         {/* Sibling elements: Option button and Audio button sit side-by-side cleanly with NO overlap */}
-        <div className="w-full flex flex-col gap-2.5 sm:gap-3 shrink-0">
+        <div className="w-full flex flex-col gap-2 sm:gap-2.5 shrink-0 max-w-lg mb-1">
           {currentQuestion.options.map((option, idx) => {
             const isSelected = selectedOptionIndex === idx;
             const isCorrect = option.isCorrect;

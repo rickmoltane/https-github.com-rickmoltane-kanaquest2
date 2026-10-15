@@ -1,10 +1,25 @@
 export interface ExchangeItem {
   id: string;
-  category: 'places-work' | 'occupations' | 'introductions' | 'people' | 'courtesy' | 'countries-origin' | 'languages' | 'age-numbers' | 'daily-inquiry' | 'time-days' | 'demonstratives';
+  category: 
+    | 'places-work' 
+    | 'occupations' 
+    | 'introductions' 
+    | 'people' 
+    | 'courtesy' 
+    | 'countries-origin' 
+    | 'languages' 
+    | 'age-numbers' 
+    | 'daily-inquiry' 
+    | 'time-days' 
+    | 'demonstratives'
+    | 'classroom';
   categoryLabel: string;
   situationTitle: string;
   englishMeaning: string;
   promptSpeaker?: string;
+  semanticPattern?: string; // Grouping to prevent asking similar questions in the same session
+  subjectEntity?: string;   // father, mother, man, woman, elderly, self, colleague, teacher, etc.
+  spriteId?: string;        // Visual sprite reference '01' to '16' from 4x4 sprite sheet
 
   // Prompt / Question (Full multi-word phrase)
   promptRomaji: string;
@@ -1238,6 +1253,1062 @@ export const EXCHANGE_DATA: ExchangeItem[] = [
       { romaji: 'Desu ka sore wa nan?', hiragana: 'ですかそれは何？', english: 'Inverted word order' },
     ],
   },
+
+  // 61. Please listen. -> Yes, I will listen.
+  {
+    id: 'exch-61',
+    category: 'classroom',
+    categoryLabel: 'Classroom Phrases',
+    situationTitle: 'Teacher Request: Listen',
+    englishMeaning: 'Please listen.',
+    promptSpeaker: 'Teacher',
+    semanticPattern: 'classroom-request',
+    subjectEntity: 'teacher',
+    promptRomaji: 'Kiite kudasai.',
+    promptHiragana: 'きいてください。',
+    correctRomaji: 'Hai, kikimasu.',
+    correctHiragana: 'はい、ききます。',
+    correctEnglish: 'Yes, I will listen.',
+    distractors: [
+      { romaji: 'Hai, kiite kudasai.', hiragana: 'はい、きいてください。', english: 'Echoing request instead of responding' },
+      { romaji: 'Kikimasu hai.', hiragana: 'ききますはい。', english: 'Inverted word order' },
+    ],
+    questionDistractors: [
+      { romaji: 'Kiite no kudasai.', hiragana: 'きいてのください。', english: 'Extraneous particle error' },
+      { romaji: 'Kudasai kiite.', hiragana: 'くださいきいて。', english: 'Inverted phrasing' },
+    ],
+  },
+
+  // 62. Please write. -> Yes, I will write.
+  {
+    id: 'exch-62',
+    category: 'classroom',
+    categoryLabel: 'Classroom Phrases',
+    situationTitle: 'Teacher Request: Write',
+    englishMeaning: 'Please write.',
+    promptSpeaker: 'Teacher',
+    semanticPattern: 'classroom-request',
+    subjectEntity: 'teacher',
+    promptRomaji: 'Kaite kudasai.',
+    promptHiragana: 'かいてください。',
+    correctRomaji: 'Hai, kakimasu.',
+    correctHiragana: 'はい、かきます。',
+    correctEnglish: 'Yes, I will write.',
+    distractors: [
+      { romaji: 'Hai, kaite kudasai.', hiragana: 'はい、かいてください。', english: 'Echoing request instead of responding' },
+      { romaji: 'Kakimasu hai.', hiragana: 'かきますはい。', english: 'Inverted word order' },
+    ],
+    questionDistractors: [
+      { romaji: 'Kaite no kudasai.', hiragana: 'かいてのください。', english: 'Extraneous particle error' },
+      { romaji: 'Kudasai kaite.', hiragana: 'くださいかいて。', english: 'Inverted phrasing' },
+    ],
+  },
+
+  // 63. Please read. -> Yes, I will read.
+  {
+    id: 'exch-63',
+    category: 'classroom',
+    categoryLabel: 'Classroom Phrases',
+    situationTitle: 'Teacher Request: Read',
+    englishMeaning: 'Please read.',
+    promptSpeaker: 'Teacher',
+    semanticPattern: 'classroom-request',
+    subjectEntity: 'teacher',
+    promptRomaji: 'Yonde kudasai.',
+    promptHiragana: 'よんでください。',
+    correctRomaji: 'Hai, yomimasu.',
+    correctHiragana: 'はい、よみます。',
+    correctEnglish: 'Yes, I will read.',
+    distractors: [
+      { romaji: 'Hai, yonde kudasai.', hiragana: 'はい、よんでください。', english: 'Echoing request instead of responding' },
+      { romaji: 'Yomimasu hai.', hiragana: 'よみますはい。', english: 'Inverted word order' },
+    ],
+    questionDistractors: [
+      { romaji: 'Yonde no kudasai.', hiragana: 'よんでのください。', english: 'Extraneous particle error' },
+      { romaji: 'Kudasai yonde.', hiragana: 'くださいよんで。', english: 'Inverted phrasing' },
+    ],
+  },
+
+  // 64. Please open to page 3. -> Yes, I will open it.
+  {
+    id: 'exch-64',
+    category: 'classroom',
+    categoryLabel: 'Classroom Phrases',
+    situationTitle: 'Teacher Request: Page 3',
+    englishMeaning: 'Please open to page 3.',
+    promptSpeaker: 'Teacher',
+    semanticPattern: 'classroom-request',
+    subjectEntity: 'teacher',
+    promptRomaji: 'San-pēji o hiraite kudasai.',
+    promptHiragana: 'さんぺーじをひらいてください。',
+    correctRomaji: 'Hai, hirakimasu.',
+    correctHiragana: 'はい、ひらきます。',
+    correctEnglish: 'Yes, I will open it.',
+    distractors: [
+      { romaji: 'Hai, san-pēji o kudasai.', hiragana: 'はい、さんぺーじをください。', english: 'Omitted verb "hiraite"' },
+      { romaji: 'San-pēji ni hirakimasu hai.', hiragana: 'さんぺーじにひらきますはい。', english: 'Incorrect particle and order' },
+    ],
+    questionDistractors: [
+      { romaji: 'San-pēji ni hiraite kudasai.', hiragana: 'さんぺーじにひらいてください。', english: 'Particle error: "ni" instead of "o"' },
+      { romaji: 'Kudasai hiraite san-pēji o.', hiragana: 'くださいひらいてさんぺーじを。', english: 'Inverted phrasing order' },
+    ],
+  },
+
+  // 65. Please say it. -> Yes, I will say it.
+  {
+    id: 'exch-65',
+    category: 'classroom',
+    categoryLabel: 'Classroom Phrases',
+    situationTitle: 'Teacher Request: Say It',
+    englishMeaning: 'Please say it.',
+    promptSpeaker: 'Teacher',
+    semanticPattern: 'classroom-request',
+    subjectEntity: 'teacher',
+    promptRomaji: 'Itte kudasai.',
+    promptHiragana: 'いってください。',
+    correctRomaji: 'Hai, iimasu.',
+    correctHiragana: 'はい、いいます。',
+    correctEnglish: 'Yes, I will say it.',
+    distractors: [
+      { romaji: 'Hai, itte kudasai.', hiragana: 'はい、いってください。', english: 'Echoing request instead of responding' },
+      { romaji: 'Iimasu hai.', hiragana: 'いいますはい。', english: 'Inverted word order' },
+    ],
+    questionDistractors: [
+      { romaji: 'Itte no kudasai.', hiragana: 'いってのください。', english: 'Extraneous particle error' },
+      { romaji: 'Kudasai itte.', hiragana: 'くださいいって。', english: 'Inverted phrasing' },
+    ],
+  },
+
+  // 66. Please look. -> Yes, I will look.
+  {
+    id: 'exch-66',
+    category: 'classroom',
+    categoryLabel: 'Classroom Phrases',
+    situationTitle: 'Teacher Request: Look',
+    englishMeaning: 'Please look.',
+    promptSpeaker: 'Teacher',
+    semanticPattern: 'classroom-request',
+    subjectEntity: 'teacher',
+    promptRomaji: 'Mite kudasai.',
+    promptHiragana: 'みてください。',
+    correctRomaji: 'Hai, mimasu.',
+    correctHiragana: 'はい、みます。',
+    correctEnglish: 'Yes, I will look.',
+    distractors: [
+      { romaji: 'Hai, mite kudasai.', hiragana: 'はい、みてください。', english: 'Echoing request instead of responding' },
+      { romaji: 'Mimasu hai.', hiragana: 'みますはい。', english: 'Inverted word order' },
+    ],
+    questionDistractors: [
+      { romaji: 'Mite no kudasai.', hiragana: 'みてのください。', english: 'Extraneous particle error' },
+      { romaji: 'Kudasai mite.', hiragana: 'くださいみて。', english: 'Inverted phrasing' },
+    ],
+  },
+
+  // 67. Please talk in pairs. -> Yes, we will talk.
+  {
+    id: 'exch-67',
+    category: 'classroom',
+    categoryLabel: 'Classroom Phrases',
+    situationTitle: 'Pair Work Request',
+    englishMeaning: 'Please talk in pairs.',
+    promptSpeaker: 'Teacher',
+    semanticPattern: 'classroom-request',
+    subjectEntity: 'teacher',
+    promptRomaji: 'Pea de hanashite kudasai.',
+    promptHiragana: 'ぺあではなしてください。',
+    correctRomaji: 'Hai, hanashimasu.',
+    correctHiragana: 'はい、はなします。',
+    correctEnglish: 'Yes, we will talk.',
+    distractors: [
+      { romaji: 'Hai, pea o hanashite kudasai.', hiragana: 'はい、ぺあをはなしてください。', english: 'Incorrect particle: "o" instead of "de"' },
+      { romaji: 'Hanashimasu hai pea de.', hiragana: 'はなしますはいぺあで。', english: 'Inverted word order' },
+    ],
+    questionDistractors: [
+      { romaji: 'Pea o hanashite kudasai.', hiragana: 'ぺあをはなしてください。', english: 'Particle error: "o" instead of "de"' },
+      { romaji: 'Kudasai pea de hanashite.', hiragana: 'くださいぺあではなして。', english: 'Inverted phrasing' },
+    ],
+  },
+
+  // 68. Please wait 10 minutes. -> Yes, I will wait.
+  {
+    id: 'exch-68',
+    category: 'classroom',
+    categoryLabel: 'Classroom & Courtesy',
+    situationTitle: 'Waiting Request: 10 Minutes',
+    englishMeaning: 'Please wait 10 minutes.',
+    promptSpeaker: 'Colleague',
+    semanticPattern: 'classroom-request',
+    subjectEntity: 'colleague',
+    promptRomaji: 'Juppun matte kudasai.',
+    promptHiragana: 'じゅっぷんまってください。',
+    correctRomaji: 'Hai, machimasu.',
+    correctHiragana: 'はい、まちます。',
+    correctEnglish: 'Yes, I will wait.',
+    distractors: [
+      { romaji: 'Hai, juppun o matte kudasai.', hiragana: 'はい、じゅっぷんをまってください。', english: 'Extraneous particle error' },
+      { romaji: 'Machimasu hai juppun.', hiragana: 'まちますはいじゅっぷん。', english: 'Inverted word order' },
+    ],
+    questionDistractors: [
+      { romaji: 'Juppun no matte kudasai.', hiragana: 'じゅっぷんのまってください。', english: 'Extraneous particle error' },
+      { romaji: 'Kudasai juppun matte.', hiragana: 'くださいじゅっぷんまって。', english: 'Inverted phrasing' },
+    ],
+  },
+
+  // 69. Where does your father work? -> He works at a company.
+  {
+    id: 'exch-69',
+    category: 'places-work',
+    categoryLabel: 'Family & Work',
+    situationTitle: 'Father Workplace Inquiry',
+    englishMeaning: 'Where does your father work?',
+    promptSpeaker: 'Friend',
+    semanticPattern: 'workplace-location',
+    subjectEntity: 'father',
+    promptRomaji: 'Otōsan wa doko de hataraite imasu ka?',
+    promptHiragana: 'おとうさんはどこではたらいていますか？',
+    correctRomaji: 'Kaisha de hataraite imasu.',
+    correctHiragana: 'かいしゃではたらいています。',
+    correctEnglish: 'He works at a company.',
+    distractors: [
+      { romaji: 'Kaisha o hataraite imasu.', hiragana: 'かいしゃをはたらいています。', english: 'Particle error: "o" instead of "de"' },
+      { romaji: 'Hataraite kaisha de imasu.', hiragana: 'はたらいてかいしゃでいます。', english: 'Inverted word order' },
+    ],
+    questionDistractors: [
+      { romaji: 'Otōsan no doko de hataraite imasu ka?', hiragana: 'おとうさんのどこではたらいていますか？', english: 'Particle error: "no" instead of "wa"' },
+      { romaji: 'Desu ka otōsan wa doko de hataraite?', hiragana: 'ですかおとうさんはどこではたらいて？', english: 'Inverted sentence structure' },
+    ],
+  },
+
+  // 70. Where does your mother work? -> She works at a hospital.
+  {
+    id: 'exch-70',
+    category: 'places-work',
+    categoryLabel: 'Family & Work',
+    situationTitle: 'Mother Workplace Inquiry',
+    englishMeaning: 'Where does your mother work?',
+    promptSpeaker: 'Acquaintance',
+    semanticPattern: 'workplace-location',
+    subjectEntity: 'mother',
+    promptRomaji: 'Okāsan wa doko de hataraite imasu ka?',
+    promptHiragana: 'おかあさんはどこではたらいていますか？',
+    correctRomaji: 'Byōin de hataraite imasu.',
+    correctHiragana: 'びょういんではたらいています。',
+    correctEnglish: 'She works at a hospital.',
+    distractors: [
+      { romaji: 'Byōin o hataraite imasu.', hiragana: 'びょういんをはたらいています。', english: 'Particle error: "o" instead of "de"' },
+      { romaji: 'Hataraite byōin de imasu.', hiragana: 'はたらいてびょういんでいます。', english: 'Inverted word order' },
+    ],
+    questionDistractors: [
+      { romaji: 'Okāsan no doko de hataraite imasu ka?', hiragana: 'おかあさんのどこではたらいていますか？', english: 'Particle error: "no" instead of "wa"' },
+      { romaji: 'Desu ka okāsan wa doko de hataraite?', hiragana: 'ですかおかあさんはどこではたらいて？', english: 'Inverted sentence structure' },
+    ],
+  },
+
+  // 71. How old is your father? -> He is 50 years old.
+  {
+    id: 'exch-71',
+    category: 'age-numbers',
+    categoryLabel: 'Family & Age',
+    situationTitle: 'Father Age Inquiry',
+    englishMeaning: 'How old is your father?',
+    promptSpeaker: 'Doctor',
+    semanticPattern: 'age-inquiry',
+    subjectEntity: 'father',
+    promptRomaji: 'Otōsan wa nan-sai desu ka?',
+    promptHiragana: 'おとうさんはなんさいですか？',
+    correctRomaji: 'Gojissai desu.',
+    correctHiragana: 'ごじゅっさいです。',
+    correctEnglish: 'He is 50 years old.',
+    distractors: [
+      { romaji: 'Gojissai o desu.', hiragana: 'ごじゅっさいをです。', english: 'Extraneous object particle' },
+      { romaji: 'Desu gojissai wa.', hiragana: 'ですごじゅっさいは。', english: 'Inverted word order' },
+    ],
+    questionDistractors: [
+      { romaji: 'Otōsan no nan-sai desu ka?', hiragana: 'おとうさんのなんさいですか？', english: 'Particle error: "no" instead of "wa"' },
+      { romaji: 'Desu ka otōsan wa nan-sai?', hiragana: 'ですかおとうさんはなんさい？', english: 'Inverted word order' },
+    ],
+  },
+
+  // 72. How old is your mother? -> She is 45 years old.
+  {
+    id: 'exch-72',
+    category: 'age-numbers',
+    categoryLabel: 'Family & Age',
+    situationTitle: 'Mother Age Inquiry',
+    englishMeaning: 'How old is your mother?',
+    promptSpeaker: 'Nurse',
+    semanticPattern: 'age-inquiry',
+    subjectEntity: 'mother',
+    promptRomaji: 'Okāsan wa nan-sai desu ka?',
+    promptHiragana: 'おかあさんはなんさいですか？',
+    correctRomaji: 'Yonjūgo-sai desu.',
+    correctHiragana: 'よんじゅうごさいです。',
+    correctEnglish: 'She is 45 years old.',
+    distractors: [
+      { romaji: 'Yonjūgo-sai no desu.', hiragana: 'よんじゅうごさいのです。', english: 'Extraneous possessive particle' },
+      { romaji: 'Desu yonjūgo-sai wa.', hiragana: 'ですよんじゅうごさいは。', english: 'Inverted word order' },
+    ],
+    questionDistractors: [
+      { romaji: 'Okāsan no nan-sai desu ka?', hiragana: 'おかあさんのなんさいですか？', english: 'Particle error: "no" instead of "wa"' },
+      { romaji: 'Desu ka okāsan wa nan-sai?', hiragana: 'ですかおかあさんはなんさい？', english: 'Inverted word order' },
+    ],
+  },
+
+  // 73. Is your mother a homemaker? -> Yes, she is a homemaker.
+  {
+    id: 'exch-73',
+    category: 'occupations',
+    categoryLabel: 'Family & Occupations',
+    situationTitle: 'Mother Homemaker Status',
+    englishMeaning: 'Is your mother a homemaker?',
+    promptSpeaker: 'Neighbor',
+    semanticPattern: 'occupation-status',
+    subjectEntity: 'mother',
+    promptRomaji: 'Okāsan wa shufu desu ka?',
+    promptHiragana: 'おかあさんはしゅふですか？',
+    correctRomaji: 'Hai, shufu desu.',
+    correctHiragana: 'はい、しゅふです。',
+    correctEnglish: 'Yes, she is a homemaker.',
+    distractors: [
+      { romaji: 'Hai, shufu o desu.', hiragana: 'はい、しゅふをです。', english: 'Extraneous object particle' },
+      { romaji: 'Hai, shufu wa desu.', hiragana: 'はい、しゅふはです。', english: 'Misplaced particle' },
+    ],
+    questionDistractors: [
+      { romaji: 'Okāsan no shufu desu ka?', hiragana: 'おかあさんのしゅふですか？', english: 'Particle error: "no" instead of "wa"' },
+      { romaji: 'Desu ka okāsan wa shufu?', hiragana: 'ですかおかあさんはしゅふ？', english: 'Inverted word order' },
+    ],
+  },
+
+  // 74. Is that man a doctor? -> Yes, he works at a hospital.
+  {
+    id: 'exch-74',
+    category: 'occupations',
+    categoryLabel: 'People & Occupations',
+    situationTitle: 'Male Doctor Inquiry',
+    englishMeaning: 'Is that man a doctor?',
+    promptSpeaker: 'Visitor',
+    semanticPattern: 'occupation-status',
+    subjectEntity: 'man',
+    promptRomaji: 'Ano otoko no hito wa isha desu ka?',
+    promptHiragana: 'あのおとこのひとはいしゃですか？',
+    correctRomaji: 'Hai, byōin de hataraite imasu.',
+    correctHiragana: 'はい、びょういんではたらいています。',
+    correctEnglish: 'Yes, he works at a hospital.',
+    distractors: [
+      { romaji: 'Hai, byōin o hataraite imasu.', hiragana: 'はい、びょういんをはたらいています。', english: 'Particle error: "o" instead of "de"' },
+      { romaji: 'Hai, hataraite byōin de imasu.', hiragana: 'はい、はたらいてびょういんでいます。', english: 'Inverted word order' },
+    ],
+    questionDistractors: [
+      { romaji: 'Ano otoko no hito no isha desu ka?', hiragana: 'あのおとこのひとのいしゃですか？', english: 'Particle error: "no" instead of "wa"' },
+      { romaji: 'Desu ka ano otoko no hito wa isha?', hiragana: 'ですかあのおとこのひとはいしゃ？', english: 'Inverted word order' },
+    ],
+  },
+
+  // 75. Is that woman a teacher? -> Yes, she works at a school.
+  {
+    id: 'exch-75',
+    category: 'occupations',
+    categoryLabel: 'People & Occupations',
+    situationTitle: 'Female Teacher Inquiry',
+    englishMeaning: 'Is that woman a teacher?',
+    promptSpeaker: 'Parent',
+    semanticPattern: 'occupation-status',
+    subjectEntity: 'woman',
+    promptRomaji: 'Ano onna no hito wa sensei desu ka?',
+    promptHiragana: 'あのおんなのひとはせんせいですか？',
+    correctRomaji: 'Hai, gakkō de hataraite imasu.',
+    correctHiragana: 'はい、がっこうではたらいています。',
+    correctEnglish: 'Yes, she works at a school.',
+    distractors: [
+      { romaji: 'Hai, gakkō o hataraite imasu.', hiragana: 'はい、がっこうをはたらいています。', english: 'Particle error: "o" instead of "de"' },
+      { romaji: 'Hai, hataraite gakkō de imasu.', hiragana: 'はい、はたらいてがっこうでいます。', english: 'Inverted word order' },
+    ],
+    questionDistractors: [
+      { romaji: 'Ano onna no hito no sensei desu ka?', hiragana: 'あのおんなのひとのせんせいですか？', english: 'Particle error: "no" instead of "wa"' },
+      { romaji: 'Desu ka ano onna no hito wa sensei?', hiragana: 'ですかあのおんなのひとはせんせい？', english: 'Inverted word order' },
+    ],
+  },
+
+  // 76. Is that man a lawyer? -> Yes, he is a lawyer.
+  {
+    id: 'exch-76',
+    category: 'occupations',
+    categoryLabel: 'People & Occupations',
+    situationTitle: 'Lawyer Status Inquiry',
+    englishMeaning: 'Is that man a lawyer?',
+    promptSpeaker: 'Client',
+    semanticPattern: 'occupation-status',
+    subjectEntity: 'man',
+    promptRomaji: 'Ano otoko no hito wa bengoshi desu ka?',
+    promptHiragana: 'あのおとこのひとはべんごしですか？',
+    correctRomaji: 'Hai, bengoshi desu.',
+    correctHiragana: 'はい、べんごしです。',
+    correctEnglish: 'Yes, he is a lawyer.',
+    distractors: [
+      { romaji: 'Hai, bengoshi o desu.', hiragana: 'はい、べんごしをです。', english: 'Extraneous object particle' },
+      { romaji: 'Bengoshi wa ano otoko no hito desu.', hiragana: 'べんごしはあのおとこのひとです。', english: 'Inverted topic/predicate' },
+    ],
+    questionDistractors: [
+      { romaji: 'Ano otoko no hito no bengoshi desu ka?', hiragana: 'あのおとこのひとのべんごしですか？', english: 'Particle error: "no" instead of "wa"' },
+      { romaji: 'Desu ka ano otoko no hito wa bengoshi?', hiragana: 'ですかあのおとこのひとはべんごし？', english: 'Inverted word order' },
+    ],
+  },
+
+  // 77. Is that woman a nurse? -> Yes, she works at a hospital.
+  {
+    id: 'exch-77',
+    category: 'occupations',
+    categoryLabel: 'People & Occupations',
+    situationTitle: 'Nurse Status Inquiry',
+    englishMeaning: 'Is that woman a nurse?',
+    promptSpeaker: 'Patient',
+    semanticPattern: 'occupation-status',
+    subjectEntity: 'woman',
+    promptRomaji: 'Ano onna no hito wa kangoshi desu ka?',
+    promptHiragana: 'あのおんなのひとはかんごしですか？',
+    correctRomaji: 'Hai, byōin de hataraite imasu.',
+    correctHiragana: 'はい、びょういんではたらいています。',
+    correctEnglish: 'Yes, she works at a hospital.',
+    distractors: [
+      { romaji: 'Hai, byōin ni hataraite imasu.', hiragana: 'はい、びょういんにはたらいています。', english: 'Particle error: "ni" instead of "de"' },
+      { romaji: 'Hai, kangoshi de byōin desu.', hiragana: 'はい、かんごしでびょういんです。', english: 'Garbled phrasing' },
+    ],
+    questionDistractors: [
+      { romaji: 'Ano onna no hito no kangoshi desu ka?', hiragana: 'あのおんなのひとのかんごしですか？', english: 'Particle error: "no" instead of "wa"' },
+      { romaji: 'Desu ka ano onna no hito wa kangoshi?', hiragana: 'ですかあのおんなのひとはかんごし？', english: 'Inverted word order' },
+    ],
+  },
+
+  // 78. How old is that elderly person? -> They are 70 years old.
+  {
+    id: 'exch-78',
+    category: 'age-numbers',
+    categoryLabel: 'Age & People',
+    situationTitle: 'Elderly Age Inquiry: 70',
+    englishMeaning: 'How old is that elderly person?',
+    promptSpeaker: 'Caregiver',
+    semanticPattern: 'age-inquiry',
+    subjectEntity: 'elderly',
+    promptRomaji: 'Ano otoshiyori wa nan-sai desu ka?',
+    promptHiragana: 'あのおとしよりはなんさいですか？',
+    correctRomaji: 'Nanajissai desu.',
+    correctHiragana: 'ななじゅっさいです。',
+    correctEnglish: 'They are 70 years old.',
+    distractors: [
+      { romaji: 'Nanajissai o desu.', hiragana: 'ななじゅっさいをです。', english: 'Extraneous object particle' },
+      { romaji: 'Desu nanajissai wa.', hiragana: 'ですななじゅっさいは。', english: 'Inverted word order' },
+    ],
+    questionDistractors: [
+      { romaji: 'Ano otoshiyori no nan-sai desu ka?', hiragana: 'あのおとしよりのなんさいですか？', english: 'Particle error: "no" instead of "wa"' },
+      { romaji: 'Desu ka ano otoshiyori wa nan-sai?', hiragana: 'ですかあのおとしよりはなんさい？', english: 'Inverted word order' },
+    ],
+  },
+
+  // 79. What is this? -> That is a watch.
+  {
+    id: 'exch-79',
+    category: 'demonstratives',
+    categoryLabel: 'Demonstratives & Identification',
+    situationTitle: 'Object Identification: Watch',
+    englishMeaning: 'What is this?',
+    promptSpeaker: 'Shopper',
+    semanticPattern: 'demonstrative-object',
+    subjectEntity: 'object',
+    promptRomaji: 'Kore wa nan desu ka?',
+    promptHiragana: 'これはなんですか？',
+    correctRomaji: 'Sore wa tokei desu.',
+    correctHiragana: 'それはとけいです。',
+    correctEnglish: 'That is a watch.',
+    distractors: [
+      { romaji: 'Sore ni tokei desu.', hiragana: 'それにとけいです。', english: 'Particle error: "ni" instead of "wa"' },
+      { romaji: 'Tokei desu sore wa.', hiragana: 'とけいですそれは。', english: 'Inverted word order' },
+    ],
+    questionDistractors: [
+      { romaji: 'Kore no nan desu ka?', hiragana: 'これのなんですか？', english: 'Particle error: "no" instead of "wa"' },
+      { romaji: 'Desu ka kore wa nan?', hiragana: 'ですかこれは何？', english: 'Inverted word order' },
+    ],
+  },
+
+  // 80. What is that? -> This is a book.
+  {
+    id: 'exch-80',
+    category: 'demonstratives',
+    categoryLabel: 'Demonstratives & Identification',
+    situationTitle: 'Object Identification: Book',
+    englishMeaning: 'What is that?',
+    promptSpeaker: 'Friend',
+    semanticPattern: 'demonstrative-object',
+    subjectEntity: 'object',
+    promptRomaji: 'Sore wa nan desu ka?',
+    promptHiragana: 'それはなんですか？',
+    correctRomaji: 'Kore wa hon desu.',
+    correctHiragana: 'これはほんです。',
+    correctEnglish: 'This is a book.',
+    distractors: [
+      { romaji: 'Kore ni hon desu.', hiragana: 'これにほんです。', english: 'Particle error: "ni" instead of "wa"' },
+      { romaji: 'Hon desu kore wa.', hiragana: 'ほんですこれは。', english: 'Inverted word order' },
+    ],
+    questionDistractors: [
+      { romaji: 'Sore no nan desu ka?', hiragana: 'それのなんですか？', english: 'Particle error: "no" instead of "wa"' },
+      { romaji: 'Desu ka sore wa nan?', hiragana: 'ですかそれは何？', english: 'Inverted word order' },
+    ],
+  },
+
+  // 81. What is that over there? -> That over there is an umbrella.
+  {
+    id: 'exch-81',
+    category: 'demonstratives',
+    categoryLabel: 'Demonstratives & Identification',
+    situationTitle: 'Object Identification: Umbrella',
+    englishMeaning: 'What is that over there?',
+    promptSpeaker: 'Customer',
+    semanticPattern: 'demonstrative-object',
+    subjectEntity: 'object',
+    promptRomaji: 'Are wa nan desu ka?',
+    promptHiragana: 'あれはなんですか？',
+    correctRomaji: 'Are wa kasa desu.',
+    correctHiragana: 'あれはかさです。',
+    correctEnglish: 'That over there is an umbrella.',
+    distractors: [
+      { romaji: 'Are ni kasa desu.', hiragana: 'あれにかさです。', english: 'Particle error: "ni" instead of "wa"' },
+      { romaji: 'Kasa desu are wa.', hiragana: 'かさですあれは。', english: 'Inverted word order' },
+    ],
+    questionDistractors: [
+      { romaji: 'Are no nan desu ka?', hiragana: 'あれのなんですか？', english: 'Particle error: "no" instead of "wa"' },
+      { romaji: 'Desu ka are wa nan?', hiragana: 'ですかあれは何？', english: 'Inverted word order' },
+    ],
+  },
+
+  // 82. What is this? -> That is a dictionary.
+  {
+    id: 'exch-82',
+    category: 'demonstratives',
+    categoryLabel: 'Demonstratives & Identification',
+    situationTitle: 'Object Identification: Dictionary',
+    englishMeaning: 'What is this?',
+    promptSpeaker: 'Student',
+    semanticPattern: 'demonstrative-object',
+    subjectEntity: 'object',
+    promptRomaji: 'Kore wa nan desu ka?',
+    promptHiragana: 'これはなんですか？',
+    correctRomaji: 'Sore wa jisho desu.',
+    correctHiragana: 'それはじしょです。',
+    correctEnglish: 'That is a dictionary.',
+    distractors: [
+      { romaji: 'Sore ni jisho desu.', hiragana: 'それにはじしょです。', english: 'Particle error' },
+      { romaji: 'Jisho desu sore wa.', hiragana: 'じしょですそれは。', english: 'Inverted word order' },
+    ],
+    questionDistractors: [
+      { romaji: 'Kore no nan desu ka?', hiragana: 'これのなんですか？', english: 'Particle error: "no" instead of "wa"' },
+      { romaji: 'Desu ka kore wa nan?', hiragana: 'ですかこれは何？', english: 'Inverted word order' },
+    ],
+  },
+
+  // 83. What is that over there? -> That over there is a computer.
+  {
+    id: 'exch-83',
+    category: 'demonstratives',
+    categoryLabel: 'Demonstratives & Identification',
+    situationTitle: 'Object Identification: Computer',
+    englishMeaning: 'What is that over there?',
+    promptSpeaker: 'Coworker',
+    semanticPattern: 'demonstrative-object',
+    subjectEntity: 'object',
+    promptRomaji: 'Are wa nan desu ka?',
+    promptHiragana: 'あれはなんですか？',
+    correctRomaji: 'Are wa konpyūtā desu.',
+    correctHiragana: 'あれはこんぴゅーたーです。',
+    correctEnglish: 'That over there is a computer.',
+    distractors: [
+      { romaji: 'Are ni konpyūtā desu.', hiragana: 'あれにこんぴゅーたーです。', english: 'Particle error: "ni" instead of "wa"' },
+      { romaji: 'Konpyūtā desu are wa.', hiragana: 'こんぴゅーたーですあれは。', english: 'Inverted word order' },
+    ],
+    questionDistractors: [
+      { romaji: 'Are no nan desu ka?', hiragana: 'あれのなんですか？', english: 'Particle error: "no" instead of "wa"' },
+      { romaji: 'Desu ka are wa nan?', hiragana: 'ですかあれは何？', english: 'Inverted word order' },
+    ],
+  },
+
+  // 84. What time is it now? -> It is 9 o'clock.
+  {
+    id: 'exch-84',
+    category: 'time-days',
+    categoryLabel: 'Hours & Minutes',
+    situationTitle: 'Asking Time: 9 o\'clock',
+    englishMeaning: 'What time is it now?',
+    promptSpeaker: 'Passenger',
+    semanticPattern: 'time-clock',
+    subjectEntity: 'clock',
+    promptRomaji: 'Ima, nanji desu ka?',
+    promptHiragana: 'いま、なんじですか？',
+    correctRomaji: 'Kuji desu.',
+    correctHiragana: 'くじです。',
+    correctEnglish: 'It is 9 o\'clock.',
+    distractors: [
+      { romaji: 'Kyūji desu.', hiragana: 'きゅうじです。', english: 'Irregular error: "kuji" is correct for 9 o\'clock' },
+      { romaji: 'Kuji o desu.', hiragana: 'くじをです。', english: 'Extraneous object particle' },
+    ],
+    questionDistractors: [
+      { romaji: 'Ima, nanji no desu ka?', hiragana: 'いま、なんじのですか？', english: 'Extraneous particle error' },
+      { romaji: 'Desu ka ima, nanji?', hiragana: 'ですか今、なんじ？', english: 'Inverted word order' },
+    ],
+  },
+
+  // 85. What time is it now? -> It is 4 o'clock.
+  {
+    id: 'exch-85',
+    category: 'time-days',
+    categoryLabel: 'Hours & Minutes',
+    situationTitle: 'Asking Time: 4 o\'clock',
+    englishMeaning: 'What time is it now?',
+    promptSpeaker: 'Client',
+    semanticPattern: 'time-clock',
+    subjectEntity: 'clock',
+    promptRomaji: 'Ima, nanji desu ka?',
+    promptHiragana: 'いま、なんじですか？',
+    correctRomaji: 'Yoji desu.',
+    correctHiragana: 'よじです。',
+    correctEnglish: 'It is 4 o\'clock.',
+    distractors: [
+      { romaji: 'Yonji desu.', hiragana: 'よんじです。', english: 'Irregular error: "yoji" is correct for 4 o\'clock' },
+      { romaji: 'Yoji o desu.', hiragana: 'よじをです。', english: 'Extraneous object particle' },
+    ],
+    questionDistractors: [
+      { romaji: 'Ima, nanji no desu ka?', hiragana: 'いま、なんじのですか？', english: 'Extraneous particle error' },
+      { romaji: 'Desu ka ima, nanji?', hiragana: 'ですか今、なんじ？', english: 'Inverted word order' },
+    ],
+  },
+
+  // 86. What time is it now? -> It is 7 o'clock.
+  {
+    id: 'exch-86',
+    category: 'time-days',
+    categoryLabel: 'Hours & Minutes',
+    situationTitle: 'Asking Time: 7 o\'clock',
+    englishMeaning: 'What time is it now?',
+    promptSpeaker: 'Colleague',
+    semanticPattern: 'time-clock',
+    subjectEntity: 'clock',
+    promptRomaji: 'Ima, nanji desu ka?',
+    promptHiragana: 'いま、なんじですか？',
+    correctRomaji: 'Shichiji desu.',
+    correctHiragana: 'しちじです。',
+    correctEnglish: 'It is 7 o\'clock.',
+    distractors: [
+      { romaji: 'Nanaji desu.', hiragana: 'ななじです。', english: 'Irregular error: "shichiji" is correct for 7 o\'clock' },
+      { romaji: 'Shichiji o desu.', hiragana: 'しちじをです。', english: 'Extraneous object particle' },
+    ],
+    questionDistractors: [
+      { romaji: 'Ima, nanji no desu ka?', hiragana: 'いま、なんじのですか？', english: 'Extraneous particle error' },
+      { romaji: 'Desu ka ima, nanji?', hiragana: 'ですか今、なんじ？', english: 'Inverted word order' },
+    ],
+  },
+
+  // 87. What day is tomorrow? -> Tomorrow is Friday.
+  {
+    id: 'exch-87',
+    category: 'time-days',
+    categoryLabel: 'Days of the Week',
+    situationTitle: 'Calendar Check: Friday',
+    englishMeaning: 'What day is tomorrow?',
+    promptSpeaker: 'Coworker',
+    semanticPattern: 'day-calendar',
+    subjectEntity: 'calendar',
+    promptRomaji: "Ashita wa nan'yōbi desu ka?",
+    promptHiragana: 'あしたはなんようびですか？',
+    correctRomaji: "Ashita wa kin'yōbi desu.",
+    correctHiragana: 'あしたはきんようびです。',
+    correctEnglish: 'Tomorrow is Friday.',
+    distractors: [
+      { romaji: "Ashita ni kin'yōbi desu.", hiragana: 'あしたにきんようびです。', english: 'Particle error: "ni" instead of "wa"' },
+      { romaji: "Kin'yōbi desu ashita wa.", hiragana: 'きんようびですあしたは。', english: 'Inverted word order' },
+    ],
+    questionDistractors: [
+      { romaji: "Ashita no nan'yōbi desu ka?", hiragana: 'あしたのなんようびですか？', english: 'Particle error: "no" instead of "wa"' },
+      { romaji: "Desu ka ashita wa nan'yōbi?", hiragana: 'ですかあしたはなんようび？', english: 'Inverted word order' },
+    ],
+  },
+
+  // 88. What day was the day before yesterday? -> The day before yesterday was Sunday.
+  {
+    id: 'exch-88',
+    category: 'time-days',
+    categoryLabel: 'Days and Dates',
+    situationTitle: 'Calendar Check: Day Before Yesterday',
+    englishMeaning: 'What day was the day before yesterday?',
+    promptSpeaker: 'Friend',
+    semanticPattern: 'day-calendar',
+    subjectEntity: 'calendar',
+    promptRomaji: "Ototoi wa nan'yōbi deshita ka?",
+    promptHiragana: 'おとといはなんようびでしたか？',
+    correctRomaji: 'Ototoi wa nichiyōbi deshita.',
+    correctHiragana: 'おとといはにちようびでした。',
+    correctEnglish: 'The day before yesterday was Sunday.',
+    distractors: [
+      { romaji: 'Ototoi ni nichiyōbi deshita.', hiragana: 'おとといににちようびでした。', english: 'Particle error: "ni" instead of "wa"' },
+      { romaji: 'Nichiyōbi deshita ototoi wa.', hiragana: 'にちようびでしたおとといは。', english: 'Inverted word order' },
+    ],
+    questionDistractors: [
+      { romaji: "Ototoi no nan'yōbi deshita ka?", hiragana: 'おとといのなんようびでしたか？', english: 'Particle error: "no" instead of "wa"' },
+      { romaji: "Deshita ka ototoi wa nan'yōbi?", hiragana: 'でしたかおとといはなんようび？', english: 'Inverted word order' },
+    ],
+  },
+
+  // 89. How have things been lately? -> So-so / Not bad.
+  {
+    id: 'exch-89',
+    category: 'daily-inquiry',
+    categoryLabel: 'Daily Inquiry & Feelings',
+    situationTitle: 'Catching Up: So-so',
+    englishMeaning: 'How have things been lately?',
+    promptSpeaker: 'Classmate',
+    semanticPattern: 'daily-inquiry',
+    subjectEntity: 'self',
+    promptRomaji: 'Saikin dō desu ka?',
+    promptHiragana: 'さいきんどうですか？',
+    correctRomaji: 'Māmā desu.',
+    correctHiragana: 'まあまあです。',
+    correctEnglish: 'So-so / Not bad.',
+    distractors: [
+      { romaji: 'Māmā o desu.', hiragana: 'まあまあをです。', english: 'Extraneous object particle' },
+      { romaji: 'Desu māmā wa.', hiragana: 'ですまあまあは。', english: 'Inverted word order' },
+    ],
+    questionDistractors: [
+      { romaji: 'Saikin no dō desu ka?', hiragana: 'さいきんのどうですか？', english: 'Extraneous particle error' },
+      { romaji: 'Desu ka saikin dō?', hiragana: 'ですかさいきんどう？', english: 'Inverted word order' },
+    ],
+  },
+
+  // 90. How are your studies? -> It's interesting.
+  {
+    id: 'exch-90',
+    category: 'daily-inquiry',
+    categoryLabel: 'Daily Inquiry & Studies',
+    situationTitle: 'Study Check: Interesting',
+    englishMeaning: 'How are your studies?',
+    promptSpeaker: 'Tutor',
+    semanticPattern: 'daily-inquiry',
+    subjectEntity: 'student',
+    promptRomaji: 'Benkyō wa dō desu ka?',
+    promptHiragana: 'べんきょうはどうですか？',
+    correctRomaji: 'Omoshiroi desu.',
+    correctHiragana: 'おもしろいです。',
+    correctEnglish: "It's interesting.",
+    distractors: [
+      { romaji: 'Omoshiroi o desu.', hiragana: 'おもしろいをです。', english: 'Extraneous object particle' },
+      { romaji: 'Desu omoshiroi wa.', hiragana: 'ですおもしろいは。', english: 'Inverted word order' },
+    ],
+    questionDistractors: [
+      { romaji: 'Benkyō no dō desu ka?', hiragana: 'べんきょうのどうですか？', english: 'Particle error: "no" instead of "wa"' },
+      { romaji: 'Desu ka benkyō wa dō?', hiragana: 'ですかべんきょうはどう？', english: 'Inverted word order' },
+    ],
+  },
+
+  // =========================================================================
+  // SPRITE-DEDICATED CONVERSATIONAL EXCHANGES (All 16 visual manga panels)
+  // =========================================================================
+
+  // 1. Sprite 05: Waiter taking an order at a restaurant (Waiter & customer)
+  {
+    id: 'exch-sprite-05a',
+    category: 'daily-inquiry',
+    categoryLabel: 'Restaurant & Dining',
+    situationTitle: 'Ordering at a Restaurant',
+    englishMeaning: 'May I take your order?',
+    promptSpeaker: 'Waiter',
+    semanticPattern: 'restaurant-order',
+    subjectEntity: 'waiter',
+    spriteId: '05',
+    promptRomaji: 'Gochūmon wa okimari desu ka?',
+    promptHiragana: 'ごちゅうもんは おきまりですか？',
+    correctRomaji: 'Hai, kōhī to chokorēto o kudasai.',
+    correctHiragana: 'はい、こーひーと ちょこれーとを ください。',
+    correctEnglish: 'Yes, coffee and chocolate please.',
+    distractors: [
+      { romaji: 'Hai, kōhī to chokorēto de kudasai.', hiragana: 'はい、こーひーと ちょこれーとで ください。', english: 'Particle error: "de" instead of "o"' },
+      { romaji: 'Hai, kudasai kōhī to chokorēto o.', hiragana: 'はい、ください こーひーと ちょこれーとを。', english: 'Inverted word order' },
+    ],
+    questionDistractors: [
+      { romaji: 'Gochūmon no okimari desu ka?', hiragana: 'ごちゅうもんの おきまりですか？', english: 'Particle error' },
+      { romaji: 'Desu ka gochūmon wa okimari?', hiragana: 'ですか ごちゅうもんは おきまり？', english: 'Inverted word order' },
+    ],
+  },
+  {
+    id: 'exch-sprite-05b',
+    category: 'daily-inquiry',
+    categoryLabel: 'Restaurant & Dining',
+    situationTitle: 'Asking for Water at Restaurant',
+    englishMeaning: 'Could I have some water, please?',
+    promptSpeaker: 'Customer',
+    semanticPattern: 'restaurant-water',
+    subjectEntity: 'customer',
+    spriteId: '05',
+    promptRomaji: 'Sumimasen, o-mizu o kudasai.',
+    promptHiragana: 'すみません、おみずを ください。',
+    correctRomaji: 'Hai, kashikomarimashita. Shōshō o-machi kudasai.',
+    correctHiragana: 'はい、かしこまりました。しょうしょう おまち ください。',
+    correctEnglish: 'Certainly. Please wait just a moment.',
+    distractors: [
+      { romaji: 'Hai, kashikomarimashita o-machi shōshō.', hiragana: 'はい、かしこまりました おまち しょうしょう。', english: 'Incorrect syntax order' },
+      { romaji: 'Iie, o-mizu wa kudasai.', hiragana: 'いいえ、おみずは ください。', english: 'Contradictory negative response' },
+    ],
+  },
+
+  // 2. Sprite 06: Construction workers discussing work on building site
+  {
+    id: 'exch-sprite-06a',
+    category: 'places-work',
+    categoryLabel: 'Work Site & Safety',
+    situationTitle: 'Construction Site Safety',
+    englishMeaning: 'Is it safety first on the site today?',
+    promptSpeaker: 'Construction Worker',
+    semanticPattern: 'site-safety',
+    subjectEntity: 'construction worker',
+    spriteId: '06',
+    promptRomaji: 'Kyō no shigoto wa anzen dai-ichi desu ka?',
+    promptHiragana: 'きょうの しごとは あんぜんだいいち ですか？',
+    correctRomaji: 'Hai, ki o tsukete kudasai.',
+    correctHiragana: 'はい、きを つけて ください。',
+    correctEnglish: 'Yes, please be careful.',
+    distractors: [
+      { romaji: 'Hai, ki ni tsukete kudasai.', hiragana: 'はい、きに つけて ください。', english: 'Particle error: "ni" instead of "o"' },
+      { romaji: 'Hai, kudasai ki o tsukete.', hiragana: 'はい、ください きを つけて。', english: 'Inverted word order' },
+    ],
+    questionDistractors: [
+      { romaji: 'Kyō no shigoto no anzen dai-ichi desu ka?', hiragana: 'きょうの しごとの あんぜんだいいち ですか？', english: 'Particle error' },
+      { romaji: 'Desu ka kyō no shigoto wa anzen?', hiragana: 'ですか きょうの しごとは あんぜん？', english: 'Inverted question order' },
+    ],
+  },
+  {
+    id: 'exch-sprite-06b',
+    category: 'places-work',
+    categoryLabel: 'Work Site Instruction',
+    situationTitle: 'Waiting on Construction Site',
+    englishMeaning: 'Please wait here for ten minutes.',
+    promptSpeaker: 'Foreman',
+    semanticPattern: 'site-wait',
+    subjectEntity: 'construction worker',
+    spriteId: '06',
+    promptRomaji: 'Koko de jū-pun matte kudasai.',
+    promptHiragana: 'ここで じゅっぷん まって ください。',
+    correctRomaji: 'Hai, wakarimashita. Koko de machimasu.',
+    correctHiragana: 'はい、わかりました。ここで まちます。',
+    correctEnglish: 'Yes, understood. I will wait here.',
+    distractors: [
+      { romaji: 'Hai, wakarimashita koko o machimasu.', hiragana: 'はい、わかりました ここを まちます。', english: 'Particle error: "o" instead of "de"' },
+      { romaji: 'Hai, machimasu wakarimashita koko de.', hiragana: 'はい、まちます わかりました ここで。', english: 'Garbled syntax' },
+    ],
+  },
+
+  // 3. Sprite 09: Two people greeting each other outside train station
+  {
+    id: 'exch-sprite-09a',
+    category: 'introductions',
+    categoryLabel: 'Meeting Outside Station',
+    situationTitle: 'Reunion at Station',
+    englishMeaning: 'Long time no see! Have you been well?',
+    promptSpeaker: 'Friend',
+    semanticPattern: 'station-greeting',
+    subjectEntity: 'friend',
+    spriteId: '09',
+    promptRomaji: 'Hisashiburi desu ne! O-genki deshita ka?',
+    promptHiragana: 'ひさしぶりですね！おげんきでしたか？',
+    correctRomaji: 'Hai, hisashiburi! Totemo genki desu.',
+    correctHiragana: 'はい、ひさしぶり！とても げんきです。',
+    correctEnglish: 'Yes, long time! I have been very well.',
+    distractors: [
+      { romaji: 'Hai, genki totemo hisashiburi desu.', hiragana: 'はい、げんき とても ひさしぶりです。', english: 'Incorrect modifier placement' },
+      { romaji: 'Iie, o-genki deshita.', hiragana: 'いいえ、おげんきでした。', english: 'Mismatched polite honorific to self' },
+    ],
+  },
+  {
+    id: 'exch-sprite-09b',
+    category: 'daily-inquiry',
+    categoryLabel: 'Meeting Outside Station',
+    situationTitle: 'Where are you heading from the station?',
+    englishMeaning: 'Where are you going from here?',
+    promptSpeaker: 'Acquaintance',
+    semanticPattern: 'station-destination',
+    subjectEntity: 'young woman',
+    spriteId: '09',
+    promptRomaji: 'Kore kara doko e ikimasu ka?',
+    promptHiragana: 'これから どこへ いきますか？',
+    correctRomaji: 'Toshokan e ikimasu. Hon o yomimasu.',
+    correctHiragana: 'としょかんへ いきます。ほんを よみます。',
+    correctEnglish: 'I am going to the library. I will read books.',
+    distractors: [
+      { romaji: 'Toshokan o ikimasu hon e yomimasu.', hiragana: 'としょかんを いきます ほんへ よみます。', english: 'Inverted particles "o" and "e"' },
+      { romaji: 'Ikimasu toshokan e yomimasu hon o.', hiragana: 'いきます としょかんへ よみます ほんを。', english: 'Inverted sentence structure' },
+    ],
+  },
+
+  // 4. Sprite 10: Chef serving a meal to a customer (Male chef & customer)
+  {
+    id: 'exch-sprite-10a',
+    category: 'daily-inquiry',
+    categoryLabel: 'Chef & Dining',
+    situationTitle: 'Chef Serving Meal',
+    englishMeaning: 'Thank you for waiting! Here is your hot meal.',
+    promptSpeaker: 'Chef',
+    semanticPattern: 'chef-serving',
+    subjectEntity: 'chef',
+    spriteId: '10',
+    promptRomaji: 'O-machidō-sama desu! Go-chūmon no gohan desu.',
+    promptHiragana: 'おまちどうさまです！ごちゅうもんの ごはんです。',
+    correctRomaji: 'Arigatō gozaimasu! Itadakimasu.',
+    correctHiragana: 'ありがとうございます！いただきます。',
+    correctEnglish: 'Thank you very much! Let\'s eat.',
+    distractors: [
+      { romaji: 'Arigatō gozaimasu itadakimasen.', hiragana: 'ありがとうございます いただきません。', english: 'Negative verb refusal' },
+      { romaji: 'Gohan no o-machidō-sama arigatō.', hiragana: 'ごはんの おまちどうさま ありがとう。', english: 'Mismatched phrasing' },
+    ],
+  },
+  {
+    id: 'exch-sprite-10b',
+    category: 'daily-inquiry',
+    categoryLabel: 'Chef & Dining',
+    situationTitle: 'Chef Asking About Taste',
+    englishMeaning: 'How does it taste? Is it delicious?',
+    promptSpeaker: 'Chef',
+    semanticPattern: 'chef-taste',
+    subjectEntity: 'chef',
+    spriteId: '10',
+    promptRomaji: 'O-aji wa dō desu ka? Oishii desu ka?',
+    promptHiragana: 'おあじは どうですか？おいしいですか？',
+    correctRomaji: 'Hai, totemo oishii desu! Gochisōsama deshita.',
+    correctHiragana: 'はい、とても おいしいです！ごちそうさまでした。',
+    correctEnglish: 'Yes, it is very delicious! Thank you for the meal.',
+    distractors: [
+      { romaji: 'Hai, oishii totemo desu gochisōsama.', hiragana: 'はい、おいしい とても です ごちそうさま。', english: 'Adverb placement error' },
+      { romaji: 'Iie, totemo oishii desu.', hiragana: 'いいえ、とても おいしいです。', english: 'Contradictory negative opener' },
+    ],
+  },
+
+  // 5. Sprite 11: Woman in kimono talking outdoors (Kyoto / Traditional setting)
+  {
+    id: 'exch-sprite-11a',
+    category: 'courtesy',
+    categoryLabel: 'Traditional Kyoto Setting',
+    situationTitle: 'First Time in Kyoto',
+    englishMeaning: 'Is this your first time in Kyoto?',
+    promptSpeaker: 'Woman in Kimono',
+    semanticPattern: 'kyoto-visit',
+    subjectEntity: 'woman in kimono',
+    spriteId: '11',
+    promptRomaji: 'Kyōto wa hajimete desu ka?',
+    promptHiragana: 'きょうとは はじめてですか？',
+    correctRomaji: 'Hai, hajimete desu. Totemo kirei desu ne.',
+    correctHiragana: 'はい、はじめてです。とても きれいですね。',
+    correctEnglish: 'Yes, it is my first time. It is very beautiful.',
+    distractors: [
+      { romaji: 'Hai, kirei hajimete desu totemo.', hiragana: 'はい、きれい はじめてです とても。', english: 'Scrambled syntax' },
+      { romaji: 'Hai, Kyōto ni hajimete desu.', hiragana: 'はい、きょうとに はじめてです。', english: 'Particle error' },
+    ],
+  },
+  {
+    id: 'exch-sprite-11b',
+    category: 'courtesy',
+    categoryLabel: 'Traditional Tea Hospitality',
+    situationTitle: 'Offering Green Tea',
+    englishMeaning: 'Please, have some Japanese green tea.',
+    promptSpeaker: 'Woman in Kimono',
+    semanticPattern: 'kyoto-tea',
+    subjectEntity: 'woman in kimono',
+    spriteId: '11',
+    promptRomaji: 'Dōzo, o-cha o meshiagatte kudasai.',
+    promptHiragana: 'どうぞ、おちゃを めしあがって ください。',
+    correctRomaji: 'Dōmo arigatō gozaimasu. Itadakimasu.',
+    correctHiragana: 'どうも ありがとうございます。いただきます。',
+    correctEnglish: 'Thank you very much. I will partake.',
+    distractors: [
+      { romaji: 'Dōmo arigatō gozaimasu o-cha wa kudasai.', hiragana: 'どうも ありがとうございます おちゃは ください。', english: 'Redundant request phrasing' },
+      { romaji: 'Itadakimasu dōzo arigatō.', hiragana: 'いただきます どうぞ ありがとう。', english: 'Improper response combination' },
+    ],
+  },
+
+  // 6. Sprite 12: Police officer speaking with young man at koban
+  {
+    id: 'exch-sprite-12a',
+    category: 'places-work',
+    categoryLabel: 'Directions at Koban',
+    situationTitle: 'Asking Police for Station Directions',
+    englishMeaning: 'Excuse me, where is the train station?',
+    promptSpeaker: 'Young Man',
+    semanticPattern: 'police-station-directions',
+    subjectEntity: 'police officer',
+    spriteId: '12',
+    promptRomaji: 'Sumimasen, eki wa doko desu ka?',
+    promptHiragana: 'すみません、えきは どこですか？',
+    correctRomaji: 'Kono michi o massugu itte kudasai. Migi ni arimasu.',
+    correctHiragana: 'このみちを まっすぐ いって ください。みぎに あります。',
+    correctEnglish: 'Please go straight down this street. It is on the right.',
+    distractors: [
+      { romaji: 'Kono michi ni massugu itte kudasai.', hiragana: 'このみちに まっすぐ いって ください。', english: 'Particle error: "ni" instead of "o"' },
+      { romaji: 'Eki wa doko kudasai itte massugu.', hiragana: 'えきは どこ ください いって まっすぐ。', english: 'Garbled word order' },
+    ],
+  },
+  {
+    id: 'exch-sprite-12b',
+    category: 'places-work',
+    categoryLabel: 'Directions at Koban',
+    situationTitle: 'Asking for Police Box Location',
+    englishMeaning: 'Is the police box over there?',
+    promptSpeaker: 'Citizen',
+    semanticPattern: 'police-box-location',
+    subjectEntity: 'police officer',
+    spriteId: '12',
+    promptRomaji: 'Kōban wa asoko desu ka?',
+    promptHiragana: 'こうばんは あそこですか？',
+    correctRomaji: 'Hai, koko ga kōban desu yo. Dō shimashita ka?',
+    correctHiragana: 'はい、ここが こうばんですよ。どうしましたか？',
+    correctEnglish: 'Yes, this is the police box. What is the matter?',
+    distractors: [
+      { romaji: 'Hai, kōban ga koko desu ka?', hiragana: 'はい、こうばんが ここですか？', english: 'Inappropriate question inflection' },
+      { romaji: 'Iie, koko wa kōban desu.', hiragana: 'いいえ、ここは こうばんです。', english: 'Contradictory reply' },
+    ],
+  },
+
+  // 7. Sprite 15: Two men talking at gym after workout
+  {
+    id: 'exch-sprite-15a',
+    category: 'daily-inquiry',
+    categoryLabel: 'Gym & Fitness',
+    situationTitle: 'After Workout at the Gym',
+    englishMeaning: 'How was today\'s workout? Good exercise?',
+    promptSpeaker: 'Gym Partner',
+    semanticPattern: 'gym-workout-review',
+    subjectEntity: 'gym partner',
+    spriteId: '15',
+    promptRomaji: 'Kyō no torēningu wa dō deshita ka?',
+    promptHiragana: 'きょうの とれーにんぐは どうでしたか？',
+    correctRomaji: 'Tsukaremashita ga, totemo ii undō ni narimashita.',
+    correctHiragana: 'つかれましたが、とても いいうんどうに なりました。',
+    correctEnglish: 'I am tired, but it was very good exercise.',
+    distractors: [
+      { romaji: 'Tsukaremashita totemo ga undō desu.', hiragana: 'つかれました とてもが うんどうです。', english: 'Particle placement error' },
+      { romaji: 'Iie, torēningu wa dō deshita.', hiragana: 'いいえ、とれーにんぐは どうでした。', english: 'Inappropriate question echo' },
+    ],
+  },
+  {
+    id: 'exch-sprite-15b',
+    category: 'daily-inquiry',
+    categoryLabel: 'Gym & Fitness',
+    situationTitle: 'Finishing Exercise at the Gym',
+    englishMeaning: 'Shall we do one more set?',
+    promptSpeaker: 'Gym Partner',
+    semanticPattern: 'gym-finish-session',
+    subjectEntity: 'gym partner',
+    spriteId: '15',
+    promptRomaji: 'Mō ichido yarimasu ka?',
+    promptHiragana: 'もういちど やりますか？',
+    correctRomaji: 'Iie, kyō wa koko made ni shimashō. O-tsukaresama!',
+    correctHiragana: 'いいえ、きょうは ここまでに しましょう。おつかれさま！',
+    correctEnglish: 'No, let\'s stop here for today. Great workout!',
+    distractors: [
+      { romaji: 'Iie, shimashō koko made kyō wa.', hiragana: 'いいえ、しましょう ここまで きょうは。', english: 'Inverted clause order' },
+      { romaji: 'Hai, mō ichido yari de imasu.', hiragana: 'はい、もういちど やりで います。', english: 'Ungrammatical verb conjugation' },
+    ],
+  },
 ];
 
 export interface ExchangeOption {
@@ -1261,6 +2332,8 @@ export interface ExchangeQuizQuestion {
   situationTitle: string;
   options: ExchangeOption[];
   correctOptionIndex: number;
+  adaptiveStatus?: 'unseen' | 'needs_practice' | 'proven' | 'review';
+  spriteId?: string;
 }
 
 /**
@@ -1338,109 +2411,17 @@ export function getQuestionDistractors(
   ];
 }
 
+import { generateAdaptiveExchangeQuiz } from '../utils/adaptivePhraseEngine';
+
 /**
- * Generate a 10-question quiz drawn from the exchanged conversation items.
+ * Generate an adaptive 10-question quiz drawn from the exchanged conversation items.
  * STRICT: 100% compliant with user curriculum database.
- * Supports BIDIRECTIONAL practice:
- * - Some questions provide the QUESTION prompt and test finding the appropriate REPLY.
- * - Some questions provide the REPLY / ANSWER prompt (e.g. "I am 35 years old") and test finding the QUESTION that was asked.
- * @param mode 'romaji' for Exercise 6, 'hiragana' for Exercise 7
- * @param count number of questions (default 10)
+ * Supports:
+ * - Anti-repetition & Spaced repetition (learned phrases deferred 3-4 days)
+ * - Strict pattern diversity (no duplicate questions like 2x "where are you from" in same quiz)
+ * - Subject variety (father, mother, man, woman, elderly, self, teacher, student)
+ * - Bidirectional practice (50% Answer prompt -> Find question, 50% Question prompt -> Find reply)
  */
 export function generateExchangeQuiz(mode: 'romaji' | 'hiragana', count = 10): ExchangeQuizQuestion[] {
-  // Shuffle items
-  const shuffled = [...EXCHANGE_DATA].sort(() => 0.5 - Math.random());
-  const selectedItems = shuffled.slice(0, Math.min(count, shuffled.length));
-
-  return selectedItems.map((item, index) => {
-    const isRomaji = mode === 'romaji';
-
-    // Eligible for reverse if prompt is a question inquiry
-    const isEligibleForReverse = 
-      item.promptRomaji.endsWith('ka?') || 
-      item.promptRomaji.endsWith('ka') || 
-      item.promptHiragana.endsWith('か？') || 
-      item.promptHiragana.endsWith('か') ||
-      item.category === 'age-numbers' ||
-      item.category === 'countries-origin' ||
-      item.category === 'languages' ||
-      item.category === 'places-work' ||
-      item.category === 'occupations';
-
-    // Balanced mix: roughly half (alternating indices 1, 3, 5, 7, 9) test Reply -> Find Question!
-    const isReverse = isEligibleForReverse && (index % 2 === 1);
-
-    if (isReverse) {
-      // REVERSE DIRECTION: Prompt is THE ANSWER TO A QUESTION -> user chooses THE QUESTION
-      const correctOption: ExchangeOption = {
-        text: isRomaji ? item.promptRomaji : item.promptHiragana,
-        hiraganaAudio: item.promptHiragana,
-        isCorrect: true,
-        englishMeaning: item.englishMeaning,
-      };
-
-      const qDistractors = getQuestionDistractors(item);
-      const distractorOptions: ExchangeOption[] = qDistractors.map((d) => ({
-        text: isRomaji ? d.romaji : d.hiragana,
-        hiraganaAudio: d.hiragana,
-        isCorrect: false,
-        englishMeaning: d.english,
-      }));
-
-      // Randomize order of the 3 options
-      const allOptions = [correctOption, ...distractorOptions].sort(() => 0.5 - Math.random());
-      const correctIndex = allOptions.findIndex((opt) => opt.isCorrect);
-
-      return {
-        questionNumber: index + 1,
-        item,
-        direction: 'reply-to-question',
-        directionBadge: 'Statement / Reply → Which question was asked?',
-        directionInstruction: 'Select the Japanese question that leads to this reply',
-        prompt: isRomaji ? item.correctRomaji : item.correctHiragana,
-        promptAudio: item.correctHiragana,
-        promptEnglish: item.correctEnglish,
-        secondaryPrompt: item.correctEnglish,
-        categoryLabel: item.categoryLabel,
-        situationTitle: item.situationTitle,
-        options: allOptions,
-        correctOptionIndex: correctIndex,
-      };
-    } else {
-      // STANDARD DIRECTION: Prompt is THE QUESTION -> user chooses THE REPLY
-      const correctOption: ExchangeOption = {
-        text: isRomaji ? item.correctRomaji : item.correctHiragana,
-        hiraganaAudio: item.correctHiragana,
-        isCorrect: true,
-        englishMeaning: item.correctEnglish,
-      };
-
-      const distractorOptions: ExchangeOption[] = item.distractors.map((d) => ({
-        text: isRomaji ? d.romaji : d.hiragana,
-        hiraganaAudio: d.hiragana,
-        isCorrect: false,
-        englishMeaning: d.english,
-      }));
-
-      // Randomize order of the 3 options
-      const allOptions = [correctOption, ...distractorOptions].sort(() => 0.5 - Math.random());
-      const correctIndex = allOptions.findIndex((opt) => opt.isCorrect);
-
-      return {
-        questionNumber: index + 1,
-        item,
-        direction: 'question-to-reply',
-        directionBadge: 'Question asked → Choose the correct reply',
-        directionInstruction: 'Select the appropriate Japanese reply to this question',
-        prompt: isRomaji ? item.promptRomaji : item.promptHiragana,
-        promptAudio: item.promptHiragana,
-        promptEnglish: item.englishMeaning,
-        secondaryPrompt: item.englishMeaning,
-        categoryLabel: item.categoryLabel,
-        situationTitle: item.situationTitle,
-        options: allOptions,
-        correctOptionIndex: correctIndex,
-      };
-    }
-  });
+  return generateAdaptiveExchangeQuiz(mode, count);
 }

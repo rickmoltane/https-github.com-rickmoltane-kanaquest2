@@ -93,52 +93,22 @@ export function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
+import { generateAdaptiveKanaQuiz } from '../utils/adaptiveQuizEngine';
+
 /**
- * Generates a succession of 10 questions with 3 options each (1 correct + 2 distractors).
+ * Generates an adaptive succession of 10 questions with 3 options each (1 correct + 2 distractors).
+ * Strictly avoids immediate character repetition across consecutive quizzes,
+ * and prioritizes characters with mistakes or unseen characters over mastered ones.
  */
-export function generateQuiz(exerciseType: ExerciseType, count = 10, targetCharacters = HIRAGANA_CHARACTERS): QuizQuestion[] {
-  const shuffledCandidates = shuffleArray(targetCharacters);
-  // Pick `count` characters
-  const selectedChars: HiraganaChar[] = [];
-  for (let i = 0; i < count; i++) {
-    selectedChars.push(shuffledCandidates[i % shuffledCandidates.length]);
+export function generateQuiz(
+  exerciseType: ExerciseType, 
+  count = 10, 
+  targetCharacters = HIRAGANA_CHARACTERS
+): QuizQuestion[] {
+  if (exerciseType === 'hiragana-to-romaji' || exerciseType === 'romaji-to-hiragana') {
+    return generateAdaptiveKanaQuiz(exerciseType, count, targetCharacters);
   }
 
-  return selectedChars.map((char, index) => {
-    // Generate 2 distractors from pool that are NOT the correct one
-    const pool = HIRAGANA_CHARACTERS.filter(c => c.kana !== char.kana);
-    const shuffledPool = shuffleArray(pool);
-
-    if (exerciseType === 'hiragana-to-romaji') {
-      const correctOption = char.romaji;
-      const distractor1 = shuffledPool[0].romaji;
-      // ensure distractor 2 is different from distractor 1
-      const distractor2 = shuffledPool.find(c => c.romaji !== distractor1 && c.romaji !== correctOption)?.romaji || shuffledPool[1].romaji;
-      const options = shuffleArray([correctOption, distractor1, distractor2]);
-
-      return {
-        questionNumber: index + 1,
-        character: char,
-        prompt: char.kana,
-        promptType: 'kana' as const,
-        options,
-        correctOption,
-      };
-    } else {
-      // romaji-to-hiragana
-      const correctOption = char.kana;
-      const distractor1 = shuffledPool[0].kana;
-      const distractor2 = shuffledPool.find(c => c.kana !== distractor1 && c.kana !== correctOption)?.kana || shuffledPool[1].kana;
-      const options = shuffleArray([correctOption, distractor1, distractor2]);
-
-      return {
-        questionNumber: index + 1,
-        character: char,
-        prompt: char.romaji,
-        promptType: 'romaji' as const,
-        options,
-        correctOption,
-      };
-    }
-  });
+  // Fallback for any other type
+  return generateAdaptiveKanaQuiz('hiragana-to-romaji', count, targetCharacters);
 }

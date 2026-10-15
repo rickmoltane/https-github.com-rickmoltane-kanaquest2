@@ -37,6 +37,7 @@ export interface QuizQuestion {
   options: string[]; // exactly 3 options
   correctOption: string;
   secondaryPrompt?: string; // e.g. Romaji or Kana display when picture is shown
+  adaptiveStatus?: 'unseen' | 'needs_practice' | 'proven' | 'review';
 }
 
 export interface AnswerRecord {

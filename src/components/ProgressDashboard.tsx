@@ -4,6 +4,8 @@ import { ExerciseType, QuizResult } from '../types';
 import { HIRAGANA_CHARACTERS, HIRAGANA_ROWS } from '../data/hiraganaData';
 import { getLocalMastery } from '../services/storageService';
 import { speakKana } from '../utils/audio';
+import { ConversationSprite } from './ConversationSprite';
+import { SPRITES_METADATA } from '../data/spriteSheetData';
 import { 
   BarChart3, 
   Flame, 
@@ -371,6 +373,65 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
                 <span>Launch Exercise [{mod.num}]</span>
                 <ArrowUpRight className="w-3.5 h-3.5" />
               </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 16 CONVERSATIONAL SCENES GALLERY (4x4 Sprite Sheet Visual References) */}
+      <div className="bg-white border-2 border-[#CBD5E1] rounded-3xl p-5 sm:p-6 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-xs font-black px-2 py-0.5 rounded-md bg-[#1F2329] text-white">
+                4×4 Sprite Sheet
+              </span>
+              <h2 className="text-base sm:text-lg font-extrabold text-[#1F2329]">
+                16 Visual Conversation Scenes
+              </h2>
+            </div>
+            <p className="text-xs text-[#5F6368] mt-0.5">
+              All 16 visual references actively power Exercises 6 (Romaji) & 7 (Hiragana). Tap any scene to launch practice.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => onStartExercise('exchange-romaji')}
+              className="px-3 py-1.5 rounded-xl bg-[#F8FAFF] hover:bg-[#E8F0FE] text-[#1A73E8] border border-[#CBD5E1] hover:border-[#1A73E8] text-xs font-bold transition-all cursor-pointer shadow-2xs"
+            >
+              Practice Romaji [6]
+            </button>
+            <button
+              type="button"
+              onClick={() => onStartExercise('exchange-hiragana')}
+              className="px-3 py-1.5 rounded-xl bg-[#1A73E8] hover:bg-[#1557B0] text-white text-xs font-bold transition-all cursor-pointer shadow-2xs"
+            >
+              Practice Hiragana [7]
+            </button>
+          </div>
+        </div>
+
+        {/* 4x4 Grid of 16 manga scenes */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-2.5 sm:gap-3.5 pt-1">
+          {Object.values(SPRITES_METADATA).map((sprite) => (
+            <div
+              key={sprite.id}
+              onClick={() => onStartExercise('exchange-romaji')}
+              className="flex flex-col items-center p-2 rounded-2xl bg-[#F8FAFF] border border-[#E2E8F0] hover:border-[#1A73E8] hover:shadow-md transition-all cursor-pointer group"
+              title={`Scene ${sprite.id}: ${sprite.sceneTitle} (${sprite.characters})`}
+            >
+              <ConversationSprite
+                spriteId={sprite.id}
+                size="sm"
+                className="pointer-events-none"
+              />
+              <span className="font-mono text-[10px] font-extrabold text-[#1F2329] mt-1.5 group-hover:text-[#1A73E8] transition-colors truncate max-w-full text-center">
+                #{sprite.id}
+              </span>
+              <span className="text-[10px] text-[#5F6368] font-medium text-center line-clamp-1 leading-tight w-full truncate">
+                {sprite.sceneTitle}
+              </span>
             </div>
           ))}
         </div>
