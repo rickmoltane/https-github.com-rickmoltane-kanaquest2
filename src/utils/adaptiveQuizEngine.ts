@@ -263,44 +263,62 @@ export function generateAdaptiveWordQuiz(
   // 3. Record selected words in recent history
   recordRecentWords(selectedWords.map(w => w.id));
 
-  // 4. Build quiz questions with length-matched distractors
+  // 4. Build quiz questions with length-matched distractors and decoupled meaning options
   return selectedWords.map((word, index) => {
     const sameLengthPool = targetWords.filter(w => w.id !== word.id && w.kana.length === word.kana.length);
     const candidateDistractors = sameLengthPool.length >= 2 ? sameLengthPool : targetWords.filter(w => w.id !== word.id);
     const shuffledPool = shuffleArray(candidateDistractors);
     const adaptiveStatus = statuses[word.kana] || 'unseen';
 
+    const distractorWord1 = shuffledPool[0];
+    const distractorWord2 = shuffledPool.find(
+      w => w.id !== distractorWord1.id && w.kana !== distractorWord1.kana && w.kana !== word.kana && w.english !== distractorWord1.english && w.english !== word.english
+    ) || (shuffledPool[1]?.id !== distractorWord1.id ? shuffledPool[1] : targetWords.find(w => w.id !== word.id && w.id !== distractorWord1.id)!);
+
+    const correctMeaning = word.english;
+    // Shuffle the 3 English meanings independently from the written options!
+    let meaningOptions = shuffleArray([word.english, distractorWord1.english, distractorWord2.english]);
+
     if (exerciseType === 'word-romaji-to-hiragana') {
       const correctOption = word.kana;
-      const distractor1 = shuffledPool[0].kana;
-      const distractor2 = shuffledPool.find(w => w.kana !== distractor1 && w.kana !== correctOption)?.kana || shuffledPool[1].kana;
-      const options = shuffleArray([correctOption, distractor1, distractor2]);
+      const options = shuffleArray([word.kana, distractorWord1.kana, distractorWord2.kana]);
+
+      // If random alignment happens to place correct option and correct meaning in the exact same index,
+      // rotate meaning options by 1 so they are not trivially aligned in the same position!
+      if (options.indexOf(correctOption) === meaningOptions.indexOf(correctMeaning) && meaningOptions.length > 1) {
+        meaningOptions = [meaningOptions[1], meaningOptions[2], meaningOptions[0]];
+      }
 
       return {
         questionNumber: index + 1,
         word,
         prompt: word.romaji,
-        secondaryPrompt: word.english,
         promptType: 'romaji',
         options,
         correctOption,
+        meaningOptions,
+        correctMeaning,
         adaptiveStatus,
       };
     } else {
       // word-hiragana-to-romaji
       const correctOption = word.romaji;
-      const distractor1 = shuffledPool[0].romaji;
-      const distractor2 = shuffledPool.find(w => w.romaji !== distractor1 && w.romaji !== correctOption)?.romaji || shuffledPool[1].romaji;
-      const options = shuffleArray([correctOption, distractor1, distractor2]);
+      const options = shuffleArray([word.romaji, distractorWord1.romaji, distractorWord2.romaji]);
+
+      // Ensure decoupled alignment
+      if (options.indexOf(correctOption) === meaningOptions.indexOf(correctMeaning) && meaningOptions.length > 1) {
+        meaningOptions = [meaningOptions[1], meaningOptions[2], meaningOptions[0]];
+      }
 
       return {
         questionNumber: index + 1,
         word,
         prompt: word.kana,
-        secondaryPrompt: word.english,
         promptType: 'kana',
         options,
         correctOption,
+        meaningOptions,
+        correctMeaning,
         adaptiveStatus,
       };
     }

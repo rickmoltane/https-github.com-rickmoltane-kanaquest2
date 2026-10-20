@@ -13,9 +13,7 @@ import {
   XCircle, 
   ArrowRight, 
   Flame,
-  Lightbulb,
-  Target,
-  Sparkles
+  Lightbulb
 } from 'lucide-react';
 import { ConversationSprite } from './ConversationSprite';
 
@@ -50,6 +48,7 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
   const [questions, setQuestions] = useState<ExchangeQuizQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [selectedOptionIndex, setSelectedOptionIndex] = useState<number | null>(null);
+  const [selectedMeaning, setSelectedMeaning] = useState<string | null>(null);
   const [isAnswered, setIsAnswered] = useState<boolean>(false);
   const [showHint, setShowHint] = useState<boolean>(false);
   const [answers, setAnswers] = useState<AnswerRecord[]>([]);
@@ -67,6 +66,7 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
     setQuestions(newQuestions);
     setCurrentIndex(0);
     setSelectedOptionIndex(null);
+    setSelectedMeaning(null);
     setIsAnswered(false);
     setShowHint(false);
     setAnswers([]);
@@ -85,6 +85,10 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
   const currentQuestion = questions[currentIndex];
 
   useEffect(() => {
+    setSelectedOptionIndex(null);
+    setSelectedMeaning(null);
+    setIsAnswered(false);
+    setShowHint(false);
     questionStartTimeRef.current = Date.now();
   }, [currentIndex]);
 
@@ -106,6 +110,7 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
     if (currentIndex < questions.length - 1) {
       setCurrentIndex(prev => prev + 1);
       setSelectedOptionIndex(null);
+      setSelectedMeaning(null);
       setIsAnswered(false);
       setShowHint(false);
     } else {
@@ -137,8 +142,100 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
     }
   }, [currentIndex, questions.length, answers, exerciseType, onComplete]);
 
-  // Option selection
-  const handleSelectOption = useCallback((option: ExchangeOption, index: number) => {
+  // Dual-selection evaluation for Exercise 6 (Written Romaji + English Meaning)
+  const evaluateDualAnswer = useCallback((writtenIdx: number, meaningChoice: string) => {
+    if (isAnswered || !currentQuestion) return;
+
+    const chosenOption = currentQuestion.options[writtenIdx];
+    const isWrittenCorrect = chosenOption.isCorrect;
+    const isMeaningCorrect = meaningChoice === currentQuestion.correctMeaning;
+    const isOverallCorrect = isWrittenCorrect && isMeaningCorrect;
+
+    setSelectedOptionIndex(writtenIdx);
+    setSelectedMeaning(meaningChoice);
+    setIsAnswered(true);
+
+    const timeTakenMs = Date.now() - questionStartTimeRef.current;
+    const correctOpt = currentQuestion.options.find(o => o.isCorrect) || currentQuestion.options[0];
+
+    const newAnswer: AnswerRecord = {
+      questionNumber: currentQuestion.questionNumber,
+      prompt: currentQuestion.prompt,
+      selectedText: `${chosenOption.text} [${meaningChoice}]`,
+      correctText: `${correctOpt.text} [${currentQuestion.correctMeaning || ''}]`,
+      isCorrect: isOverallCorrect,
+      timeTakenMs,
+      hiraganaKana: currentQuestion.direction === 'reply-to-question' 
+        ? currentQuestion.item.correctHiragana 
+        : currentQuestion.item.promptHiragana,
+      romajiText: currentQuestion.direction === 'reply-to-question' 
+        ? currentQuestion.item.correctRomaji 
+        : currentQuestion.item.promptRomaji,
+    };
+
+    const nextAnswers = [...answers, newAnswer];
+    setAnswers(nextAnswers);
+
+    recordImmediatePhraseAnswer(currentQuestion.item.id, isOverallCorrect);
+
+    if (isOverallCorrect) {
+      setStreak(prev => prev + 1);
+    } else {
+      setStreak(0);
+    }
+
+    if (soundEnabled) {
+      if (isOverallCorrect) {
+        playSuccessChime();
+        if (correctOpt.hiraganaAudio) {
+          setTimeout(() => {
+            speakKana(correctOpt.hiraganaAudio);
+          }, 180);
+        }
+      } else {
+        playErrorBuzz();
+        if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+          try {
+            navigator.vibrate([45, 60, 45]);
+          } catch (e) {
+            // ignore
+          }
+        }
+        if (correctOpt.hiraganaAudio) {
+          setTimeout(() => {
+            speakKana(correctOpt.hiraganaAudio);
+          }, 360);
+        }
+      }
+    }
+
+    if (timerRef.current) clearTimeout(timerRef.current);
+    if (isOverallCorrect) {
+      timerRef.current = setTimeout(() => {
+        handleAdvance(nextAnswers);
+      }, 2000);
+    }
+  }, [isAnswered, currentQuestion, answers, soundEnabled, handleAdvance]);
+
+  // Click handlers for Exercise 6
+  const handleSelectWrittenOption = useCallback((idx: number) => {
+    if (isAnswered || !currentQuestion) return;
+    setSelectedOptionIndex(idx);
+    if (selectedMeaning) {
+      evaluateDualAnswer(idx, selectedMeaning);
+    }
+  }, [isAnswered, currentQuestion, selectedMeaning, evaluateDualAnswer]);
+
+  const handleSelectMeaningOption = useCallback((meaning: string) => {
+    if (isAnswered || !currentQuestion) return;
+    setSelectedMeaning(meaning);
+    if (selectedOptionIndex !== null) {
+      evaluateDualAnswer(selectedOptionIndex, meaning);
+    }
+  }, [isAnswered, currentQuestion, selectedOptionIndex, evaluateDualAnswer]);
+
+  // Single-selection evaluation for Exercise 7 (Hiragana with visual scene)
+  const handleSelectSingleOption = useCallback((option: ExchangeOption, index: number) => {
     if (isAnswered || !currentQuestion) return;
 
     const isCorrect = option.isCorrect;
@@ -166,7 +263,6 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
     const nextAnswers = [...answers, newAnswer];
     setAnswers(nextAnswers);
 
-    // Record immediate phrase answer for spaced repetition and adaptive focus
     recordImmediatePhraseAnswer(currentQuestion.item.id, isCorrect);
 
     if (isCorrect) {
@@ -175,11 +271,9 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
       setStreak(0);
     }
 
-    // Audio feedback:
     if (soundEnabled) {
       if (isCorrect) {
         playSuccessChime();
-        // Play audio of the chosen correct Japanese phrase
         if (correctOpt.hiraganaAudio) {
           setTimeout(() => {
             speakKana(correctOpt.hiraganaAudio);
@@ -187,18 +281,13 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
         }
       } else {
         playErrorBuzz();
-
-        // Physical vibration on supported mobile devices
         if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
           try {
             navigator.vibrate([45, 60, 45]);
           } catch (e) {
-            // Ignore unsupported/denied vibration
+            // ignore
           }
         }
-
-        // USER REQUEST: Do NOT play audio of the wrong answer.
-        // Instead, give the audio for the CORRECT one!
         if (correctOpt.hiraganaAudio) {
           setTimeout(() => {
             speakKana(correctOpt.hiraganaAudio);
@@ -207,28 +296,25 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
       }
     }
 
-    // Auto-advance logic:
-    // USER REQUEST: When wrong, do NOT go straight to the next question (let user click Next)!
     if (timerRef.current) clearTimeout(timerRef.current);
     if (isCorrect) {
-      // Auto-advance only when correct after 2400ms
       timerRef.current = setTimeout(() => {
         handleAdvance(nextAnswers);
       }, 2400);
     }
   }, [isAnswered, currentQuestion, answers, soundEnabled, handleAdvance]);
 
-  // Keyboard shortcuts [1], [2], [3], [H] for hint toggle, and [Enter]/[Space] to advance
+  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
-      if ((e.key === 'h' || e.key === 'H') && !e.ctrlKey && !e.metaKey) {
+      if ((e.key === 'h' || e.key === 'H') && !e.ctrlKey && !e.metaKey && isHiragana) {
         setShowHint(prev => !prev);
         return;
       }
 
-      if ((e.key === 'p' || e.key === 'P' || e.key === 'a' || e.key === 'A') && !e.ctrlKey && !e.metaKey && currentQuestion) {
+      if ((e.key === 'p' || e.key === 'P') && !e.ctrlKey && !e.metaKey && currentQuestion) {
         handlePlayAudio(currentQuestion.promptAudio, 'prompt');
         return;
       }
@@ -243,24 +329,42 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
 
       if (!currentQuestion) return;
 
-      if (e.key === '1' && currentQuestion.options[0]) {
-        handleSelectOption(currentQuestion.options[0], 0);
-      } else if (e.key === '2' && currentQuestion.options[1]) {
-        handleSelectOption(currentQuestion.options[1], 1);
-      } else if (e.key === '3' && currentQuestion.options[2]) {
-        handleSelectOption(currentQuestion.options[2], 2);
+      if (!isHiragana) {
+        // Exercise 6: Dual answers [1, 2, 3] for Written, [A, B, C] for Meaning
+        if (e.key === '1' && currentQuestion.options[0]) {
+          handleSelectWrittenOption(0);
+        } else if (e.key === '2' && currentQuestion.options[1]) {
+          handleSelectWrittenOption(1);
+        } else if (e.key === '3' && currentQuestion.options[2]) {
+          handleSelectWrittenOption(2);
+        } else if ((e.key === 'a' || e.key === 'A') && currentQuestion.meaningOptions?.[0]) {
+          handleSelectMeaningOption(currentQuestion.meaningOptions[0]);
+        } else if ((e.key === 'b' || e.key === 'B') && currentQuestion.meaningOptions?.[1]) {
+          handleSelectMeaningOption(currentQuestion.meaningOptions[1]);
+        } else if ((e.key === 'c' || e.key === 'C') && currentQuestion.meaningOptions?.[2]) {
+          handleSelectMeaningOption(currentQuestion.meaningOptions[2]);
+        }
+      } else {
+        // Exercise 7: Single option [1, 2, 3]
+        if (e.key === '1' && currentQuestion.options[0]) {
+          handleSelectSingleOption(currentQuestion.options[0], 0);
+        } else if (e.key === '2' && currentQuestion.options[1]) {
+          handleSelectSingleOption(currentQuestion.options[1], 1);
+        } else if (e.key === '3' && currentQuestion.options[2]) {
+          handleSelectSingleOption(currentQuestion.options[2], 2);
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isAnswered, currentQuestion, handleSelectOption, handleAdvance]);
+  }, [isAnswered, isHiragana, currentQuestion, handleSelectWrittenOption, handleSelectMeaningOption, handleSelectSingleOption, handlePlayAudio, handleAdvance]);
 
   if (!currentQuestion) {
     return (
       <div className="flex-1 flex items-center justify-center p-6 text-center">
         <div className="p-8 bg-white rounded-2xl border-2 border-[#CBD5E1] shadow-xs max-w-md">
-          <p className="font-extrabold text-[#1F2329] mb-4">Loading exercise...</p>
+          <p className="font-extrabold text-[#1F2329] mb-4">Loading conversation scenario...</p>
           <button
             type="button"
             onClick={startNewQuiz}
@@ -273,12 +377,13 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
     );
   }
 
-  const progressPercent = Math.round(((currentIndex + 1) / questions.length) * 100);
+  const progressPercent = ((currentIndex + (isAnswered ? 1 : 0)) / questions.length) * 100;
+  const lastAnswer = answers[answers.length - 1];
 
   return (
-    <div className="flex-1 flex flex-col h-full max-h-full overflow-hidden bg-[#F8FAFF] select-none">
+    <div className="h-full flex flex-col justify-between max-w-3xl sm:max-w-4xl mx-auto w-full px-2.5 sm:px-4 py-1.5 sm:py-2 select-none overflow-hidden">
       {/* TOP HEADER: Clean, uncrowded bar */}
-      <div className="bg-white border-b border-[#E2E8F0] px-3 sm:px-6 py-2 shrink-0 shadow-2xs">
+      <div className="bg-white border-b border-[#E2E8F0] px-3 sm:px-6 py-2 shrink-0 shadow-2xs rounded-xl">
         <div className="max-w-3xl mx-auto flex items-center justify-between gap-2">
           {/* Left: Badge & Question Count */}
           <div className="flex items-center gap-2 min-w-0">
@@ -287,7 +392,7 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
             </span>
             <div className="min-w-0">
               <span className="text-xs sm:text-sm font-black text-[#1F2329] tracking-tight truncate block">
-                {exerciseTitle}
+                {exerciseTitle}: {isHiragana ? 'Visual Conversation (Hiragana)' : 'Dialogue Exchanges (Romaji + Meaning)'}
               </span>
               <p className="text-[11px] text-[#5F6368] font-medium">
                 {currentIndex + 1} / {questions.length}
@@ -295,7 +400,7 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
             </div>
           </div>
 
-          {/* Right: Streak, Hint toggle, & Exit */}
+          {/* Right: Streak & Exit */}
           <div className="flex items-center gap-2 shrink-0">
             {streak > 1 && (
               <div className="flex items-center gap-1 text-xs font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-200">
@@ -322,34 +427,293 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
         </div>
       </div>
 
-      {/* MAIN BODY: Calibrated visual scene and 3 replies below with ZERO overlap */}
-      <div className="flex-1 min-h-0 flex flex-col items-center justify-between p-2 sm:p-3 max-w-xl mx-auto w-full gap-2 sm:gap-2.5 overflow-y-auto">
-        
-        {/* UPPER QUESTION SPACE: Calibrated manga scene visual with overlaid white speech bubble box */}
-        <div className="w-full flex flex-col items-center justify-center shrink-0 my-auto py-0.5">
-          <ConversationSprite
-            spriteId={currentQuestion.spriteId}
-            size="full"
-            speechBubbleText={currentQuestion.prompt}
-            isHiragana={isHiragana}
-            direction={currentQuestion.direction}
-            directionBadge={currentQuestion.directionBadge}
-            adaptiveStatus={currentQuestion.adaptiveStatus}
-            isPlayingAudio={playingAudioKey === 'prompt'}
-            onPlayAudio={() => handlePlayAudio(currentQuestion.promptAudio, 'prompt')}
-            showHint={showHint}
-            onToggleHint={() => setShowHint(prev => !prev)}
-            hintEnglish={currentQuestion.promptEnglish}
-            hintDirectionInstruction={
-              currentQuestion.direction === 'reply-to-question'
-                ? '💡 Challenge: Select the Japanese question that leads to this reply.'
-                : '💡 Challenge: Select the appropriate Japanese reply to this question.'
-            }
-          />
+      {/* ========================================================================= */}
+      {/* EXERCISE 6: NO ICONS/IMAGES, PROMPT AT TOP WITH NO HINTS, DOUBLE ANSWER SPACE */}
+      {/* ========================================================================= */}
+      {!isHiragana ? (
+        <div className="flex-1 min-h-0 flex flex-col justify-between py-2 sm:py-3 px-1 sm:px-3 max-w-2xl mx-auto w-full gap-2 sm:gap-3 overflow-y-auto">
+          
+          {/* PROMPT AT TOP: Pure prompt phrase with NO OTHER HINTS */}
+          <div className="w-full flex flex-col items-center justify-center shrink-0 my-auto py-2">
+            <div className="w-full px-6 py-4 sm:px-8 sm:py-5 rounded-2xl sm:rounded-3xl bg-[#1F2329] text-white shadow-md text-center border-2 border-[#1F2329]">
+              <span className="font-mono text-xl sm:text-2xl md:text-3xl font-black tracking-wide block leading-snug select-text">
+                {currentQuestion.prompt}
+              </span>
+            </div>
+          </div>
 
-          {/* Quick Play Audio & Hint helper controls under the visual */}
-          <div className="flex items-center justify-center gap-2 mt-1 sm:mt-1.5 shrink-0">
-            {(isHiragana || isAnswered) && (
+          {/* DOUBLE ANSWER SPACE: Section 1 (Romaji) + Section 2 (English Meaning) */}
+          <div className="w-full flex flex-col gap-2.5 sm:gap-3 shrink-0">
+            {/* Status / Instructions Header */}
+            <div className="flex items-center justify-between px-1 text-xs">
+              {!isAnswered ? (
+                <span className="text-[#5F6368] font-bold">
+                  {selectedOptionIndex === null && !selectedMeaning
+                    ? 'Select BOTH the Romaji reply and its English meaning'
+                    : selectedOptionIndex === null
+                    ? '✓ Meaning selected. Now select matching Romaji reply'
+                    : '✓ Romaji selected. Now select matching English meaning'}
+                </span>
+              ) : (
+                <div className="w-full flex items-center justify-between">
+                  <span
+                    className={`font-black text-xs sm:text-sm flex items-center gap-1.5 ${
+                      lastAnswer?.isCorrect
+                        ? 'text-emerald-700'
+                        : 'text-rose-700'
+                    }`}
+                  >
+                    {lastAnswer?.isCorrect ? (
+                      <>
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span>Both answers correct!</span>
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                        <span>Both parts must be correct.</span>
+                      </>
+                    )}
+                  </span>
+
+                  {!lastAnswer?.isCorrect && (
+                    <button
+                      type="button"
+                      onClick={() => handleAdvance()}
+                      className="px-3.5 py-1 rounded-xl bg-[#1F2329] hover:bg-[#1A73E8] text-white text-xs font-bold transition-all cursor-pointer flex items-center gap-1 shadow-xs"
+                    >
+                      <span>Next</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Two Sections: Side-by-side on sm+ and stacked on small mobile */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 w-full">
+              {/* SECTION 1: Possible Answers in Romaji */}
+              <div className="flex flex-col gap-1.5 sm:gap-2">
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-[11px] sm:text-xs font-black uppercase tracking-wider text-[#1F2329] flex items-center gap-1.5">
+                    <span className="w-5 h-5 rounded-md bg-[#1F2329] text-white text-[10px] flex items-center justify-center font-mono font-bold">1</span>
+                    <span>Written Romaji Reply</span>
+                  </span>
+                  {selectedOptionIndex !== null && (
+                    <span className="text-[10px] font-bold text-[#1A73E8] bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                      Selected
+                    </span>
+                  )}
+                </div>
+
+                {currentQuestion.options.map((option, idx) => {
+                  const isSelected = selectedOptionIndex === idx;
+                  const isCorrectOption = option.isCorrect;
+
+                  let btnStyle = 'bg-white border-2 border-[#CBD5E1] text-[#1F2329] hover:border-[#1A73E8] hover:bg-[#F8FAFF] shadow-xs';
+                  let badgeStyle = 'bg-[#F1F5F9] text-[#5F6368] border border-[#CBD5E1]';
+
+                  if (isAnswered) {
+                    if (isCorrectOption) {
+                      btnStyle = 'bg-[#16A34A] border-2 border-[#15803D] text-white shadow-md ring-2 ring-[#86EFAC]';
+                      badgeStyle = 'bg-white/20 text-white border-white/40';
+                    } else if (isSelected && !isCorrectOption) {
+                      btnStyle = 'bg-[#DC2626] border-2 border-[#B91C1C] text-white shadow-md ring-2 ring-[#FCA5A5] animate-shake-wrong';
+                      badgeStyle = 'bg-white/20 text-white border-white/40';
+                    } else {
+                      btnStyle = 'bg-[#F8FAFF] border-2 border-[#E2E8F0] text-[#94A3B8] opacity-50';
+                      badgeStyle = 'bg-[#E2E8F0] text-[#94A3B8] border-transparent';
+                    }
+                  } else if (isSelected) {
+                    btnStyle = 'bg-[#EBF3FE] border-2 border-[#1A73E8] text-[#1A73E8] font-bold shadow-xs ring-2 ring-[#BFDBFE]';
+                    badgeStyle = 'bg-[#1A73E8] text-white border-[#1A73E8]';
+                  }
+
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      disabled={isAnswered}
+                      onClick={() => handleSelectWrittenOption(idx)}
+                      className={`w-full py-2.5 sm:py-3 px-3.5 rounded-xl sm:rounded-2xl flex items-center justify-between text-left transition-all cursor-pointer font-mono ${btnStyle}`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <span className={`w-6 h-6 rounded-lg text-xs font-mono font-black flex items-center justify-center shrink-0 ${badgeStyle}`}>
+                          {idx + 1}
+                        </span>
+                        <span className="text-xs sm:text-sm font-bold break-words">
+                          {option.text}
+                        </span>
+                      </div>
+                      {isAnswered && isCorrectOption && <CheckCircle2 className="w-4 h-4 text-white shrink-0 ml-1.5" />}
+                      {isAnswered && isSelected && !isCorrectOption && <XCircle className="w-4 h-4 text-white shrink-0 ml-1.5" />}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* SECTION 2: Translated Meaning (English, Randomly Aligned) */}
+              <div className="flex flex-col gap-1.5 sm:gap-2">
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-[11px] sm:text-xs font-black uppercase tracking-wider text-[#1F2329] flex items-center gap-1.5">
+                    <span className="w-5 h-5 rounded-md bg-[#1A73E8] text-white text-[10px] flex items-center justify-center font-mono font-bold">2</span>
+                    <span>English Meaning</span>
+                  </span>
+                  {selectedMeaning && (
+                    <span className="text-[10px] font-bold text-[#1A73E8] bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                      Selected
+                    </span>
+                  )}
+                </div>
+
+                {(currentQuestion.meaningOptions || []).map((meaning, idx) => {
+                  const letter = String.fromCharCode(65 + idx); // 'A', 'B', 'C'
+                  const isSelected = selectedMeaning === meaning;
+                  const isCorrectMeaning = meaning === currentQuestion.correctMeaning;
+
+                  let btnStyle = 'bg-white border-2 border-[#CBD5E1] text-[#1F2329] hover:border-[#1A73E8] hover:bg-[#F8FAFF] shadow-xs';
+                  let badgeStyle = 'bg-[#F1F5F9] text-[#5F6368] border border-[#CBD5E1]';
+
+                  if (isAnswered) {
+                    if (isCorrectMeaning) {
+                      btnStyle = 'bg-[#16A34A] border-2 border-[#15803D] text-white shadow-md ring-2 ring-[#86EFAC]';
+                      badgeStyle = 'bg-white/20 text-white border-white/40';
+                    } else if (isSelected && !isCorrectMeaning) {
+                      btnStyle = 'bg-[#DC2626] border-2 border-[#B91C1C] text-white shadow-md ring-2 ring-[#FCA5A5] animate-shake-wrong';
+                      badgeStyle = 'bg-white/20 text-white border-white/40';
+                    } else {
+                      btnStyle = 'bg-[#F8FAFF] border-2 border-[#E2E8F0] text-[#94A3B8] opacity-50';
+                      badgeStyle = 'bg-[#E2E8F0] text-[#94A3B8] border-transparent';
+                    }
+                  } else if (isSelected) {
+                    btnStyle = 'bg-[#EBF3FE] border-2 border-[#1A73E8] text-[#1A73E8] font-bold shadow-xs ring-2 ring-[#BFDBFE]';
+                    badgeStyle = 'bg-[#1A73E8] text-white border-[#1A73E8]';
+                  }
+
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      disabled={isAnswered}
+                      onClick={() => handleSelectMeaningOption(meaning)}
+                      className={`w-full py-2.5 sm:py-3 px-3.5 rounded-xl sm:rounded-2xl flex items-center justify-between text-left transition-all cursor-pointer ${btnStyle}`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <span className={`w-6 h-6 rounded-lg text-xs font-mono font-black flex items-center justify-center shrink-0 ${badgeStyle}`}>
+                          {letter}
+                        </span>
+                        <span className="text-xs sm:text-sm font-bold text-inherit break-words">
+                          {meaning}
+                        </span>
+                      </div>
+                      {isAnswered && isCorrectMeaning && <CheckCircle2 className="w-4 h-4 text-white shrink-0 ml-1.5" />}
+                      {isAnswered && isSelected && !isCorrectMeaning && <XCircle className="w-4 h-4 text-white shrink-0 ml-1.5" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* AUDIO REPLAY AFTER ANSWERED */}
+          {isAnswered && (
+            <div className="flex items-center justify-center gap-2 py-1 shrink-0 animate-fade-in">
+              <button
+                type="button"
+                onClick={() => {
+                  const correctOpt = currentQuestion.options.find(o => o.isCorrect);
+                  if (correctOpt?.hiraganaAudio) {
+                    speakKana(correctOpt.hiraganaAudio);
+                  }
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#BFDBFE] bg-white text-[#1A73E8] hover:bg-[#F8FAFF] text-xs font-bold shadow-2xs cursor-pointer"
+              >
+                <Volume2 className="w-3.5 h-3.5" />
+                <span>Hear Pronunciation</span>
+              </button>
+            </div>
+          )}
+
+          {/* BOTTOM ACTION BAR */}
+          <div className="w-full bg-white border border-[#CBD5E1] rounded-2xl px-3.5 sm:px-4 py-2.5 shadow-2xs flex items-center justify-between text-xs shrink-0 gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              {isAnswered ? (
+                lastAnswer?.isCorrect ? (
+                  <div className="flex items-center gap-1.5 text-emerald-700 font-extrabold truncate">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>正解 (Both Correct!)</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5 text-rose-700 font-bold truncate">
+                    <XCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                    <span className="font-extrabold">不正解</span>
+                    <span className="text-[11px] text-neutral-600 font-normal hidden sm:inline">
+                      — Both the Romaji reading and meaning must match!
+                    </span>
+                  </div>
+                )
+              ) : (
+                <span className="text-[#5F6368] font-semibold truncate flex items-center gap-1">
+                  <span>Keys</span>
+                  <kbd className="px-1.5 py-0.5 rounded bg-neutral-100 border border-neutral-300 font-mono text-[10px]">1</kbd>
+                  <kbd className="px-1.5 py-0.5 rounded bg-neutral-100 border border-neutral-300 font-mono text-[10px]">2</kbd>
+                  <kbd className="px-1.5 py-0.5 rounded bg-neutral-100 border border-neutral-300 font-mono text-[10px]">3</kbd>
+                  <span className="text-neutral-400 mx-1">&bull;</span>
+                  <kbd className="px-1.5 py-0.5 rounded bg-neutral-100 border border-neutral-300 font-mono text-[10px]">A</kbd>
+                  <kbd className="px-1.5 py-0.5 rounded bg-neutral-100 border border-neutral-300 font-mono text-[10px]">B</kbd>
+                  <kbd className="px-1.5 py-0.5 rounded bg-neutral-100 border border-neutral-300 font-mono text-[10px]">C</kbd>
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              {isAnswered && (
+                <button
+                  type="button"
+                  onClick={() => handleAdvance()}
+                  className={`inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-xl font-bold cursor-pointer shrink-0 transition-all shadow-xs ${
+                    lastAnswer?.isCorrect
+                      ? 'bg-[#1A73E8] hover:bg-[#1557B0] text-white'
+                      : 'bg-rose-600 hover:bg-rose-700 text-white ring-2 ring-rose-200'
+                  }`}
+                >
+                  <span>{currentIndex < questions.length - 1 ? 'Next Question' : 'Finish'}</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* ========================================================================= */
+        /* EXERCISE 7: HIRAGANA VISUAL CONVERSATION SCENE WITH OVERLAID WHITE SPEECH BUBBLE */
+        /* ========================================================================= */
+        <div className="flex-1 min-h-0 flex flex-col items-center justify-between p-2 sm:p-3 max-w-xl mx-auto w-full gap-2 sm:gap-2.5 overflow-y-auto">
+          
+          {/* UPPER QUESTION SPACE: Calibrated manga scene visual with overlaid white speech bubble box */}
+          <div className="w-full flex flex-col items-center justify-center shrink-0 my-auto py-0.5">
+            <ConversationSprite
+              spriteId={currentQuestion.spriteId}
+              size="full"
+              speechBubbleText={currentQuestion.prompt}
+              isHiragana={true}
+              direction={currentQuestion.direction}
+              directionBadge={currentQuestion.directionBadge}
+              adaptiveStatus={currentQuestion.adaptiveStatus}
+              isPlayingAudio={playingAudioKey === 'prompt'}
+              onPlayAudio={() => handlePlayAudio(currentQuestion.promptAudio, 'prompt')}
+              showHint={showHint}
+              onToggleHint={() => setShowHint(prev => !prev)}
+              hintEnglish={currentQuestion.promptEnglish}
+              hintDirectionInstruction={
+                currentQuestion.direction === 'reply-to-question'
+                  ? '💡 Challenge: Select the Japanese question that leads to this reply.'
+                  : '💡 Challenge: Select the appropriate Japanese reply to this question.'
+              }
+            />
+
+            {/* Quick Play Audio & Hint helper controls under the visual */}
+            <div className="flex items-center justify-center gap-2 mt-1 sm:mt-1.5 shrink-0">
               <button
                 type="button"
                 onClick={() => handlePlayAudio(currentQuestion.promptAudio, 'prompt')}
@@ -364,106 +728,91 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
                 <Volume2 className="w-3.5 h-3.5" />
                 <span>{playingAudioKey === 'prompt' ? 'Playing...' : 'Play Audio'}</span>
               </button>
-            )}
 
-            <button
-              type="button"
-              onClick={() => setShowHint(prev => !prev)}
-              aria-label="Toggle English translation hint"
-              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-bold transition-all cursor-pointer ${
-                showHint
-                  ? 'bg-amber-100 text-amber-900 border-amber-400 font-extrabold shadow-2xs'
-                  : 'bg-white text-[#5F6368] border-[#CBD5E1] hover:text-[#1F2329] hover:bg-amber-50/50 shadow-2xs'
-              }`}
-              title="Toggle English Translation Hint (Key: H)"
-            >
-              <Lightbulb className={`w-3.5 h-3.5 ${showHint ? 'text-amber-600 fill-amber-500' : 'text-amber-500'}`} />
-              <span>{showHint ? 'Hide Hint' : 'Hint'}</span>
-            </button>
-          </div>
-        </div>
-
-        {/* BOTTOM OPTIONS AREA: Exactly 3 Possible Replies (Pure Romaji or Hiragana) */}
-        {/* Sibling elements: Option button and Audio button sit side-by-side cleanly with NO overlap */}
-        <div className="w-full flex flex-col gap-2 sm:gap-2.5 shrink-0 max-w-lg mb-1">
-          {currentQuestion.options.map((option, idx) => {
-            const isSelected = selectedOptionIndex === idx;
-            const isCorrect = option.isCorrect;
-            const showFeedback = isAnswered;
-            const wasWrongChoiceMade = selectedOptionIndex !== null && !currentQuestion.options[selectedOptionIndex]?.isCorrect;
-
-            let buttonStyle = 'bg-white text-[#1F2329] border-2 border-[#CBD5E1] hover:border-[#1A73E8] hover:bg-[#F8FAFF]';
-
-            if (showFeedback) {
-              if (isCorrect) {
-                // If wrong answer was chosen, flash green the correct one right after the shake!
-                buttonStyle = wasWrongChoiceMade
-                  ? 'bg-emerald-50 text-emerald-900 border-2 border-emerald-500 ring-2 ring-emerald-300 animate-flash-green-delayed'
-                  : 'bg-emerald-50 text-emerald-900 border-2 border-emerald-500 ring-2 ring-emerald-200';
-              } else if (isSelected && !isCorrect) {
-                // Vibrate the wrong (red) answer slightly!
-                buttonStyle = 'bg-rose-50 text-rose-900 border-2 border-rose-500 ring-2 ring-rose-300 animate-shake-wrong';
-              } else {
-                buttonStyle = 'bg-[#F8FAFF] text-[#5F6368] border-2 border-[#E2E8F0] opacity-50';
-              }
-            }
-
-            // In Exercise 7 (Hiragana), audio buttons are always present for options.
-            // In Exercise 6 (Romaji), audio is included AFTER player chooses an answer.
-            const showAudioButton = isHiragana || (showFeedback && (isSelected || isCorrect));
-
-            return (
-              <div
-                key={idx}
-                className="flex items-stretch gap-2 w-full"
+              <button
+                type="button"
+                onClick={() => setShowHint(prev => !prev)}
+                aria-label="Toggle English translation hint"
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-bold transition-all cursor-pointer ${
+                  showHint
+                    ? 'bg-amber-100 text-amber-900 border-amber-400 font-extrabold shadow-2xs'
+                    : 'bg-white text-[#5F6368] border-[#CBD5E1] hover:text-[#1F2329] hover:bg-amber-50/50 shadow-2xs'
+                }`}
+                title="Toggle English Translation Hint (Key: H)"
               >
-                {/* Main Option Select Button */}
-                <button
-                  type="button"
-                  onClick={() => handleSelectOption(option, idx)}
-                  disabled={isAnswered}
-                  className={`flex-1 min-h-[50px] sm:min-h-[54px] py-2.5 sm:py-3 px-3.5 sm:px-4 rounded-xl sm:rounded-2xl flex items-center justify-between text-left transition-all cursor-pointer font-sans shadow-xs gap-3 ${buttonStyle}`}
+                <Lightbulb className={`w-3.5 h-3.5 ${showHint ? 'text-amber-600 fill-amber-500' : 'text-amber-500'}`} />
+                <span>{showHint ? 'Hide Hint' : 'Hint'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* BOTTOM OPTIONS AREA: Exactly 3 Possible Replies in Hiragana */}
+          <div className="w-full flex flex-col gap-2 sm:gap-2.5 shrink-0 max-w-lg mb-1">
+            {currentQuestion.options.map((option, idx) => {
+              const isSelected = selectedOptionIndex === idx;
+              const isCorrect = option.isCorrect;
+              const showFeedback = isAnswered;
+              const wasWrongChoiceMade = selectedOptionIndex !== null && !currentQuestion.options[selectedOptionIndex]?.isCorrect;
+
+              let buttonStyle = 'bg-white text-[#1F2329] border-2 border-[#CBD5E1] hover:border-[#1A73E8] hover:bg-[#F8FAFF]';
+
+              if (showFeedback) {
+                if (isCorrect) {
+                  buttonStyle = wasWrongChoiceMade
+                    ? 'bg-emerald-50 text-emerald-900 border-2 border-emerald-500 ring-2 ring-emerald-300 animate-flash-green-delayed'
+                    : 'bg-emerald-50 text-emerald-900 border-2 border-emerald-500 ring-2 ring-emerald-200';
+                } else if (isSelected && !isCorrect) {
+                  buttonStyle = 'bg-rose-50 text-rose-900 border-2 border-rose-500 ring-2 ring-rose-300 animate-shake-wrong';
+                } else {
+                  buttonStyle = 'bg-[#F8FAFF] text-[#5F6368] border-2 border-[#E2E8F0] opacity-50';
+                }
+              }
+
+              return (
+                <div
+                  key={idx}
+                  className="flex items-stretch gap-2 w-full"
                 >
-                  <div className="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-0">
-                    {/* Number key shortcut badge */}
-                    <span className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-[#F0F4F8] text-[#1F2329] border border-[#CBD5E1] flex items-center justify-center font-mono text-xs sm:text-sm font-black shrink-0">
-                      {idx + 1}
-                    </span>
-
-                    {/* Option Text (Pure Japanese text, wraps cleanly without overflowing) */}
-                    <div className="flex flex-col min-w-0 flex-1">
-                      <span
-                        className={`${
-                          isHiragana
-                            ? "font-['Noto_Sans_JP',_sans-serif] text-base sm:text-lg font-bold tracking-wide"
-                            : "font-mono text-sm sm:text-base font-bold"
-                        } break-words text-left leading-snug`}
-                      >
-                        {option.text}
+                  {/* Main Option Select Button */}
+                  <button
+                    type="button"
+                    onClick={() => handleSelectSingleOption(option, idx)}
+                    disabled={isAnswered}
+                    className={`flex-1 min-h-[50px] sm:min-h-[54px] py-2.5 sm:py-3 px-3.5 sm:px-4 rounded-xl sm:rounded-2xl flex items-center justify-between text-left transition-all cursor-pointer font-sans shadow-xs gap-3 ${buttonStyle}`}
+                  >
+                    <div className="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-0">
+                      {/* Number key shortcut badge */}
+                      <span className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-[#F0F4F8] text-[#1F2329] border border-[#CBD5E1] flex items-center justify-center font-mono text-xs sm:text-sm font-black shrink-0">
+                        {idx + 1}
                       </span>
-                      {/* Optional English translation of options shown when hint is active and answer was revealed */}
-                      {showHint && showFeedback && (
-                        <span className="text-[11px] sm:text-xs text-[#5F6368] font-normal italic mt-0.5 break-words">
-                          {option.englishMeaning}
+
+                      {/* Option Text (Pure Hiragana text, wraps cleanly without overflowing) */}
+                      <div className="flex flex-col min-w-0 flex-1">
+                        <span className="font-['Noto_Sans_JP',_sans-serif] text-base sm:text-lg font-bold tracking-wide break-words text-left leading-snug">
+                          {option.text}
                         </span>
-                      )}
+                        {/* Optional English translation of options shown when hint is active and answer was revealed */}
+                        {showHint && showFeedback && (
+                          <span className="text-[11px] sm:text-xs text-[#5F6368] font-normal italic mt-0.5 break-words">
+                            {option.englishMeaning}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Feedback Status Icon */}
-                  {showFeedback && (
-                    <div className="shrink-0 ml-1">
-                      {isCorrect ? (
-                        <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                      ) : isSelected ? (
-                        <XCircle className="w-5 h-5 text-rose-600 shrink-0" />
-                      ) : null}
-                    </div>
-                  )}
-                </button>
+                    {/* Feedback Status Icon */}
+                    {showFeedback && (
+                      <div className="shrink-0 ml-1">
+                        {isCorrect ? (
+                          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                        ) : isSelected ? (
+                          <XCircle className="w-5 h-5 text-rose-600 shrink-0" />
+                        ) : null}
+                      </div>
+                    )}
+                  </button>
 
-                {/* Sibling Audio Button - Independent flex item, never overlapping */}
-                {showAudioButton && (
+                  {/* Sibling Audio Button - Independent flex item, never overlapping */}
                   <button
                     type="button"
                     onClick={() => handlePlayAudio(option.hiraganaAudio, `opt_${idx}`)}
@@ -477,79 +826,78 @@ export const ExchangeQuiz: React.FC<ExchangeQuizProps> = ({
                   >
                     <Volume2 className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
-                )}
-              </div>
-            );
-          })}
-        </div>
+                </div>
+              );
+            })}
+          </div>
 
-        {/* BOTTOM ACTION BAR: Clean Status, Shortcuts, and Advance Button */}
-        <div className="w-full bg-white border border-[#CBD5E1] rounded-2xl px-3.5 sm:px-4 py-2.5 shadow-2xs flex items-center justify-between text-xs shrink-0 gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            {isAnswered ? (
-              selectedOptionIndex !== null && currentQuestion.options[selectedOptionIndex]?.isCorrect ? (
-                <div className="flex items-center gap-1.5 text-emerald-700 font-extrabold truncate">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>正解 (Correct!)</span>
-                  {showHint && (
-                    <span className="text-[11px] font-normal text-emerald-800 hidden sm:inline ml-1 truncate">
-                      — {currentQuestion.item.correctEnglish}
+          {/* BOTTOM ACTION BAR: Clean Status, Shortcuts, and Advance Button */}
+          <div className="w-full bg-white border border-[#CBD5E1] rounded-2xl px-3.5 sm:px-4 py-2.5 shadow-2xs flex items-center justify-between text-xs shrink-0 gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              {isAnswered ? (
+                selectedOptionIndex !== null && currentQuestion.options[selectedOptionIndex]?.isCorrect ? (
+                  <div className="flex items-center gap-1.5 text-emerald-700 font-extrabold truncate">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>正解 (Correct!)</span>
+                    {showHint && (
+                      <span className="text-[11px] font-normal text-emerald-800 hidden sm:inline ml-1 truncate">
+                        — {currentQuestion.item.correctEnglish}
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5 text-rose-700 font-bold truncate">
+                    <XCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                    <span className="font-extrabold">不正解</span>
+                    <span className="text-[11px] text-neutral-600 font-normal hidden sm:inline">
+                      — Take your time to review, then click Next or press [Enter]
                     </span>
-                  )}
-                </div>
+                  </div>
+                )
               ) : (
-                <div className="flex items-center gap-1.5 text-rose-700 font-bold truncate">
-                  <XCircle className="w-4 h-4 text-rose-600 shrink-0" />
-                  <span className="font-extrabold">不正解</span>
-                  <span className="text-[11px] text-neutral-600 font-normal hidden sm:inline">
-                    — Take your time to review, then click Next or press [Enter]
-                  </span>
-                </div>
-              )
-            ) : (
-              <span className="text-[#5F6368] font-semibold truncate flex items-center gap-1">
-                <span>Keys</span>
-                <kbd className="px-1.5 py-0.5 rounded bg-neutral-100 border border-neutral-300 font-mono text-[10px]">1</kbd>
-                <kbd className="px-1.5 py-0.5 rounded bg-neutral-100 border border-neutral-300 font-mono text-[10px]">2</kbd>
-                <kbd className="px-1.5 py-0.5 rounded bg-neutral-100 border border-neutral-300 font-mono text-[10px]">3</kbd>
-                <span className="text-neutral-400 mx-1">&bull;</span>
-                <kbd className="px-1.5 py-0.5 rounded bg-neutral-100 border border-neutral-300 font-mono text-[10px]">H</kbd>
-                <span className="text-[11px] text-neutral-500">Hint</span>
-              </span>
-            )}
-          </div>
+                <span className="text-[#5F6368] font-semibold truncate flex items-center gap-1">
+                  <span>Keys</span>
+                  <kbd className="px-1.5 py-0.5 rounded bg-neutral-100 border border-neutral-300 font-mono text-[10px]">1</kbd>
+                  <kbd className="px-1.5 py-0.5 rounded bg-neutral-100 border border-neutral-300 font-mono text-[10px]">2</kbd>
+                  <kbd className="px-1.5 py-0.5 rounded bg-neutral-100 border border-neutral-300 font-mono text-[10px]">3</kbd>
+                  <span className="text-neutral-400 mx-1">&bull;</span>
+                  <kbd className="px-1.5 py-0.5 rounded bg-neutral-100 border border-neutral-300 font-mono text-[10px]">H</kbd>
+                  <span className="text-[11px] text-neutral-500">Hint</span>
+                </span>
+              )}
+            </div>
 
-          <div className="flex items-center gap-2 shrink-0">
-            {/* Mobile quick-toggle for hint when unanswered */}
-            {!isAnswered && (
-              <button
-                type="button"
-                onClick={() => setShowHint(prev => !prev)}
-                className={`text-[11px] font-bold px-2 py-1 rounded-lg border transition-colors cursor-pointer sm:hidden ${
-                  showHint ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-white text-neutral-600 border-neutral-300'
-                }`}
-              >
-                {showHint ? 'Hide (hint)' : '(hint)'}
-              </button>
-            )}
+            <div className="flex items-center gap-2 shrink-0">
+              {!isAnswered && (
+                <button
+                  type="button"
+                  onClick={() => setShowHint(prev => !prev)}
+                  className={`text-[11px] font-bold px-2 py-1 rounded-lg border transition-colors cursor-pointer sm:hidden ${
+                    showHint ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-white text-neutral-600 border-neutral-300'
+                  }`}
+                >
+                  {showHint ? 'Hide (hint)' : '(hint)'}
+                </button>
+              )}
 
-            {isAnswered && (
-              <button
-                type="button"
-                onClick={() => handleAdvance()}
-                className={`inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-xl font-bold cursor-pointer shrink-0 transition-all shadow-xs ${
-                  selectedOptionIndex !== null && !currentQuestion.options[selectedOptionIndex]?.isCorrect
-                    ? 'bg-rose-600 hover:bg-rose-700 text-white ring-2 ring-rose-200'
-                    : 'bg-[#1A73E8] hover:bg-[#1557B0] text-white'
-                }`}
-              >
-                <span>{currentIndex < questions.length - 1 ? 'Next Question' : 'Finish'}</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            )}
+              {isAnswered && (
+                <button
+                  type="button"
+                  onClick={() => handleAdvance()}
+                  className={`inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-xl font-bold cursor-pointer shrink-0 transition-all shadow-xs ${
+                    selectedOptionIndex !== null && !currentQuestion.options[selectedOptionIndex]?.isCorrect
+                      ? 'bg-rose-600 hover:bg-rose-700 text-white ring-2 ring-rose-200'
+                      : 'bg-[#1A73E8] hover:bg-[#1557B0] text-white'
+                  }`}
+                >
+                  <span>{currentIndex < questions.length - 1 ? 'Next Question' : 'Finish'}</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

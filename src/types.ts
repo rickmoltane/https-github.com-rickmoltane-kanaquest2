@@ -36,8 +36,11 @@ export interface QuizQuestion {
   promptType: 'kana' | 'romaji';
   options: string[]; // exactly 3 options
   correctOption: string;
-  secondaryPrompt?: string; // e.g. Romaji or Kana display when picture is shown
+  secondaryPrompt?: string; // e.g. Romaji or Kana display
   adaptiveStatus?: 'unseen' | 'needs_practice' | 'proven' | 'review';
+  // Dual-selection for Exercises 3 & 4 (Written + Meaning)
+  meaningOptions?: string[]; // 3 English meanings shuffled independently
+  correctMeaning?: string;   // Correct English meaning
 }
 
 export interface AnswerRecord {
@@ -45,6 +48,8 @@ export interface AnswerRecord {
   word?: EverydayWord;
   selectedOption: string;
   correctOption: string;
+  selectedMeaning?: string;
+  correctMeaning?: string;
   isCorrect: boolean;
   timeTakenMs: number;
 }

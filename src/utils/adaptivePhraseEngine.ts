@@ -11,6 +11,7 @@ import {
   recordRecentPhrases 
 } from '../services/storageService';
 import { getSpriteIdForItem } from '../data/spriteSheetData';
+import { shuffleArray } from '../data/hiraganaData';
 
 /**
  * Calculates adaptive weight and status for a phrase item.
@@ -252,6 +253,22 @@ export function generateAdaptiveExchangeQuiz(
       const allOptions = [correctOption, ...distractorOptions].sort(() => 0.5 - Math.random());
       const correctIndex = allOptions.findIndex((opt) => opt.isCorrect);
 
+      // Build meaningful English translated meanings for Section 2 (Meaning answer buttons)
+      const correctMeaning = item.englishMeaning;
+      const otherItems = EXCHANGE_DATA.filter((it) => it.id !== item.id);
+      const candidateMeanings = otherItems
+        .map((it) => it.englishMeaning)
+        .filter((m): m is string => Boolean(m) && m.trim() !== '' && m !== correctMeaning);
+      const uniqueCandidateMeanings = Array.from(new Set(candidateMeanings));
+      const shuffledMeanings = shuffleArray(uniqueCandidateMeanings);
+      const mDistractor1 = shuffledMeanings[0] || 'Where do you work?';
+      const mDistractor2 = shuffledMeanings[1] || 'Are you a teacher?';
+
+      let meaningOptions = shuffleArray([correctMeaning, mDistractor1, mDistractor2]);
+      if (meaningOptions.indexOf(correctMeaning) === correctIndex && meaningOptions.length > 1) {
+        meaningOptions = [meaningOptions[1], meaningOptions[2], meaningOptions[0]];
+      }
+
       return {
         questionNumber: index + 1,
         item,
@@ -266,6 +283,8 @@ export function generateAdaptiveExchangeQuiz(
         situationTitle: item.situationTitle,
         options: allOptions,
         correctOptionIndex: correctIndex,
+        meaningOptions,
+        correctMeaning,
         adaptiveStatus: entry.status,
         spriteId: getSpriteIdForItem(item),
       };
@@ -288,6 +307,22 @@ export function generateAdaptiveExchangeQuiz(
       const allOptions = [correctOption, ...distractorOptions].sort(() => 0.5 - Math.random());
       const correctIndex = allOptions.findIndex((opt) => opt.isCorrect);
 
+      // Build meaningful English translated meanings for Section 2 (Meaning answer buttons)
+      const correctMeaning = item.correctEnglish;
+      const otherItems = EXCHANGE_DATA.filter((it) => it.id !== item.id);
+      const candidateMeanings = otherItems
+        .map((it) => it.correctEnglish)
+        .filter((m): m is string => Boolean(m) && m.trim() !== '' && m !== correctMeaning);
+      const uniqueCandidateMeanings = Array.from(new Set(candidateMeanings));
+      const shuffledMeanings = shuffleArray(uniqueCandidateMeanings);
+      const mDistractor1 = shuffledMeanings[0] || 'I work at a company.';
+      const mDistractor2 = shuffledMeanings[1] || 'Yes, I am a student.';
+
+      let meaningOptions = shuffleArray([correctMeaning, mDistractor1, mDistractor2]);
+      if (meaningOptions.indexOf(correctMeaning) === correctIndex && meaningOptions.length > 1) {
+        meaningOptions = [meaningOptions[1], meaningOptions[2], meaningOptions[0]];
+      }
+
       return {
         questionNumber: index + 1,
         item,
@@ -302,6 +337,8 @@ export function generateAdaptiveExchangeQuiz(
         situationTitle: item.situationTitle,
         options: allOptions,
         correctOptionIndex: correctIndex,
+        meaningOptions,
+        correctMeaning,
         adaptiveStatus: entry.status,
         spriteId: getSpriteIdForItem(item),
       };

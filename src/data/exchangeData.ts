@@ -2334,6 +2334,8 @@ export interface ExchangeQuizQuestion {
   correctOptionIndex: number;
   adaptiveStatus?: 'unseen' | 'needs_practice' | 'proven' | 'review';
   spriteId?: string;
+  meaningOptions?: string[];
+  correctMeaning?: string;
 }
 
 /**
