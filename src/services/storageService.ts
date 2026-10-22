@@ -11,13 +11,37 @@ import {
 import { db, handleFirestoreError, OperationType } from '../firebase/config';
 import { QuizResult, UserProfile, CharacterMastery } from '../types';
 
+const memoryStore: Record<string, string> = {};
+
+function safeGetItem(key: string): string | null {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      return localStorage.getItem(key);
+    }
+    return memoryStore[key] ?? null;
+  } catch {
+    return memoryStore[key] ?? null;
+  }
+}
+
+function safeSetItem(key: string, value: string): void {
+  try {
+    memoryStore[key] = value;
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(key, value);
+    }
+  } catch (err) {
+    console.warn(`Failed to save ${key} to local storage`, err);
+  }
+}
+
 const LOCAL_STORAGE_HISTORY_KEY = 'kanaquest_quiz_history_v1';
 const LOCAL_STORAGE_PROFILE_KEY = 'kanaquest_user_profile_v1';
 const LOCAL_STORAGE_MASTERY_KEY = 'kanaquest_mastery_v1';
 
 export function getLocalQuizHistory(): QuizResult[] {
   try {
-    const raw = localStorage.getItem(LOCAL_STORAGE_HISTORY_KEY);
+    const raw = safeGetItem(LOCAL_STORAGE_HISTORY_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
@@ -26,7 +50,7 @@ export function getLocalQuizHistory(): QuizResult[] {
 
 export function saveLocalQuizHistory(history: QuizResult[]) {
   try {
-    localStorage.setItem(LOCAL_STORAGE_HISTORY_KEY, JSON.stringify(history.slice(0, 100)));
+    safeSetItem(LOCAL_STORAGE_HISTORY_KEY, JSON.stringify(history.slice(0, 100)));
   } catch (err) {
     console.warn('Failed to save history to local storage', err);
   }
@@ -34,7 +58,7 @@ export function saveLocalQuizHistory(history: QuizResult[]) {
 
 export function getLocalProfile(): UserProfile | null {
   try {
-    const raw = localStorage.getItem(LOCAL_STORAGE_PROFILE_KEY);
+    const raw = safeGetItem(LOCAL_STORAGE_PROFILE_KEY);
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
@@ -43,7 +67,7 @@ export function getLocalProfile(): UserProfile | null {
 
 export function saveLocalProfile(profile: UserProfile) {
   try {
-    localStorage.setItem(LOCAL_STORAGE_PROFILE_KEY, JSON.stringify(profile));
+    safeSetItem(LOCAL_STORAGE_PROFILE_KEY, JSON.stringify(profile));
   } catch (err) {
     console.warn('Failed to save profile to local storage', err);
   }
@@ -51,7 +75,7 @@ export function saveLocalProfile(profile: UserProfile) {
 
 export function getLocalMastery(): CharacterMastery {
   try {
-    const raw = localStorage.getItem(LOCAL_STORAGE_MASTERY_KEY);
+    const raw = safeGetItem(LOCAL_STORAGE_MASTERY_KEY);
     return raw ? JSON.parse(raw) : {};
   } catch {
     return {};
@@ -60,7 +84,7 @@ export function getLocalMastery(): CharacterMastery {
 
 export function saveLocalMastery(mastery: CharacterMastery) {
   try {
-    localStorage.setItem(LOCAL_STORAGE_MASTERY_KEY, JSON.stringify(mastery));
+    safeSetItem(LOCAL_STORAGE_MASTERY_KEY, JSON.stringify(mastery));
   } catch (err) {
     console.warn('Failed to save mastery to local storage', err);
   }
@@ -68,21 +92,76 @@ export function saveLocalMastery(mastery: CharacterMastery) {
 
 const LOCAL_STORAGE_RECENT_CHARS_KEY = 'kanaquest_recent_characters_v2';
 const LOCAL_STORAGE_RECENT_WORDS_KEY = 'kanaquest_recent_words_v2';
+const LOCAL_STORAGE_ACTIVE_MISTAKES_KEY = 'kanaquest_active_mistakes_v2';
 
-export function getRecentCharacters(): string[] {
+export function getActiveMistakes(): string[] {
   try {
-    const raw = localStorage.getItem(LOCAL_STORAGE_RECENT_CHARS_KEY);
+    const raw = safeGetItem(LOCAL_STORAGE_ACTIVE_MISTAKES_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
   }
 }
 
+export function saveActiveMistakes(mistakes: string[]) {
+  try {
+    safeSetItem(LOCAL_STORAGE_ACTIVE_MISTAKES_KEY, JSON.stringify(mistakes.slice(0, 50)));
+  } catch (err) {
+    console.warn('Failed to save active mistakes', err);
+  }
+}
+
+export function recordActiveMistake(itemKey: string, isCorrect: boolean) {
+  try {
+    const current = getActiveMistakes();
+    const currentMastery = getLocalMastery();
+    const itemStat = currentMastery[itemKey];
+
+    if (!isCorrect) {
+      // Add mistake to the front of active queue
+      const filtered = current.filter(k => k !== itemKey);
+      saveActiveMistakes([itemKey, ...filtered]);
+    } else {
+      // Graduate item from mistakes queue once user gets it correct at least 2 times consecutively!
+      if (itemStat && (itemStat.consecutiveCorrect ?? 1) >= 2) {
+        saveActiveMistakes(current.filter(k => k !== itemKey));
+      }
+    }
+  } catch (err) {
+    console.warn('Failed to update active mistakes', err);
+  }
+}
+
+export function getRecentCharacters(): string[] {
+  try {
+    const raw = safeGetItem(LOCAL_STORAGE_RECENT_CHARS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Intelligent cooldown: ONLY mastered / correctly answered characters enter cooldown.
+ * Characters with mistakes NEVER enter cooldown so they can be drilled in the very next quiz!
+ */
 export function recordRecentCharacters(kanaList: string[]) {
   try {
-    const existing = getRecentCharacters().filter(k => !kanaList.includes(k));
-    const combined = [...kanaList, ...existing].slice(0, 26);
-    localStorage.setItem(LOCAL_STORAGE_RECENT_CHARS_KEY, JSON.stringify(combined));
+    const mastery = getLocalMastery();
+    const activeMistakes = getActiveMistakes();
+
+    const cooldownEligible = kanaList.filter(kana => {
+      if (activeMistakes.includes(kana)) return false; // Needs immediate drill!
+      const stat = mastery[kana];
+      if (stat && (!stat.lastAnswerCorrect || stat.accuracy < 75 || (stat.consecutiveMistakes ?? 0) > 0)) {
+        return false;
+      }
+      return true;
+    });
+
+    const existing = getRecentCharacters().filter(k => !cooldownEligible.includes(k));
+    const combined = [...cooldownEligible, ...existing].slice(0, 18);
+    safeSetItem(LOCAL_STORAGE_RECENT_CHARS_KEY, JSON.stringify(combined));
   } catch (err) {
     console.warn('Failed to save recent characters', err);
   }
@@ -90,18 +169,34 @@ export function recordRecentCharacters(kanaList: string[]) {
 
 export function getRecentWords(): string[] {
   try {
-    const raw = localStorage.getItem(LOCAL_STORAGE_RECENT_WORDS_KEY);
+    const raw = safeGetItem(LOCAL_STORAGE_RECENT_WORDS_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
   }
 }
 
+/**
+ * Intelligent cooldown: ONLY mastered / correctly answered words enter cooldown.
+ * Words with mistakes NEVER enter cooldown so they can be reinforced immediately!
+ */
 export function recordRecentWords(wordIdentifiers: string[]) {
   try {
-    const existing = getRecentWords().filter(w => !wordIdentifiers.includes(w));
-    const combined = [...wordIdentifiers, ...existing].slice(0, 40);
-    localStorage.setItem(LOCAL_STORAGE_RECENT_WORDS_KEY, JSON.stringify(combined));
+    const mastery = getLocalMastery();
+    const activeMistakes = getActiveMistakes();
+
+    const cooldownEligible = wordIdentifiers.filter(wId => {
+      if (activeMistakes.includes(wId)) return false;
+      const stat = mastery[wId];
+      if (stat && (!stat.lastAnswerCorrect || stat.accuracy < 75 || (stat.consecutiveMistakes ?? 0) > 0)) {
+        return false;
+      }
+      return true;
+    });
+
+    const existing = getRecentWords().filter(w => !cooldownEligible.includes(w));
+    const combined = [...cooldownEligible, ...existing].slice(0, 25);
+    safeSetItem(LOCAL_STORAGE_RECENT_WORDS_KEY, JSON.stringify(combined));
   } catch (err) {
     console.warn('Failed to save recent words', err);
   }
@@ -116,13 +211,16 @@ export interface PhraseMasteryRecord {
   consecutiveCorrect: number;
   lastPracticed: string; // ISO date
   accuracy: number;
+  consecutiveMistakes?: number;
+  mistakesCount?: number;
+  lastAnswerCorrect?: boolean;
 }
 
 export type PhraseMasteryMap = Record<string, PhraseMasteryRecord>;
 
 export function getPhraseMastery(): PhraseMasteryMap {
   try {
-    const raw = localStorage.getItem(LOCAL_STORAGE_PHRASE_MASTERY_KEY);
+    const raw = safeGetItem(LOCAL_STORAGE_PHRASE_MASTERY_KEY);
     return raw ? JSON.parse(raw) : {};
   } catch {
     return {};
@@ -131,7 +229,7 @@ export function getPhraseMastery(): PhraseMasteryMap {
 
 export function savePhraseMastery(mastery: PhraseMasteryMap) {
   try {
-    localStorage.setItem(LOCAL_STORAGE_PHRASE_MASTERY_KEY, JSON.stringify(mastery));
+    safeSetItem(LOCAL_STORAGE_PHRASE_MASTERY_KEY, JSON.stringify(mastery));
   } catch (err) {
     console.warn('Failed to save phrase mastery', err);
   }
@@ -139,7 +237,7 @@ export function savePhraseMastery(mastery: PhraseMasteryMap) {
 
 export function getRecentPhrases(): string[] {
   try {
-    const raw = localStorage.getItem(LOCAL_STORAGE_RECENT_PHRASES_KEY);
+    const raw = safeGetItem(LOCAL_STORAGE_RECENT_PHRASES_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
@@ -148,9 +246,20 @@ export function getRecentPhrases(): string[] {
 
 export function recordRecentPhrases(ids: string[]) {
   try {
-    const existing = getRecentPhrases().filter(id => !ids.includes(id));
-    const combined = [...ids, ...existing].slice(0, 30);
-    localStorage.setItem(LOCAL_STORAGE_RECENT_PHRASES_KEY, JSON.stringify(combined));
+    const mastery = getPhraseMastery();
+    const activeMistakes = getActiveMistakes();
+    const cooldownEligible = ids.filter(id => {
+      const rec = mastery[id];
+      if (activeMistakes.includes(id)) return false;
+      if (rec && (rec.consecutiveCorrect === 0 || rec.accuracy < 70 || (rec.consecutiveMistakes ?? 0) > 0 || rec.lastAnswerCorrect === false)) {
+        return false; // Do not put mistake phrases on cooldown!
+      }
+      return true;
+    });
+
+    const existing = getRecentPhrases().filter(id => !cooldownEligible.includes(id));
+    const combined = [...cooldownEligible, ...existing].slice(0, 20);
+    safeSetItem(LOCAL_STORAGE_RECENT_PHRASES_KEY, JSON.stringify(combined));
   } catch (err) {
     console.warn('Failed to save recent phrases', err);
   }
@@ -158,7 +267,7 @@ export function recordRecentPhrases(ids: string[]) {
 
 /**
  * Records immediate answer for an exchange phrase (Exercise 6 & 7)
- * Tracks consecutive correct count and timestamp for spaced repetition
+ * Tracks consecutive correct count, consecutive mistakes, and timestamp for spaced repetition
  */
 export function recordImmediatePhraseAnswer(phraseId: string, isCorrect: boolean) {
   try {
@@ -167,21 +276,30 @@ export function recordImmediatePhraseAnswer(phraseId: string, isCorrect: boolean
       attempts: 0,
       correct: 0,
       consecutiveCorrect: 0,
+      consecutiveMistakes: 0,
+      mistakesCount: 0,
       lastPracticed: '',
       accuracy: 0,
     };
     const attempts = existing.attempts + 1;
     const correct = existing.correct + (isCorrect ? 1 : 0);
     const consecutiveCorrect = isCorrect ? (existing.consecutiveCorrect || 0) + 1 : 0;
+    const consecutiveMistakes = isCorrect ? 0 : (existing.consecutiveMistakes || 0) + 1;
+    const mistakesCount = (existing.mistakesCount || 0) + (isCorrect ? 0 : 1);
 
     mastery[phraseId] = {
       attempts,
       correct,
       consecutiveCorrect,
+      consecutiveMistakes,
+      mistakesCount,
+      lastAnswerCorrect: isCorrect,
       lastPracticed: new Date().toISOString(),
       accuracy: Math.round((correct / attempts) * 100),
     };
     savePhraseMastery(mastery);
+
+    recordActiveMistake(phraseId, isCorrect);
   } catch (err) {
     console.warn('Failed to record immediate phrase answer', err);
   }
@@ -193,16 +311,36 @@ export function recordImmediatePhraseAnswer(phraseId: string, isCorrect: boolean
 export function recordImmediateAnswer(itemKey: string, isCorrect: boolean) {
   try {
     const currentMastery = getLocalMastery();
-    const existing = currentMastery[itemKey] || { attempts: 0, correct: 0, accuracy: 0, lastPracticed: '' };
+    const existing = currentMastery[itemKey] || { 
+      attempts: 0, 
+      correct: 0, 
+      accuracy: 0, 
+      lastPracticed: '',
+      consecutiveCorrect: 0,
+      consecutiveMistakes: 0,
+      mistakesCount: 0,
+    };
     const attempts = existing.attempts + 1;
     const correct = existing.correct + (isCorrect ? 1 : 0);
+    const consecutiveCorrect = isCorrect ? (existing.consecutiveCorrect || 0) + 1 : 0;
+    const consecutiveMistakes = isCorrect ? 0 : (existing.consecutiveMistakes || 0) + 1;
+    const mistakesCount = (existing.mistakesCount || 0) + (isCorrect ? 0 : 1);
+
     currentMastery[itemKey] = {
       attempts,
       correct,
       accuracy: Math.round((correct / attempts) * 100),
       lastPracticed: new Date().toISOString(),
+      consecutiveCorrect,
+      consecutiveMistakes,
+      mistakesCount,
+      lastAnswerCorrect: isCorrect,
+      lastMistakeAt: isCorrect ? existing.lastMistakeAt : new Date().toISOString(),
     };
     saveLocalMastery(currentMastery);
+
+    // Keep active mistakes queue in sync
+    recordActiveMistake(itemKey, isCorrect);
   } catch (err) {
     console.warn('Failed to record immediate answer', err);
   }
@@ -221,21 +359,28 @@ export async function saveQuizResult(
   const updatedHistory = [quizResult, ...currentHistory.filter(h => h.id !== quizResult.id)];
   saveLocalQuizHistory(updatedHistory);
 
-  // Update mastery
+  // Update mastery fallback: only initialize or record items if they weren't already recorded
   const currentMastery = getLocalMastery();
   if (quizResult.items) {
+    let changed = false;
     for (const item of quizResult.items) {
-      const existing = currentMastery[item.kana] || { attempts: 0, correct: 0, accuracy: 0, lastPracticed: '' };
-      const attempts = existing.attempts + 1;
-      const correct = existing.correct + (item.isCorrect ? 1 : 0);
-      currentMastery[item.kana] = {
-        attempts,
-        correct,
-        accuracy: Math.round((correct / attempts) * 100),
-        lastPracticed: quizResult.createdAt,
-      };
+      if (!currentMastery[item.kana]) {
+        currentMastery[item.kana] = {
+          attempts: 1,
+          correct: item.isCorrect ? 1 : 0,
+          accuracy: item.isCorrect ? 100 : 0,
+          lastPracticed: quizResult.createdAt,
+          consecutiveCorrect: item.isCorrect ? 1 : 0,
+          consecutiveMistakes: item.isCorrect ? 0 : 1,
+          mistakesCount: item.isCorrect ? 0 : 1,
+          lastAnswerCorrect: item.isCorrect,
+        };
+        changed = true;
+      }
     }
-    saveLocalMastery(currentMastery);
+    if (changed) {
+      saveLocalMastery(currentMastery);
+    }
   }
 
   // Calculate profile stats

@@ -8,16 +8,17 @@ import {
 import { 
   getPhraseMastery, 
   getRecentPhrases, 
-  recordRecentPhrases 
+  recordRecentPhrases,
+  getActiveMistakes
 } from '../services/storageService';
 import { getSpriteIdForItem } from '../data/spriteSheetData';
 import { shuffleArray } from '../data/hiraganaData';
 
 /**
  * Calculates adaptive weight and status for a phrase item.
- * User requirement: If something has been answered correctly 3-4 times,
- * assume it is learned and focus on other phrases, increasing the time
- * before it gets asked again from 1 day to 3 or 4 days.
+ * User requirement:
+ * - Brand NEW phrases (0 attempts) have EQUAL TOP PRIORITY (weight 350) alongside Active Mistakes.
+ * - Mastered phrases (answered correctly 3+ times consecutively) are suppressed for 3-4 days on cooldown.
  */
 export function getPhraseAdaptiveProfile(item: ExchangeItem): {
   weight: number;
@@ -25,27 +26,30 @@ export function getPhraseAdaptiveProfile(item: ExchangeItem): {
 } {
   const mastery = getPhraseMastery();
   const recent = getRecentPhrases();
+  const activeMistakes = getActiveMistakes();
   const rec = mastery[item.id];
+  const isMistake = activeMistakes.includes(item.id);
 
-  if (!rec || rec.attempts === 0) {
-    const isRecent = recent.includes(item.id);
+  // 1. EQUAL TOP PRIORITY TIER A: Active mistakes and phrases with recent errors
+  if (isMistake || (rec && ((rec.consecutiveMistakes ?? 0) > 0 || rec.consecutiveCorrect === 0 || rec.accuracy < 70 || rec.lastAnswerCorrect === false))) {
+    const mistakeBonus = (rec?.mistakesCount ?? 1) * 50;
     return {
-      weight: isRecent ? 25 : 100,
-      status: 'unseen',
-    };
-  }
-
-  const isRecent = recent.includes(item.id);
-
-  // If player made a mistake or low accuracy, top priority practice
-  if (rec.consecutiveCorrect === 0 || rec.accuracy < 70) {
-    return {
-      weight: isRecent ? 80 : 160,
+      weight: 350 + mistakeBonus,
       status: 'needs_practice',
     };
   }
 
-  // If answered correctly 3-4 times:
+  // 2. EQUAL TOP PRIORITY TIER B: Brand NEW phrases (0 attempts - Curriculum Discovery)
+  // Dedicated high-priority bucket: same priority as Active Mistakes
+  if (!rec || rec.attempts === 0) {
+    const isRecent = recent.includes(item.id);
+    return {
+      weight: isRecent ? 250 : 350,
+      status: 'unseen',
+    };
+  }
+
+  // 3. Mastered phrases: deferred on a 3-4 day spaced repetition cooldown
   if (rec.consecutiveCorrect >= 3 || (rec.correct >= 4 && rec.accuracy >= 80)) {
     const lastPracticedMs = new Date(rec.lastPracticed).getTime();
     const daysSince = !isNaN(lastPracticedMs) 
@@ -53,23 +57,24 @@ export function getPhraseAdaptiveProfile(item: ExchangeItem): {
       : 5;
 
     if (daysSince < 3) {
-      // Defer for 3-4 days so learner focuses on other phrases
+      // Defer for 3-4 days so learner focuses on fresh phrases and mistakes
       return {
-        weight: 4,
+        weight: 0.1,
         status: 'proven',
       };
     } else {
-      // 3 to 4+ days have passed: re-enter review pool for spaced retention
+      // 3 to 4+ days have passed: re-enter review pool for occasional spaced retention check
       return {
-        weight: isRecent ? 15 : 50,
+        weight: 15,
         status: 'review',
       };
     }
   }
 
-  // Answered correctly 1-2 times
+  // 4. Developing / 1-2 attempts
+  const isRecent = recent.includes(item.id);
   return {
-    weight: isRecent ? 20 : 70,
+    weight: isRecent ? 25 : 60,
     status: 'review',
   };
 }
@@ -78,11 +83,11 @@ export function getPhraseAdaptiveProfile(item: ExchangeItem): {
  * Weighted random pick from an array of items with weights
  */
 function weightedSample<T>(candidates: { item: T; weight: number }[]): T {
-  const totalWeight = candidates.reduce((sum, c) => sum + Math.max(1, c.weight), 0);
+  const totalWeight = candidates.reduce((sum, c) => sum + Math.max(0.1, c.weight), 0);
   let random = Math.random() * totalWeight;
 
   for (const c of candidates) {
-    const w = Math.max(1, c.weight);
+    const w = Math.max(0.1, c.weight);
     if (random < w) {
       return c.item;
     }
@@ -93,122 +98,140 @@ function weightedSample<T>(candidates: { item: T; weight: number }[]): T {
 
 /**
  * Generates an adaptive, highly varied 10-question quiz for Exercise 6 & 7:
- * 1. STRICT SEMANTIC PATTERN DIVERSITY:
- *    Ensures NO two questions in the same session share the same pattern
- *    (e.g., never two "Where are you from?" or two "What time is it?").
- * 2. SUBJECT DIVERSITY:
- *    Varies subjects across father, mother, that man, that woman, older person,
- *    young person, self, colleague, teacher, student.
- * 3. ADAPTIVE SPACED REPETITION:
- *    Suppresses mastered phrases (3-4 correct answers) for 3-4 days.
- *    Focuses on unseen phrases and phrases with mistakes.
- * 4. BIDIRECTIONAL PRACTICE:
- *    Alternates ~50% standard (Question -> Reply) and
- *    ~50% reverse (Answer / Statement -> Find the Question).
+ * 1. DEDICATED BRAND NEW PHRASES BUCKET:
+ *    Shares equal top priority alongside Active Mistakes (up to 8 slots combined!).
+ *    If user has 0 mistakes, up to 8 brand new dialogue phrases are presented.
+ * 2. DEDICATED ACTIVE MISTAKES BUCKET:
+ *    Any phrase missed is drilled immediately.
+ * 3. STRICT SEMANTIC PATTERN DIVERSITY:
+ *    Ensures NO two questions in the same session share the same pattern.
+ * 4. SUBJECT & SCENE DIVERSITY:
+ *    Varies subjects and visual sprite scenes.
+ * 5. ADAPTIVE SPACED REPETITION:
+ *    Suppresses mastered phrases (3+ correct answers) for 3-4 days.
+ * 6. BIDIRECTIONAL PRACTICE:
+ *    Alternates ~50% Question -> Reply and ~50% Statement/Reply -> Question.
  */
 export function generateAdaptiveExchangeQuiz(
   mode: 'romaji' | 'hiragana',
   count = 10
 ): ExchangeQuizQuestion[] {
   const isRomaji = mode === 'romaji';
+  const recentPhrases = getRecentPhrases();
 
-  // 1. Group all available items by semanticPattern
-  const patternGroups: Record<string, ExchangeItem[]> = {};
-  for (const item of EXCHANGE_DATA) {
-    const pattern = item.semanticPattern || item.category;
-    if (!patternGroups[pattern]) {
-      patternGroups[pattern] = [];
-    }
-    patternGroups[pattern].push(item);
-  }
+  // Profile all items in the exchange curriculum
+  const allProfiles = EXCHANGE_DATA.map((item) => ({
+    item,
+    profile: getPhraseAdaptiveProfile(item),
+    pattern: item.semanticPattern || item.category,
+    sprite: getSpriteIdForItem(item),
+    subject: item.subjectEntity || 'general',
+  }));
 
-  const allPatterns = Object.keys(patternGroups);
+  // Partition into distinct pedagogical pools
+  const mistakePool = allProfiles.filter((p) => p.profile.status === 'needs_practice');
+  const brandNewPool = allProfiles.filter((p) => p.profile.status === 'unseen');
+  const reviewPool = allProfiles.filter((p) => p.profile.status === 'review');
+  const masteredPool = allProfiles.filter((p) => p.profile.status === 'proven');
 
-  // 2. Score every pattern group based on the average/max weight of its items
-  const patternScores = allPatterns.map((pattern) => {
-    const items = patternGroups[pattern];
-    const itemProfiles = items.map((it) => ({
-      item: it,
-      profile: getPhraseAdaptiveProfile(it),
-    }));
-    const totalWeight = itemProfiles.reduce((sum, ip) => sum + ip.profile.weight, 0);
-    const avgWeight = totalWeight / items.length;
-    return {
-      pattern,
-      items: itemProfiles,
-      avgWeight: Math.max(5, avgWeight),
-    };
-  });
-
-  // Shuffle pattern order with weighting to pick diverse patterns
-  const availablePatternScores = [...patternScores].sort(() => 0.5 - Math.random());
-  
-  // Pick distinct patterns up to count (default 10)
   const selectedItems: { item: ExchangeItem; status: 'unseen' | 'needs_practice' | 'proven' | 'review' }[] = [];
   const usedPatterns = new Set<string>();
   const usedSprites = new Set<string>();
+  const usedIds = new Set<string>();
   const subjectCounts: Record<string, number> = {};
 
-  // First pass: Pick 1 item from distinct pattern groups
-  for (let step = 0; step < count && availablePatternScores.length > 0; step++) {
-    // Find candidate patterns not yet used
-    const candidates = availablePatternScores.filter((p) => !usedPatterns.has(p.pattern));
-    if (candidates.length === 0) break;
+  const tryAddItem = (entry: typeof allProfiles[0], enforcePattern = true): boolean => {
+    if (usedIds.has(entry.item.id) || selectedItems.length >= count) return false;
+    if (enforcePattern && usedPatterns.has(entry.pattern)) return false;
 
-    // Pick a pattern weighted by urgency
-    const chosenPatternGroup = weightedSample(
-      candidates.map((c) => ({ item: c, weight: c.avgWeight }))
-    );
-    usedPatterns.add(chosenPatternGroup.pattern);
+    usedIds.add(entry.item.id);
+    usedPatterns.add(entry.pattern);
+    usedSprites.add(entry.sprite);
+    if (entry.subject) {
+      subjectCounts[entry.subject] = (subjectCounts[entry.subject] || 0) + 1;
+    }
 
-    // Within chosen pattern, pick item favoring unseen or mistakes, avoiding overused subjects & sprites
-    const itemCandidates = chosenPatternGroup.items.map((entry) => {
-      let w = entry.profile.weight;
-      const subj = entry.item.subjectEntity;
-      if (subj && (subjectCounts[subj] || 0) >= 2) {
-        w = Math.max(1, Math.round(w * 0.2)); // discourage repeating same subject 3+ times
-      }
-      const sprite = getSpriteIdForItem(entry.item);
-      if (usedSprites.has(sprite)) {
-        w = Math.max(1, Math.round(w * 0.25)); // strongly prioritize unused visual scenes from 16-sprite sheet
-      }
-      return { item: entry, weight: w };
-    });
-
-    const chosenEntry = weightedSample(itemCandidates);
     selectedItems.push({
-      item: chosenEntry.item,
-      status: chosenEntry.profile.status,
+      item: entry.item,
+      status: entry.profile.status,
     });
+    return true;
+  };
 
-    const chosenSprite = getSpriteIdForItem(chosenEntry.item);
-    usedSprites.add(chosenSprite);
-
-    if (chosenEntry.item.subjectEntity) {
-      subjectCounts[chosenEntry.item.subjectEntity] = (subjectCounts[chosenEntry.item.subjectEntity] || 0) + 1;
-    }
-  }
-
-  // Fallback if fewer patterns than count: fill from remaining items with high adaptive weight
-  if (selectedItems.length < count) {
-    const selectedIds = new Set(selectedItems.map((s) => s.item.id));
-    const remaining = EXCHANGE_DATA.filter((it) => !selectedIds.has(it.id))
-      .map((it) => ({
-        item: it,
-        profile: getPhraseAdaptiveProfile(it),
-      }))
-      .sort((a, b) => b.profile.weight - a.profile.weight);
-
-    for (const rem of remaining) {
+  // Helper to pick candidates with diversity weighting
+  const pickDiverseCandidates = (pool: typeof allProfiles, targetQuota: number) => {
+    // Shuffle pool to explore different areas
+    const poolCopy = shuffleArray([...pool]);
+    for (const entry of poolCopy) {
       if (selectedItems.length >= count) break;
-      selectedItems.push({
-        item: rem.item,
-        status: rem.profile.status,
-      });
+      if (pool === brandNewPool && selectedItems.filter(s => s.status === 'unseen').length >= targetQuota) break;
+      if (pool === mistakePool && selectedItems.filter(s => s.status === 'needs_practice').length >= targetQuota) break;
+
+      // Penalize overused subjects or repeated visual sprites
+      if ((subjectCounts[entry.subject] || 0) >= 2) continue;
+      tryAddItem(entry, true);
+    }
+  };
+
+  // --- EQUAL TOP PRIORITY TIERS: BRAND NEW PHRASES & ACTIVE MISTAKES ---
+  const targetMistakeCount = Math.min(4, mistakePool.length);
+  // Dynamic spillover: If fewer mistakes, remaining top-priority slots go directly to brand new phrases!
+  const targetBrandNewCount = Math.min(
+    brandNewPool.length,
+    Math.max(4, count - 2 - targetMistakeCount)
+  );
+
+  // 1. Pick from Brand NEW Phrases bucket
+  pickDiverseCandidates(brandNewPool, targetBrandNewCount);
+
+  // 2. Pick from Active Mistakes bucket
+  pickDiverseCandidates(mistakePool, targetMistakeCount);
+
+  // 3. Pick from Spaced Review bucket (1-2 slots)
+  pickDiverseCandidates(reviewPool, 2);
+
+  // --- FILL REMAINING SLOTS (Strict pattern diversity first, then relax if pool exhausted) ---
+  if (selectedItems.length < count) {
+    // More brand new phrases
+    for (const entry of shuffleArray(brandNewPool)) {
+      if (selectedItems.length >= count) break;
+      tryAddItem(entry, true);
+    }
+  }
+  if (selectedItems.length < count) {
+    // More mistakes
+    for (const entry of shuffleArray(mistakePool)) {
+      if (selectedItems.length >= count) break;
+      tryAddItem(entry, true);
+    }
+  }
+  if (selectedItems.length < count) {
+    // More review
+    for (const entry of shuffleArray(reviewPool)) {
+      if (selectedItems.length >= count) break;
+      tryAddItem(entry, true);
     }
   }
 
-  // Record selected IDs into recent memory to avoid immediate consecutive repeats
+  // Relax pattern constraint only if needed to fulfill count
+  if (selectedItems.length < count) {
+    for (const entry of shuffleArray([...brandNewPool, ...mistakePool, ...reviewPool])) {
+      if (selectedItems.length >= count) break;
+      tryAddItem(entry, false);
+    }
+  }
+
+  // Absolute last resort: non-recent mastered items
+  if (selectedItems.length < count) {
+    const nonRecentMastered = masteredPool.filter((p) => !recentPhrases.includes(p.item.id));
+    const usableMastered = nonRecentMastered.length > 0 ? nonRecentMastered : masteredPool;
+    for (const entry of shuffleArray(usableMastered)) {
+      if (selectedItems.length >= count) break;
+      tryAddItem(entry, false);
+    }
+  }
+
+  // Record selected IDs into recent memory (mistakes are exempted from cooldown in recordRecentPhrases)
   recordRecentPhrases(selectedItems.map((s) => s.item.id));
 
   // 3. Transform to ExchangeQuizQuestion with Bidirectional balancing

@@ -91,5 +91,10 @@ export interface CharacterMastery {
     correct: number;
     accuracy: number;
     lastPracticed: string;
+    consecutiveCorrect?: number;
+    consecutiveMistakes?: number;
+    mistakesCount?: number;
+    lastAnswerCorrect?: boolean;
+    lastMistakeAt?: string;
   };
 }

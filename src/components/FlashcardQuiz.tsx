@@ -161,6 +161,9 @@ export const FlashcardQuiz: React.FC<FlashcardQuizProps> = ({
     const speechTarget = currentQuestion.word?.kana || currentQuestion.character?.kana;
     if (speechTarget) {
       recordImmediateAnswer(speechTarget, isOverallCorrect);
+      if (currentQuestion.word?.id) {
+        recordImmediateAnswer(currentQuestion.word.id, isOverallCorrect);
+      }
     }
 
     if (soundEnabled) {
@@ -215,6 +218,9 @@ export const FlashcardQuiz: React.FC<FlashcardQuizProps> = ({
     const speechTarget = currentQuestion.word?.kana || currentQuestion.character?.kana;
     if (speechTarget) {
       recordImmediateAnswer(speechTarget, isCorrect);
+      if (currentQuestion.word?.id) {
+        recordImmediateAnswer(currentQuestion.word.id, isCorrect);
+      }
     }
 
     if (soundEnabled) {

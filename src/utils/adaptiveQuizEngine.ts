@@ -12,114 +12,217 @@ import {
   getRecentCharacters, 
   recordRecentCharacters, 
   getRecentWords, 
-  recordRecentWords 
+  recordRecentWords,
+  getActiveMistakes
 } from '../services/storageService';
 
 /**
- * Calculates adaptive weight for an item (Hiragana character or word)
- * - Hasn't seen as often (unseen or 1 attempt): High priority (100)
- * - Still makes mistakes on (accuracy < 75%): Highest priority (160)
- * - Proven consistently good (accuracy >= 85% & attempts >= 2): Very low priority (4 - 8)
- * - Moderate / developing: (60)
+ * Categorizes an item based on user mastery:
+ * - 'needs_practice': Currently in active mistakes queue, last answer incorrect, or accuracy < 75%.
+ * - 'unseen': 0 attempts (completely unfamiliar / fresh).
+ * - 'review': 1-2 attempts or moderate accuracy (needs retention check).
+ * - 'proven': Answered correctly >= 2 times with high accuracy (mastered / easy).
  */
 export function getAdaptiveWeight(key: string, mastery: CharacterMastery): {
   weight: number;
   status: 'unseen' | 'needs_practice' | 'proven' | 'review';
 } {
   const stat = mastery[key];
+  const activeMistakes = getActiveMistakes();
+  const isMistake = activeMistakes.includes(key);
 
-  if (!stat || stat.attempts === 0) {
-    return { weight: 100, status: 'unseen' };
+  // 1. EQUAL TOP PRIORITY TIER A: Active mistakes and items with recent errors
+  if (isMistake || (stat && (!stat.lastAnswerCorrect || (stat.consecutiveMistakes ?? 0) > 0 || (stat.attempts >= 1 && stat.accuracy < 75)))) {
+    const mistakeBonus = (stat?.mistakesCount ?? 1) * 50;
+    const accuracyDeficit = stat ? (100 - stat.accuracy) * 2 : 100;
+    return { 
+      weight: 350 + mistakeBonus + accuracyDeficit, 
+      status: 'needs_practice' 
+    };
   }
 
-  if (stat.attempts === 1) {
-    if (stat.correct === 1) {
-      return { weight: 70, status: 'review' };
+  // 2. EQUAL TOP PRIORITY TIER B: Brand NEW items (0 attempts - Curriculum Discovery)
+  // User explicitly requested: "more emphasis on 'new' words/phrases (create a new bucket for those) they should have the same high priority as Active Mistakes"
+  if (!stat || stat.attempts === 0) {
+    return { weight: 350, status: 'unseen' };
+  }
+
+  // 3. One attempt with clean correct answer -> Developing, needs cementing
+  if (stat.attempts === 1 && stat.correct === 1) {
+    return { weight: 90, status: 'review' };
+  }
+
+  // 4. SUPPRESSION OF EASY / MASTERED ITEMS:
+  // If user has answered correctly 2+ times consecutively with high accuracy (>= 80%)
+  const isMastered = (stat.consecutiveCorrect ?? 0) >= 2 && stat.accuracy >= 80;
+  if (isMastered) {
+    const lastPracticedMs = stat.lastPracticed ? new Date(stat.lastPracticed).getTime() : 0;
+    const daysSince = !isNaN(lastPracticedMs) && lastPracticedMs > 0
+      ? (Date.now() - lastPracticedMs) / (1000 * 60 * 60 * 24)
+      : 0;
+
+    // Put on 3-day spaced repetition cooldown! Suppress weight near zero so user sees unfamiliar & new items!
+    if (daysSince < 3) {
+      return { weight: 0.1, status: 'proven' };
     } else {
-      return { weight: 140, status: 'needs_practice' };
+      // 3+ days elapsed: eligible for occasional retention check
+      return { weight: 15, status: 'review' };
     }
   }
 
-  // Attempts >= 2
-  const accuracy = stat.accuracy;
-
-  if (accuracy < 70) {
-    // Top priority to practice mistakes
-    return { weight: 160, status: 'needs_practice' };
-  }
-
-  if (accuracy < 80) {
-    return { weight: 110, status: 'needs_practice' };
-  }
-
-  // High accuracy (>= 80%)
-  if (stat.attempts >= 3 && accuracy === 100) {
-    // Fully proven consistently good
-    return { weight: 4, status: 'proven' };
-  }
-
-  if (accuracy >= 85) {
-    // Proven consistently good
-    return { weight: 8, status: 'proven' };
-  }
-
-  return { weight: 45, status: 'review' };
+  // 5. Developing / moderate accuracy
+  return { weight: 60, status: 'review' };
 }
 
 /**
- * Weighted random sampler without replacement
+ * Intelligent Quota-Based Item Selector:
+ * Implements a balanced pedagogical mix:
+ * 1. Brand NEW Items Bucket (Target: 4-5 slots, expanding up to 8 slots if mistakes are low!)
+ * 2. Active Mistakes & Weak Items Bucket (Target: 4 slots, guaranteed immediate drill)
+ * 3. Spaced Review & Developing Bucket (Target: 1-2 slots)
+ * Easy/mastered items are suppressed on a 3-day cooldown and never appear unless all fresh & review items are exhausted.
  */
-function sampleWithoutReplacement<T>(
-  candidates: T[],
+function selectAdaptiveItems<T>(
+  allPool: T[],
   getKey: (item: T) => string,
+  recentCooldownList: string[],
   count: number,
   mastery: CharacterMastery
 ): { items: T[]; statuses: Record<string, 'unseen' | 'needs_practice' | 'proven' | 'review'> } {
-  const pool = [...candidates];
-  const selected: T[] = [];
+  const activeMistakes = getActiveMistakes();
   const statuses: Record<string, 'unseen' | 'needs_practice' | 'proven' | 'review'> = {};
 
-  const targetCount = Math.min(count, pool.length);
+  // Classify all items into distinct cognitive pools
+  const mistakeWeakPool: T[] = [];
+  const brandNewPool: T[] = [];
+  const developingPool: T[] = [];
+  const reviewPool: T[] = [];
+  const masteredPool: T[] = [];
 
-  while (selected.length < targetCount && pool.length > 0) {
-    // Compute weights for remaining candidates in pool
-    const weights: number[] = [];
-    let totalWeight = 0;
+  for (const item of allPool) {
+    const key = getKey(item);
+    const profile = getAdaptiveWeight(key, mastery);
+    statuses[key] = profile.status;
 
-    for (const item of pool) {
-      const key = getKey(item);
-      const { weight, status } = getAdaptiveWeight(key, mastery);
-      statuses[key] = status;
-      weights.push(weight);
-      totalWeight += weight;
-    }
-
-    // Roulette wheel selection
-    const rand = Math.random() * totalWeight;
-    let runningSum = 0;
-    let chosenIndex = pool.length - 1;
-
-    for (let i = 0; i < pool.length; i++) {
-      runningSum += weights[i];
-      if (rand <= runningSum) {
-        chosenIndex = i;
-        break;
+    if (profile.status === 'needs_practice') {
+      mistakeWeakPool.push(item);
+    } else if (profile.status === 'unseen') {
+      brandNewPool.push(item);
+    } else if (profile.status === 'proven') {
+      masteredPool.push(item);
+    } else {
+      // Review
+      const stat = mastery[key];
+      if (stat && stat.attempts === 1) {
+        developingPool.push(item);
+      } else {
+        reviewPool.push(item);
       }
     }
-
-    const [chosenItem] = pool.splice(chosenIndex, 1);
-    selected.push(chosenItem);
   }
 
-  return { items: selected, statuses };
+  // Sort mistake pool: items with most mistakes and lowest accuracy first
+  mistakeWeakPool.sort((a, b) => {
+    const statA = mastery[getKey(a)];
+    const statB = mastery[getKey(b)];
+    const mistakesA = statA?.mistakesCount ?? (activeMistakes.includes(getKey(a)) ? 2 : 1);
+    const mistakesB = statB?.mistakesCount ?? (activeMistakes.includes(getKey(b)) ? 2 : 1);
+    if (mistakesB !== mistakesA) return mistakesB - mistakesA;
+    return (statA?.accuracy ?? 50) - (statB?.accuracy ?? 50);
+  });
+
+  // Randomize brand new items so user continuously explores diverse parts of curriculum
+  const shuffledBrandNew = shuffleArray([...brandNewPool]);
+  // Filter brand new items against recent cooldown if plenty are available
+  const nonRecentBrandNew = shuffledBrandNew.filter(item => !recentCooldownList.includes(getKey(item)));
+  const usableBrandNew = nonRecentBrandNew.length >= 4 ? nonRecentBrandNew : shuffledBrandNew;
+
+  // Filter review pool to exclude items in recent cooldown
+  const combinedReview = [...shuffleArray(developingPool), ...shuffleArray(reviewPool)];
+  const nonRecentReview = combinedReview.filter(item => !recentCooldownList.includes(getKey(item)));
+  const usableReview = nonRecentReview.length > 0 ? nonRecentReview : combinedReview;
+
+  const selected: T[] = [];
+  const selectedKeys = new Set<string>();
+
+  const tryAdd = (item: T) => {
+    const key = getKey(item);
+    if (!selectedKeys.has(key) && selected.length < count) {
+      selected.push(item);
+      selectedKeys.add(key);
+      return true;
+    }
+    return false;
+  };
+
+  // --- TOP PRIORITY TIERS (EQUAL WEIGHT): BRAND NEW ITEMS & ACTIVE MISTAKES ---
+  // Out of a 10-question quiz, up to 8 slots are dedicated to Brand New + Active Mistakes!
+  // Allocate baseline 4 slots to mistakes and baseline 4 slots to brand new items.
+  const targetMistakeCount = Math.min(4, mistakeWeakPool.length);
+  // Dynamic spillover: If user has fewer mistakes (e.g. 0-2 mistakes), the remaining slots go to Brand NEW items!
+  const targetBrandNewCount = Math.min(
+    usableBrandNew.length,
+    Math.max(4, count - 2 - targetMistakeCount)
+  );
+
+  // 1. Add Brand NEW items from dedicated bucket
+  for (let i = 0; i < targetBrandNewCount && i < usableBrandNew.length; i++) {
+    tryAdd(usableBrandNew[i]);
+  }
+
+  // 2. Add Active Mistakes & Weak items from dedicated bucket
+  for (let i = 0; i < targetMistakeCount && i < mistakeWeakPool.length; i++) {
+    tryAdd(mistakeWeakPool[i]);
+  }
+
+  // --- BUCKET 3: SPACED REVIEW & DEVELOPING ITEMS (Target: 1-2 questions) ---
+  for (const item of usableReview) {
+    if (selected.length >= count - 1) break;
+    tryAdd(item);
+  }
+
+  // --- FILL ANY REMAINING SLOTS IF NEEDED (Spillover hierarchy) ---
+  // Priority: More brand new items -> remaining mistakes -> remaining review -> lastly mastered
+  if (selected.length < count) {
+    for (const item of usableBrandNew) {
+      if (selected.length >= count) break;
+      tryAdd(item);
+    }
+  }
+  if (selected.length < count) {
+    for (const item of mistakeWeakPool) {
+      if (selected.length >= count) break;
+      tryAdd(item);
+    }
+  }
+  if (selected.length < count) {
+    for (const item of usableReview) {
+      if (selected.length >= count) break;
+      tryAdd(item);
+    }
+  }
+  // Only as absolute last resort when curriculum has 0 unseen, 0 mistakes, and 0 review
+  if (selected.length < count) {
+    const nonRecentMastered = masteredPool.filter(item => !recentCooldownList.includes(getKey(item)));
+    const usableMastered = nonRecentMastered.length > 0 ? shuffleArray(nonRecentMastered) : shuffleArray(masteredPool);
+    for (const item of usableMastered) {
+      if (selected.length >= count) break;
+      tryAdd(item);
+    }
+  }
+
+  // Interleave and randomize the selected questions so new items and mistakes are naturally distributed
+  return { 
+    items: shuffleArray(selected), 
+    statuses 
+  };
 }
 
 /**
- * Generates an adaptive, non-repeating Hiragana quiz for Exercises 1 & 2.
- * - Prevents the same characters (e.g. 'i') from appearing repeatedly in consecutive quizzes
- * - Guarantees 10 unique characters per quiz
- * - Heavily prioritizes characters with mistakes and characters not seen as often
- * - Suppresses characters player has proven consistently good at
+ * Generates an adaptive, non-repeating Hiragana quiz for Exercises 1 & 2:
+ * - Dedicated Mistake Bucket: Characters missed are immediately reinforced in subsequent quizzes.
+ * - Dedicated Discovery Bucket: Unfamiliar / unseen characters are actively prioritized.
+ * - Easy / Mastered Characters are suppressed into a 3-day cooldown so user stops seeing the same easy questions.
  */
 export function generateAdaptiveKanaQuiz(
   exerciseType: 'hiragana-to-romaji' | 'romaji-to-hiragana',
@@ -129,47 +232,19 @@ export function generateAdaptiveKanaQuiz(
   const mastery = getLocalMastery();
   const recentKanaList = getRecentCharacters();
 
-  // 1. Filter out recently tested characters to prevent immediate repetition
-  const nonRecent = targetCharacters.filter(c => !recentKanaList.includes(c.kana));
-
-  let candidatePool: HiraganaChar[] = [];
-
-  if (nonRecent.length >= count) {
-    // We have plenty of fresh characters that were NOT tested recently
-    candidatePool = nonRecent;
-  } else {
-    // If not enough fresh characters, take all fresh ones and top up with
-    // characters from the recent list that were seen farthest in the past
-    const recentSortedOldest = [...recentKanaList].reverse();
-    const supplementChars: HiraganaChar[] = [];
-
-    for (const kana of recentSortedOldest) {
-      if (supplementChars.length + nonRecent.length >= count) break;
-      const found = targetCharacters.find(c => c.kana === kana);
-      if (found && !nonRecent.some(n => n.kana === found.kana) && !supplementChars.some(s => s.kana === found.kana)) {
-        supplementChars.push(found);
-      }
-    }
-
-    candidatePool = [...nonRecent, ...supplementChars];
-    // Fallback if needed
-    if (candidatePool.length < count) {
-      candidatePool = targetCharacters;
-    }
-  }
-
-  // 2. Sample 10 unique characters adaptively based on mastery
-  const { items: selectedChars, statuses } = sampleWithoutReplacement(
-    candidatePool,
+  // Select 10 items adaptively using multi-bucket quota architecture
+  const { items: selectedChars, statuses } = selectAdaptiveItems(
+    targetCharacters,
     c => c.kana,
+    recentKanaList,
     count,
     mastery
   );
 
-  // 3. Record selected characters in recent history
+  // Record selected characters in recent history (intelligent cooldown excludes mistakes)
   recordRecentCharacters(selectedChars.map(c => c.kana));
 
-  // 4. Build quiz questions with quality distractors
+  // Build quiz questions with quality distractors
   return selectedChars.map((char, index) => {
     const pool = HIRAGANA_CHARACTERS.filter(c => c.kana !== char.kana);
     const shuffledPool = shuffleArray(pool);
@@ -211,11 +286,11 @@ export function generateAdaptiveKanaQuiz(
 }
 
 /**
- * Generates an adaptive, non-repeating Everyday Words quiz for Exercises 3 & 4.
- * - Prevents the same words from appearing repeatedly in consecutive quizzes
- * - Guarantees 10 unique words per quiz
- * - Heavily prioritizes words with mistakes and words not seen as often
- * - Suppresses words player has proven consistently good at
+ * Generates an adaptive Everyday Words quiz for Exercises 3 & 4:
+ * - Dedicated Mistake Bucket: Words user struggled with or missed are drilled immediately.
+ * - Dedicated Discovery Bucket: Unseen / unfamiliar words from the 147-word curriculum are actively pulled in.
+ * - Common/easy words already mastered are suppressed into cooldown.
+ * - Decoupled meaning options for dual-selection mode.
  */
 export function generateAdaptiveWordQuiz(
   exerciseType: 'word-romaji-to-hiragana' | 'word-hiragana-to-romaji',
@@ -225,45 +300,19 @@ export function generateAdaptiveWordQuiz(
   const mastery = getLocalMastery();
   const recentWordsList = getRecentWords();
 
-  // 1. Filter out recently tested words to prevent immediate repetition
-  const nonRecent = targetWords.filter(
-    w => !recentWordsList.includes(w.id) && !recentWordsList.includes(w.kana)
-  );
-
-  let candidatePool: EverydayWord[] = [];
-
-  if (nonRecent.length >= count) {
-    candidatePool = nonRecent;
-  } else {
-    const recentSortedOldest = [...recentWordsList].reverse();
-    const supplementWords: EverydayWord[] = [];
-
-    for (const idOrKana of recentSortedOldest) {
-      if (supplementWords.length + nonRecent.length >= count) break;
-      const found = targetWords.find(w => w.id === idOrKana || w.kana === idOrKana);
-      if (found && !nonRecent.some(n => n.id === found.id) && !supplementWords.some(s => s.id === found.id)) {
-        supplementWords.push(found);
-      }
-    }
-
-    candidatePool = [...nonRecent, ...supplementWords];
-    if (candidatePool.length < count) {
-      candidatePool = targetWords;
-    }
-  }
-
-  // 2. Sample 10 unique words adaptively based on mastery
-  const { items: selectedWords, statuses } = sampleWithoutReplacement(
-    candidatePool,
+  // Select 10 items adaptively using multi-bucket quota architecture
+  const { items: selectedWords, statuses } = selectAdaptiveItems(
+    targetWords,
     w => w.kana,
+    recentWordsList,
     count,
     mastery
   );
 
-  // 3. Record selected words in recent history
-  recordRecentWords(selectedWords.map(w => w.id));
+  // Record selected words in recent history
+  recordRecentWords(selectedWords.flatMap(w => [w.id, w.kana]));
 
-  // 4. Build quiz questions with length-matched distractors and decoupled meaning options
+  // Build quiz questions with length-matched distractors and decoupled meaning options
   return selectedWords.map((word, index) => {
     const sameLengthPool = targetWords.filter(w => w.id !== word.id && w.kana.length === word.kana.length);
     const candidateDistractors = sameLengthPool.length >= 2 ? sameLengthPool : targetWords.filter(w => w.id !== word.id);
@@ -283,8 +332,7 @@ export function generateAdaptiveWordQuiz(
       const correctOption = word.kana;
       const options = shuffleArray([word.kana, distractorWord1.kana, distractorWord2.kana]);
 
-      // If random alignment happens to place correct option and correct meaning in the exact same index,
-      // rotate meaning options by 1 so they are not trivially aligned in the same position!
+      // Rotate if accidentally aligned at identical index
       if (options.indexOf(correctOption) === meaningOptions.indexOf(correctMeaning) && meaningOptions.length > 1) {
         meaningOptions = [meaningOptions[1], meaningOptions[2], meaningOptions[0]];
       }

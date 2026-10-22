@@ -2309,6 +2309,349 @@ export const EXCHANGE_DATA: ExchangeItem[] = [
       { romaji: 'Hai, mō ichido yari de imasu.', hiragana: 'はい、もういちど やりで います。', english: 'Ungrammatical verb conjugation' },
     ],
   },
+
+  // ==========================================
+  // BATCH 5 CONVERSATIONAL EXCHANGES:
+  // Family, Age, Residence, Where You Live, Objects & Possession
+  // ==========================================
+
+  // 1. Asking Age (Polite)
+  {
+    id: 'exch-oikutsu-age',
+    category: 'age-numbers',
+    categoryLabel: 'Age & Numbers',
+    situationTitle: 'Asking Age (Polite Form)',
+    englishMeaning: 'How old are you? (polite)',
+    promptSpeaker: 'Colleague',
+    semanticPattern: 'asking-age-polite',
+    subjectEntity: 'colleague',
+    spriteId: '04',
+    promptRomaji: 'Oikutsu desu ka?',
+    promptHiragana: 'おいくつですか？',
+    correctRomaji: 'Sanjūgo-sai desu.',
+    correctHiragana: 'さんじゅうごさいです。',
+    correctEnglish: 'I am 35 years old.',
+    distractors: [
+      { romaji: 'Desu sanjūgo-sai.', hiragana: 'です さんじゅうごさい。', english: 'Copula inverted before number' },
+      { romaji: 'Sanjūgo-sai no desu.', hiragana: 'さんじゅうごさいの です。', english: 'Erroneous possessive "no"' },
+    ],
+    questionDistractors: [
+      { romaji: 'Oikutsu no desu ka?', hiragana: 'おいくつのですか？', english: 'Erroneous particle "no"' },
+      { romaji: 'Desu ka oikutsu?', hiragana: 'ですか おいくつ？', english: 'Inverted question order' },
+    ],
+  },
+
+  // 2. Asking Where Someone Lives (Bangkok)
+  {
+    id: 'exch-where-live-bangkok',
+    category: 'places-work',
+    categoryLabel: 'Places & Living',
+    situationTitle: 'Asking Where Someone Lives',
+    englishMeaning: 'Where do you live?',
+    promptSpeaker: 'Acquaintance',
+    semanticPattern: 'where-do-you-live',
+    subjectEntity: 'acquaintance',
+    spriteId: '09',
+    promptRomaji: 'Doko ni sunde imasu ka?',
+    promptHiragana: 'どこに すんでいますか？',
+    correctRomaji: 'Bankoku ni sunde imasu.',
+    correctHiragana: 'ばんこくに すんでいます。',
+    correctEnglish: 'I live in Bangkok.',
+    distractors: [
+      { romaji: 'Bankoku de sunde imasu.', hiragana: 'ばんこくで すんでいます。', english: 'Incorrect particle "de" for residence' },
+      { romaji: 'Bankoku ni imasu sunde.', hiragana: 'ばんこくに います すんで。', english: 'Split auxiliary verb order' },
+    ],
+    questionDistractors: [
+      { romaji: 'Doko de sunde imasu ka?', hiragana: 'どこで すんでいますか？', english: 'Particle error: "de" instead of "ni"' },
+      { romaji: 'Sunde imasu ka doko ni?', hiragana: 'すんでいますか どこに？', english: 'Inverted question clause' },
+    ],
+  },
+
+  // 3. Asking Where Family Lives (Tokyo)
+  {
+    id: 'exch-where-live-family-tokyo',
+    category: 'places-work',
+    categoryLabel: 'Places & Living',
+    situationTitle: 'Asking Where Family Lives',
+    englishMeaning: 'Where do you and your family live?',
+    promptSpeaker: 'Friend',
+    semanticPattern: 'where-do-you-live-family',
+    subjectEntity: 'family',
+    spriteId: '14',
+    promptRomaji: 'Doko ni sunde imasu ka?',
+    promptHiragana: 'どこに すんでいますか？',
+    correctRomaji: 'Watashitachi wa Tōkyō ni sunde imasu.',
+    correctHiragana: 'わたしたちは とうきょうに すんでいます。',
+    correctEnglish: 'We live in Tokyo.',
+    distractors: [
+      { romaji: 'Watashitachi wa Tōkyō no sunde imasu.', hiragana: 'わたしたちは とうきょうの すんでいます。', english: 'Incorrect particle "no" instead of "ni"' },
+      { romaji: 'Tōkyō ni watashitachi sunde imasu wa.', hiragana: 'とうきょうに わたしたち すんでいます は。', english: 'Topic marker misplaced at end' },
+    ],
+    questionDistractors: [
+      { romaji: 'Doko wa sunde imasu ka?', hiragana: 'どこは すんでいますか？', english: 'Particle error: "wa" instead of "ni"' },
+      { romaji: 'Sunde imasu ka doko ni?', hiragana: 'すんでいますか どこに？', english: 'Inverted clause order' },
+    ],
+  },
+
+  // 4. Living in Osaka
+  {
+    id: 'exch-where-live-osaka',
+    category: 'places-work',
+    categoryLabel: 'Places & Living',
+    situationTitle: 'Residence in Osaka',
+    englishMeaning: 'Where do you live?',
+    promptSpeaker: 'Colleague',
+    semanticPattern: 'where-do-you-live-osaka',
+    subjectEntity: 'colleague',
+    spriteId: '01',
+    promptRomaji: 'Doko ni sunde imasu ka?',
+    promptHiragana: 'どこに すんでいますか？',
+    correctRomaji: 'Watashitachi wa Ōsaka ni sunde imasu.',
+    correctHiragana: 'わたしたちは おおさかに すんでいます。',
+    correctEnglish: 'We live in Osaka.',
+    distractors: [
+      { romaji: 'Watashitachi wa Ōsaka de sunde imasu.', hiragana: 'わたしたちは おおさかで すんでいます。', english: 'Incorrect particle "de" for residence' },
+      { romaji: 'Ōsaka ni sunde imasu watashitachi no.', hiragana: 'おおさかに すんでいます わたしたちの。', english: 'Trailing dangling particle' },
+    ],
+    questionDistractors: [
+      { romaji: 'Doko ga sunde imasu ka?', hiragana: 'どこが すんでいますか？', english: 'Particle error: "ga" instead of "ni"' },
+      { romaji: 'Sunde imasu ka doko de?', hiragana: 'すんでいますか どこで？', english: 'Inverted question order' },
+    ],
+  },
+
+  // 5. Who is this person? -> Father, mother and me
+  {
+    id: 'exch-kono-hito-dare',
+    category: 'people',
+    categoryLabel: 'People & Family',
+    situationTitle: 'Identifying People in Photo',
+    englishMeaning: 'Who is this person?',
+    promptSpeaker: 'Friend looking at photo',
+    semanticPattern: 'who-is-this-person',
+    subjectEntity: 'friend',
+    spriteId: '14',
+    promptRomaji: 'Kono hito wa dare desu ka?',
+    promptHiragana: 'このひとは だれですか？',
+    correctRomaji: 'Chichi to haha to watashi desu.',
+    correctHiragana: 'ちちと ははと わたしです。',
+    correctEnglish: 'My father, my mother and me.',
+    distractors: [
+      { romaji: 'Chichi wa haha wa watashi desu.', hiragana: 'ちちは ははは わたしです。', english: 'Repeated topic particle "wa" instead of listing "to"' },
+      { romaji: 'Haha to chichi desu to watashi.', hiragana: 'ははと ちちです と わたし。', english: 'Copula inserted mid-list' },
+    ],
+    questionDistractors: [
+      { romaji: 'Kono hito no dare desu ka?', hiragana: 'このひとの だれですか？', english: 'Particle error: "no" instead of "wa"' },
+      { romaji: 'Dare desu ka kono hito wa?', hiragana: 'だれですか このひとは？', english: 'Inverted inquiry order' },
+    ],
+  },
+
+  // 6. Who is that person? (Polite) -> That is Rei. That is Maria.
+  {
+    id: 'exch-ano-kata-donata',
+    category: 'people',
+    categoryLabel: 'People & Polite Inquiry',
+    situationTitle: 'Polite Inquiry About Someone',
+    englishMeaning: 'Who is that person? (polite)',
+    promptSpeaker: 'Office Colleague',
+    semanticPattern: 'who-is-that-person-polite',
+    subjectEntity: 'colleague',
+    spriteId: '03',
+    promptRomaji: 'Ano kata wa donata desu ka?',
+    promptHiragana: 'あのかたは どなたですか？',
+    correctRomaji: 'Rei-san desu. Maria-san desu.',
+    correctHiragana: 'れいさんです。まりあさんです。',
+    correctEnglish: 'That is Rei. That is Maria.',
+    distractors: [
+      { romaji: 'Rei-san no Maria-san desu.', hiragana: 'れいさんの まりあさんです。', english: 'Erroneous possessive particle linking names' },
+      { romaji: 'Desu Rei-san, desu Maria-san.', hiragana: 'です れいさん、です まりあさん。', english: 'Copula preceding names' },
+    ],
+    questionDistractors: [
+      { romaji: 'Ano kata no donata desu ka?', hiragana: 'あのかたの どなたですか？', english: 'Particle error: "no" instead of "wa"' },
+      { romaji: 'Donata desu ka ano kata wa?', hiragana: 'どなたですか あのかたは？', english: 'Inverted question order' },
+    ],
+  },
+
+  // 7. What do you do for work? -> Bank employee
+  {
+    id: 'exch-oshigoto-wa',
+    category: 'occupations',
+    categoryLabel: 'Work & Occupations',
+    situationTitle: 'Polite Inquiry on Work',
+    englishMeaning: 'What do you do for work?',
+    promptSpeaker: 'New Acquaintance',
+    semanticPattern: 'asking-work-polite',
+    subjectEntity: 'acquaintance',
+    spriteId: '03',
+    promptRomaji: 'O-shigoto wa?',
+    promptHiragana: 'おしごとは？',
+    correctRomaji: 'Ginkōin desu.',
+    correctHiragana: 'ぎんこういんです。',
+    correctEnglish: 'I am a bank employee.',
+    distractors: [
+      { romaji: 'Ginkōin wa arimasen.', hiragana: 'ぎんこういんは ありません。', english: 'Inanimate negative copula' },
+      { romaji: 'O-shigoto no ginkōin desu.', hiragana: 'おしごとの ぎんこういんです。', english: 'Repetition of prompt noun' },
+    ],
+    questionDistractors: [
+      { romaji: 'O-shigoto ga?', hiragana: 'おしごとが？', english: 'Subject marker "ga" instead of topic "wa"' },
+      { romaji: 'O-shigoto no?', hiragana: 'おしごとの？', english: 'Possessive marker "no"' },
+    ],
+  },
+
+  // 8. Family Members Count (Three)
+  {
+    id: 'exch-family-count-three',
+    category: 'people',
+    categoryLabel: 'Family & Household',
+    situationTitle: 'Stating Family Members',
+    englishMeaning: 'How many people are in your family?',
+    promptSpeaker: 'Colleague',
+    semanticPattern: 'family-members-count',
+    subjectEntity: 'colleague',
+    spriteId: '14',
+    promptRomaji: 'Go-kazoku wa nan-nin desu ka?',
+    promptHiragana: 'ごかぞくは なんにんですか？',
+    correctRomaji: 'Watashi no kazoku wa san-nin desu.',
+    correctHiragana: 'わたしのかぞくは さんにんです。',
+    correctEnglish: 'There are three people in my family.',
+    distractors: [
+      { romaji: 'Watashi no kazoku wa san-nin no desu.', hiragana: 'わたしのかぞくは さんにんの です。', english: 'Extraneous particle "no"' },
+      { romaji: 'San-nin desu watashi no kazoku wa.', hiragana: 'さんにんです わたしのかぞくは。', english: 'Inverted predicate' },
+    ],
+    questionDistractors: [
+      { romaji: 'Go-kazoku no nan-nin desu ka?', hiragana: 'ごかぞくの なんにんですか？', english: 'Particle error: "no" instead of "wa"' },
+      { romaji: 'Nan-nin desu ka go-kazoku wa?', hiragana: 'なんにんですか ごかぞくは？', english: 'Inverted inquiry order' },
+    ],
+  },
+
+  // 9. Family Members Description (Four)
+  {
+    id: 'exch-family-members-four',
+    category: 'people',
+    categoryLabel: 'Family & Household',
+    situationTitle: 'Describing Family of Four',
+    englishMeaning: 'Who is in your family?',
+    promptSpeaker: 'Friend',
+    semanticPattern: 'family-members-listing',
+    subjectEntity: 'friend',
+    spriteId: '14',
+    promptRomaji: 'Kazoku wa nan-nin desu ka?',
+    promptHiragana: 'かぞくは なんにんですか？',
+    correctRomaji: 'Watashi no kazoku wa yo-nin desu. Tsuma to haha to watashi to kodomo desu.',
+    correctHiragana: 'わたしのかぞくは よにんです。つまとははとわたしとこどもです。',
+    correctEnglish: 'There are four people in my family: my wife, my mother, me and my child.',
+    distractors: [
+      { romaji: 'Kazoku wa yon-nin desu. Tsuma ya haha ya.', hiragana: 'かぞくは よんにんです。つまや ははや。', english: 'Incorrect pronunciation "yon-nin" instead of "yo-nin"' },
+      { romaji: 'Tsuma to haha to watashi to kodomo wa yo-nin desu.', hiragana: 'つまとははとわたしとこどもは よにんです。', english: 'Unnatural syntax order' },
+    ],
+    questionDistractors: [
+      { romaji: 'Kazoku no nan-nin desu ka?', hiragana: 'かぞくの なんにんですか？', english: 'Particle error: "no" instead of "wa"' },
+      { romaji: 'Nan-nin desu ka kazoku wa?', hiragana: 'なんにんですか かぞくは？', english: 'Inverted inquiry order' },
+    ],
+  },
+
+  // 10. Asking What an Object Is
+  {
+    id: 'exch-kore-wa-nan-desu-ka',
+    category: 'demonstratives',
+    categoryLabel: 'Objects & Demonstratives',
+    situationTitle: 'Asking What an Object Is',
+    englishMeaning: 'Um, what is this?',
+    promptSpeaker: 'Customer',
+    semanticPattern: 'asking-what-object-is',
+    subjectEntity: 'customer',
+    spriteId: '16',
+    promptRomaji: 'Ano, kore wa nan desu ka?',
+    promptHiragana: 'あの、これは なんですか？',
+    correctRomaji: 'Sore wa Nihon no wain desu.',
+    correctHiragana: 'それは にほんの わいんです。',
+    correctEnglish: 'That is Japanese wine.',
+    distractors: [
+      { romaji: 'Kore wa Nihon no wain desu.', hiragana: 'これは にほんの わいんです。', english: 'Wrong perspective: respondent must use "sore" for object near speaker' },
+      { romaji: 'Sore wa wain no Nihon desu.', hiragana: 'それは わいんの にほんです。', english: 'Inverted modifier order' },
+    ],
+    questionDistractors: [
+      { romaji: 'Ano, kore no nan desu ka?', hiragana: 'あの、これの なんですか？', english: 'Particle error: "no" instead of "wa"' },
+      { romaji: 'Nan desu ka kore wa, ano?', hiragana: 'なんですか これは、あの？', english: 'Disordered sentence components' },
+    ],
+  },
+
+  // 11. Asking If Umbrella Belongs to Mira
+  {
+    id: 'exch-kono-kasa-mira-san',
+    category: 'demonstratives',
+    categoryLabel: 'Possession & Belongings',
+    situationTitle: 'Asking If Umbrella Belongs to Mira',
+    englishMeaning: 'Is this umbrella Mira\'s?',
+    promptSpeaker: 'Friend holding umbrella',
+    semanticPattern: 'umbrella-ownership-check',
+    subjectEntity: 'friend',
+    spriteId: '01',
+    promptRomaji: 'Kono kasa wa Mira-san no desu ka?',
+    promptHiragana: 'このかさは みらさんのですか？',
+    correctRomaji: 'Ie, chigaimasu. Dare no desu ka?',
+    correctHiragana: 'いえ、ちがいます。だれの ですか？',
+    correctEnglish: 'No, it isn\'t. Whose is it?',
+    distractors: [
+      { romaji: 'Hai, chigaimasu. Dare no desu.', hiragana: 'はい、ちがいます。だれの です。', english: 'Contradictory affirmation with "chigaimasu"' },
+      { romaji: 'Ie, arimasen. Mira-san desu.', hiragana: 'いえ、ありません。みらさんです。', english: 'Wrong negation verb for identity' },
+    ],
+    questionDistractors: [
+      { romaji: 'Kono kasa no Mira-san desu ka?', hiragana: 'このかさの みらさんですか？', english: 'Particle error: "no" instead of "wa"' },
+      { romaji: 'Mira-san no desu ka kono kasa wa?', hiragana: 'みらさんのですか このかさは？', english: 'Inverted sentence order' },
+    ],
+  },
+
+  // 12. Claiming Lost Umbrella
+  {
+    id: 'exch-dare-no-desu-ka-mine',
+    category: 'demonstratives',
+    categoryLabel: 'Lost Property & Possession',
+    situationTitle: 'Claiming Lost Umbrella',
+    englishMeaning: 'Whose is it?',
+    promptSpeaker: 'Person holding umbrella',
+    semanticPattern: 'whose-object-claimed',
+    subjectEntity: 'finder',
+    spriteId: '09',
+    promptRomaji: 'Dare no desu ka?',
+    promptHiragana: 'だれの ですか？',
+    correctRomaji: 'A, watashi no desu. Arigatō gozaimasu.',
+    correctHiragana: 'あ、わたしのです。ありがとうございます。',
+    correctEnglish: 'Ah, it is mine. Thank you very much.',
+    distractors: [
+      { romaji: 'A, watashi wa desu. Arigatō.', hiragana: 'あ、わたしは です。ありがとう。', english: 'Missing possessive particle "no"' },
+      { romaji: 'Watashi no kasa arigatō desu.', hiragana: 'わたしの かさ ありがとうです。', english: 'Ungrammatical polite formulation' },
+    ],
+    questionDistractors: [
+      { romaji: 'Dare wa desu ka?', hiragana: 'だれは ですか？', english: 'Particle error: "wa" instead of possessive "no"' },
+      { romaji: 'Desu ka dare no?', hiragana: 'ですか だれの？', english: 'Inverted phrase order' },
+    ],
+  },
+
+  // 13. Asking Facility Location in Building
+  {
+    id: 'exch-toilet-kaidan',
+    category: 'places-work',
+    categoryLabel: 'Facilities & Directions',
+    situationTitle: 'Asking Restroom Location in Building',
+    englishMeaning: 'Excuse me, where is the restroom?',
+    promptSpeaker: 'Visitor',
+    semanticPattern: 'facility-location-restroom',
+    subjectEntity: 'visitor',
+    spriteId: '03',
+    promptRomaji: 'Sumimasen, toire wa doko desu ka?',
+    promptHiragana: 'すみません、といれは どこですか？',
+    correctRomaji: 'Asoko desu. Kaidan no tonari desu.',
+    correctHiragana: 'あそこです。かいだんの となりです。',
+    correctEnglish: 'It is over there. Next to the stairs.',
+    distractors: [
+      { romaji: 'Kaidan desu toire no tonari.', hiragana: 'かいだんです といれの となり。', english: 'Inverted spatial relationship' },
+      { romaji: 'Doko desu toire wa asoko.', hiragana: 'どこです といれは あそこ。', english: 'Garbled question repetition' },
+    ],
+    questionDistractors: [
+      { romaji: 'Sumimasen, toire no doko desu ka?', hiragana: 'すみません、といれの どこですか？', english: 'Particle error: "no" instead of "wa"' },
+      { romaji: 'Doko desu ka toire wa, sumimasen?', hiragana: 'どこですか といれは、すみません？', english: 'Inverted inquiry order' },
+    ],
+  },
 ];
 
 export interface ExchangeOption {

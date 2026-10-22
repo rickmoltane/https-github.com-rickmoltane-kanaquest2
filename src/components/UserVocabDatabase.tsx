@@ -31,7 +31,7 @@ export const UserVocabDatabase: React.FC<UserVocabDatabaseProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<UserVocabCategoryFilter>('All');
-  const [selectedBatch, setSelectedBatch] = useState<'all' | 1 | 2 | 3 | 4>('all');
+  const [selectedBatch, setSelectedBatch] = useState<'all' | 1 | 2 | 3 | 4 | 5>('all');
   const [playingId, setPlayingId] = useState<string | null>(null);
 
   const handlePlayAudio = (item: UserVocabItem) => {
@@ -73,6 +73,7 @@ export const UserVocabDatabase: React.FC<UserVocabDatabaseProps> = ({
   const batch2Count = USER_VOCAB_DB.filter(i => i.batch === 2).length;
   const batch3Count = USER_VOCAB_DB.filter(i => i.batch === 3).length;
   const batch4Count = USER_VOCAB_DB.filter(i => i.batch === 4).length;
+  const batch5Count = USER_VOCAB_DB.filter(i => i.batch === 5).length;
   const wordCount = USER_VOCAB_DB.filter(i => i.itemType === 'word').length;
   const phraseCount = USER_VOCAB_DB.filter(i => i.itemType !== 'word').length;
 
@@ -140,7 +141,7 @@ export const UserVocabDatabase: React.FC<UserVocabDatabaseProps> = ({
       </div>
 
       {/* Database Metrics Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <div className="p-3.5 rounded-2xl bg-white border border-[#E2E8F0] shadow-2xs">
           <div className="flex items-center justify-between text-[#5F6368] text-xs font-semibold">
             <span>Total Entries</span>
@@ -169,53 +170,53 @@ export const UserVocabDatabase: React.FC<UserVocabDatabaseProps> = ({
 
         <div className="p-3.5 rounded-2xl bg-white border border-[#E2E8F0] shadow-2xs">
           <div className="flex items-center justify-between text-[#5F6368] text-xs font-semibold">
-            <span>Batch 2 (People &amp; Roles)</span>
+            <span>Batch 2 (Roles)</span>
             <Sparkles className="w-4 h-4 text-emerald-500" />
           </div>
           <div className="mt-2 text-2xl font-black text-[#1F2329] font-mono">
             {batch2Count}
           </div>
           <div className="text-[11px] text-[#5F6368] mt-0.5 font-medium">
-            Occupations, Places, Ages
+            Jobs, Places, Ages
           </div>
         </div>
 
         <div className="p-3.5 rounded-2xl bg-white border border-[#E2E8F0] shadow-2xs">
           <div className="flex items-center justify-between text-[#5F6368] text-xs font-semibold">
-            <span>Batch 3 (Objects &amp; Eric)</span>
+            <span>Batch 3 (Objects)</span>
             <Layers className="w-4 h-4 text-blue-500" />
           </div>
           <div className="mt-2 text-2xl font-black text-[#1F2329] font-mono">
             {batch3Count}
           </div>
           <div className="text-[11px] text-[#5F6368] mt-0.5 font-medium">
-            Everyday Objects &amp; Age
+            Everyday Objects &amp; Eric
           </div>
         </div>
 
         <div className="p-3.5 rounded-2xl bg-white border border-[#E2E8F0] shadow-2xs">
           <div className="flex items-center justify-between text-[#5F6368] text-xs font-semibold">
-            <span>Batch 4 (Time &amp; Classroom)</span>
+            <span>Batch 4 (Time/Class)</span>
             <Sparkles className="w-4 h-4 text-indigo-500" />
           </div>
           <div className="mt-2 text-2xl font-black text-[#1F2329] font-mono">
             {batch4Count}
           </div>
           <div className="text-[11px] text-[#5F6368] mt-0.5 font-medium">
-            Days, Hours, Feelings, Kore/Sore/Are
+            Days, Hours, Kore/Sore
           </div>
         </div>
 
-        <div className="p-3.5 rounded-2xl bg-white border border-[#E2E8F0] shadow-2xs col-span-2 sm:col-span-1">
+        <div className="p-3.5 rounded-2xl bg-white border border-[#E2E8F0] shadow-2xs">
           <div className="flex items-center justify-between text-[#5F6368] text-xs font-semibold">
-            <span>Composition</span>
-            <Hash className="w-4 h-4 text-purple-500" />
+            <span>Batch 5 (Family &amp; Places)</span>
+            <Sparkles className="w-4 h-4 text-rose-500" />
           </div>
-          <div className="mt-2 text-base sm:text-lg font-black text-[#1F2329] font-mono leading-tight">
-            {wordCount} <span className="text-xs font-normal text-[#5F6368]">words</span> &bull; {phraseCount} <span className="text-xs font-normal text-[#5F6368]">phrases</span>
+          <div className="mt-2 text-2xl font-black text-[#1F2329] font-mono">
+            {batch5Count}
           </div>
-          <div className="text-[11px] text-[#5F6368] mt-1 font-medium">
-            In Ex 3, 4, 6, &amp; 7
+          <div className="text-[11px] text-[#5F6368] mt-0.5 font-medium">
+            Family, Facilities, Animals
           </div>
         </div>
       </div>
@@ -227,31 +228,31 @@ export const UserVocabDatabase: React.FC<UserVocabDatabaseProps> = ({
         </h4>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 text-xs text-amber-950">
           <div className="bg-white/80 p-2 rounded-xl border border-amber-200/60">
-            <span className="font-bold text-amber-900">～てください (-te kudasai):</span> "Please do..." (聞いてください = listen, 書いてください = write, 読んでください = read, 見てください = look).
+            <span className="font-bold text-amber-900">Place + に + 住んでいます:</span> Expresses where someone lives (東京に住んでいます = I live in Tokyo, バンコクに住んでいます = I live in Bangkok).
           </div>
           <div className="bg-white/80 p-2 rounded-xl border border-amber-200/60">
-            <span className="font-bold text-amber-900">X はどうですか:</span> "How is X?" or "What do you think of X?" (最近どうですか, 日本語はどうですか).
+            <span className="font-bold text-amber-900">Humble vs Polite Family:</span> 父 (chichi) &amp; 母 (haha) for your family; お父さん (otōsan) &amp; お母さん (okāsan) for someone else's.
+          </div>
+          <div className="bg-white/80 p-2 rounded-xl border border-amber-200/60">
+            <span className="font-bold text-amber-900">誰 (dare) vs どなた (donata):</span> どなた is polite. Similarly, この人 (kono hito) vs あの方 (ano kata - polite).
+          </div>
+          <div className="bg-white/80 p-2 rounded-xl border border-amber-200/60">
+            <span className="font-bold text-amber-900">四人（よにん, yonin）:</span> Always pronounced <span className="font-mono font-bold">yonin</span>, never よんにん.
+          </div>
+          <div className="bg-white/80 p-2 rounded-xl border border-amber-200/60">
+            <span className="font-bold text-amber-900">の (no) Possession:</span> ミラさんの傘 = Mira's umbrella; 私の = mine; 誰の = whose.
           </div>
           <div className="bg-white/80 p-2 rounded-xl border border-amber-200/60">
             <span className="font-bold text-amber-900">これ・それ・あれ:</span> これ = near speaker; それ = near listener; あれ = away from both.
           </div>
           <div className="bg-white/80 p-2 rounded-xl border border-amber-200/60">
-            <span className="font-bold text-amber-900">Irregular Hours:</span> 4時 is <span className="font-mono font-bold">yoji</span>, 7時 is <span className="font-mono font-bold">shichiji</span>, 9時 is <span className="font-mono font-bold">kuji</span>.
+            <span className="font-bold text-amber-900">～てください (-te kudasai):</span> "Please do..." (聞いてください = listen, 書いてください = write, 読んでください = read).
           </div>
           <div className="bg-white/80 p-2 rounded-xl border border-amber-200/60">
-            <span className="font-bold text-amber-900">スマホ vs スマートフォン:</span> スマホ is everyday casual; スマートフォン is full formal word.
+            <span className="font-bold text-amber-900">X はどうですか:</span> "How is X?" or "What do you think of X?" (最近どうですか, 日本語はどうですか).
           </div>
           <div className="bg-white/80 p-2 rounded-xl border border-amber-200/60">
-            <span className="font-bold text-amber-900">パソコン vs コンピューター:</span> パソコン is much more common in everyday Japanese for personal PC.
-          </div>
-          <div className="bg-white/80 p-2 rounded-xl border border-amber-200/60">
-            <span className="font-bold text-amber-900">時計（とけい）:</span> Refers to both a wall clock and a wristwatch.
-          </div>
-          <div className="bg-white/80 p-2 rounded-xl border border-amber-200/60">
-            <span className="font-bold text-amber-900">シャープペン:</span> Short for シャープペンシル; mechanical pencil, not wooden pencil (鉛筆).
-          </div>
-          <div className="bg-white/80 p-2 rounded-xl border border-amber-200/60">
-            <span className="font-bold text-amber-900">お土産（おみやげ）:</span> Specifically gifts brought back from a trip for others.
+            <span className="font-bold text-amber-900">Composition:</span> {wordCount} words &bull; {phraseCount} phrases across all 5 batches.
           </div>
         </div>
       </div>
@@ -336,6 +337,17 @@ export const UserVocabDatabase: React.FC<UserVocabDatabaseProps> = ({
               }`}
             >
               Batch 4 ({batch4Count})
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedBatch(5)}
+              className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
+                selectedBatch === 5 
+                  ? 'bg-white text-[#1F2329] shadow-xs' 
+                  : 'text-[#5F6368] hover:text-[#1F2329]'
+              }`}
+            >
+              Batch 5 ({batch5Count})
             </button>
           </div>
         </div>
